@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "438621284770",
+    "project_id": "twister-g18",
+    "storage_bucket": "twister-g18.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:438621284770:android:1675a6515ad99fdf64eafb",
+        "android_client_info": {
+          "package_name": "com.grupo18.twister"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAw-LTCDmvOe-dwLcpp-w2IDZdCcCOSJ6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

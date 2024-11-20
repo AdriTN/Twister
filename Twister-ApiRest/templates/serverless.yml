@@ -1,0 +1,15 @@
+service: twister-api
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+
+functions:
+  app:
+    handler: src/app.handler
+    events:
+      - http:
+          path: /
+          method: any
+          cors: true
+          integration: lambda

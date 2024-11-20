@@ -1,0 +1,23 @@
+{
+  "name": "twister-apirest",
+  "version": "1.0.0",
+  "description": "Api REST for Twister",
+  "main": "index.js",
+  "type": "module",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "node ./src/app.js",
+    "test": "npm run rest"
+  },
+  "author": "Javier DR",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "express": "^4.21.1",
+    "mysql2": "^3.11.4",
+    "serverless-http": "^3.2.0"
+  }
+}
