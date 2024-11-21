@@ -13,11 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
 import com.grupo18.twister.R
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
 
@@ -102,7 +100,7 @@ fun AccountSection(navController: NavController) {
 }
 
 fun logOut(navController: NavController) {
-    FirebaseAuth.getInstance().signOut()
+    //FirebaseAuth.getInstance().signOut()
     // Navegar a la pantalla de inicio de sesión después de cerrar sesión
     navController.navigate("login") {
         popUpTo(0) // Elimina todas las pantallas anteriores del stack

@@ -9,9 +9,6 @@ object Welcome
 object Auth
 
 @Serializable
-data class LoginData(val username: String, val password: String)
-
-@Serializable
 object Home
 
 @Serializable

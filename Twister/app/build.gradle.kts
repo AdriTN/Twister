@@ -58,9 +58,6 @@ dependencies {
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
-
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
     implementation (libs.androidx.material.icons.extended)
 
     implementation(libs.coil.compose)
@@ -79,7 +76,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.test.android)
     implementation(libs.androidx.ui.test.android)
-    implementation(libs.firebase.auth.ktx)
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.constraintlayout.compose.android)
     testImplementation(libs.junit)

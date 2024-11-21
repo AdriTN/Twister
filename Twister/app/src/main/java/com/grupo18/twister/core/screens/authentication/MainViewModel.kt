@@ -4,18 +4,21 @@ import androidx.lifecycle.ViewModel
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.models.UserModel
+import com.grupo18.twister.core.models.UserResponse // Suponiendo que existe esta clase
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+data class LoginRequest(val email: String, val password: String)
+
 class MainViewModel : ViewModel() {
     private val apiService = ApiClient.retrofit.create(ApiService::class.java)
 
+    // Función para crear un usuario
     fun createUser(username: String, email: String, password: String) {
-        val user = UserModel(username, email, password)
-
-        apiService.createUser(user).enqueue(object : Callback<UserModel> {
-            override fun onResponse(call: Call<UserModel>, response: Response<UserModel>) {
+        val user = UserModel("", username, email, password)
+        apiService.createUser(user).enqueue(object : Callback<UserResponse> {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
                     val createdUser = response.body()
                     println("Usuario creado exitosamente: $createdUser")
@@ -24,15 +27,17 @@ class MainViewModel : ViewModel() {
                 }
             }
 
-            override fun onFailure(call: Call<UserModel>, t: Throwable) {
+            override fun onFailure(call: Call<UserResponse>, t: Throwable) {
                 println("Error de red: ${t.message}")
             }
         })
     }
 
-    fun getUser(id: String) {
-        apiService.getUser(id).enqueue(object : Callback<UserModel> {
-            override fun onResponse(call: Call<UserModel>, response: Response<UserModel>) {
+
+    fun getUser(email: String, password: String) {
+        val loginRequest = LoginRequest(email, password)
+        apiService.getUser(loginRequest).enqueue(object : Callback<UserResponse> {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
                     val user = response.body()
                     println("Usuario obtenido: $user")
@@ -41,9 +46,10 @@ class MainViewModel : ViewModel() {
                 }
             }
 
-            override fun onFailure(call: Call<UserModel>, t: Throwable) {
+            override fun onFailure(call: Call<UserResponse>, t: Throwable) {
                 println("Error de red: ${t.message}")
             }
         })
     }
+
 }

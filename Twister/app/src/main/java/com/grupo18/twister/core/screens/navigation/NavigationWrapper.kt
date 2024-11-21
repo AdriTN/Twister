@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
@@ -21,7 +22,7 @@ import com.grupo18.twister.core.screens.welcome.WelcomeScreen
 @Composable
 fun NavigationWrapper() {
     val navController = rememberNavController()
-    var loginData by rememberSaveable { mutableStateOf<LoginData?>(null) }
+    var loginData by rememberSaveable { mutableStateOf<UserModel?>(null) }
 
     NavHost(
         navController = navController,
