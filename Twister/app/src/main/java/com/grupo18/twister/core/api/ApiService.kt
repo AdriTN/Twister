@@ -3,7 +3,7 @@ package com.grupo18.twister.core.api
 import com.grupo18.twister.core.models.TokenVerificationResponse
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.models.UserResponse
-import com.grupo18.twister.core.screens.authentication.LoginRequest
+import com.grupo18.twister.core.models.LoginRequest
 import retrofit2.Call
 import retrofit2.http.*
 

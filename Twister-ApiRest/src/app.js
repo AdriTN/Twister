@@ -10,101 +10,124 @@ const PORT = process.env.PORT || 3000;
 
 app.use(json());
 
-// Inicializar la base de datos
+// Initialize the database
 (async () => {
   try {
     await initDB();
   } catch (error) {
-    console.error("Error al inicializar la base de datos:", error);
-    process.exit(1); // Detener la aplicación si algo falla
+    console.error("Error initializing the database:", error);
+    process.exit(1); // Stop the application if something fails
   }
 })();
 
-// Rutas y manejo de errores
+// Routes and error handling
 
 app.post("/users/verify", (req, res) => {
-  console.log("Verificando token...");
-  const token = req.headers.authorization?.split(" ")[1]; // Extrae el token del encabezado
-  console.log("Verificando token:", token);
+  console.log("Verifying token...");
+  const token = req.headers.authorization?.split(" ")[1]; // Extract token from header
+  console.log("Verifying token:", token);
   if (!token) {
       return res.status(401).json({ message: "No token provided" });
   }
 
   try {
-      const decoded = jwt.verify(token, "tuClaveSecreta"); // Valida el token con tu clave secreta
-      res.status(200).json({ message: "Token válido", decoded });
+      const decoded = jwt.verify(token, "yourSecretKey"); // Validate token with your secret key
+      res.status(200).json({ message: "Token valid", decoded });
   } catch (error) {
-      res.status(401).json({ message: "Token inválido" });
+      res.status(401).json({ message: "Invalid token" });
   }
 });
 
 app.post("/users/login/anonymous", (req, res) => {
   try {
       const decoded = generateAnonToken()
-        res.status(200).json({ message: "Token creado", token: decoded });
+        res.status(200).json({ message: "Token created", token: decoded });
   } catch (error) {
-      res.status(401).json({ message: "Token inválido" });
+      res.status(401).json({ message: "Invalid token" });
   }
 });
 
 app.post("/users/register", async (req, res) => {
   const { username, email, password } = req.body;
-  console.log("Se ha solicitado el registro de un nuevo usuario");
+  console.log("New user registration requested");
 
   try {
-    // Validar que todos los campos sean proporcionados
+    // Validate that all required fields are provided
     if (!username || !email || !password) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Crear el nuevo usuario
+    // Create new user
     const token = await registerUser(username, email, password);
     res
       .status(201)
-      .json({ message: "Usuario registrado con éxito", token: token }); // Incluir el token en la respuesta
+      .json({ message: "User successfully registered", token: token }); // Include token in response
   } catch (error) {
     console.error(error.message);
     res.status(401).json({ error: error.message });
   }
 });
 
-// Iniciar sesión
+// Login
 app.post("/users/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const { jwtToken, username} = await loginUser(email, password);
-    console.log("Inicio de sesión exitoso del usuario:", email);
-    res.status(201).json({
-      message: "Inicio de sesión exitoso",
+    // Attempt login
+    const { jwtToken, username } = await loginUser(email, password);
+    console.log("User login successful:", email);
+
+    // Respond with token and username on success
+    res.status(200).json({
+      message: "Login successful",
       jwtToken,
       username: username,
     });
   } catch (error) {
-    console.error(error.message);
-    res.status(401).json({ error: error.message })
+    console.log("This is the error:", error.message);
+    console.error(error.code);
+
+    // Depending on the error code, return appropriate status code
+    switch (error.code) {
+      case 1:
+        // Status code 400 for bad request
+        res.status(400).json({ error: "Please provide both email and password." });
+        break;
+      case 2:
+        // Status code 400 for bad request
+        res.status(400).json({ error: "The email format is invalid. Please check and try again." });
+        break;
+      case 3:
+        // Status code 401 for unauthorized (incorrect credentials)
+        res.status(401).json({ error: "Incorrect username or password. Please try again." });
+        break;
+      default:
+        // Status code 500 for server errors
+        res.status(500).json({ error: "Error processing login request. Please try again later." });
+    }
   }
 });
 
-// Unirse a un juego
+
+// Join a game
 app.post("/games/join", async (req, res) => {
   try {
     const result = await joinGameHandler(req.body);
     res.json(result);
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ error: error.message }); // Responder con 500 para errores del servidor
+    res.status(500).json({ error: error.message }); // Respond with 500 for server errors
   }
 });
 
 app.use((err, req, res, next) => {
-  console.error("Error no manejado:", err.message);
-  res.status(500).json({ error: "Error interno del servidor" });
+  console.error("Unhandled error:", err.message);
+  res.status(500).json({ error: "Internal server error" });
 });
 
-// Iniciar el servidor
+// Start the server
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
 
 export const handler = serverless(app);

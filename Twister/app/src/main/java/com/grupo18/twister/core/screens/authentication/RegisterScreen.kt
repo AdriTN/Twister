@@ -14,7 +14,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.grupo18.twister.core.models.UserModel
 
 @Composable
@@ -28,8 +27,7 @@ fun RegisterScreen(
     var username by remember { mutableStateOf("") }  // Variable para el nombre de usuario
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val mainViewModel: MainViewModel = viewModel()
+    val app = context.applicationContext as MyApp
 
 
     fun showToast(message: String) {
@@ -92,15 +90,15 @@ fun RegisterScreen(
                         val authManager = AuthManager { result ->
                             result.onSuccess { user ->
                                 if (user != null) {
-                                    mainViewModel.createUser(username, email, password)
-                                    onRegisterSuccess(
-                                        UserModel(
-                                            token = user.token.toString(),
-                                            username = username,
-                                            email = email,
-                                            password = password,
-                                            age = 0,
-                                    ))
+                                    val newUser = UserModel(
+                                        token = user.token.toString(),
+                                        username = username,
+                                        email = email,
+                                        password = password,
+                                        age = 0,
+                                    )
+                                    app.saveUser(newUser)
+                                    onRegisterSuccess(newUser)
                                     showToast("Registration successful!")
                                 } else {
                                     showToast("Failed to register user!")

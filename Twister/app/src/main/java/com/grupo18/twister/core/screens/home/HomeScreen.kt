@@ -12,15 +12,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
+import com.grupo18.twister.core.screens.authentication.MyApp
 
 @Composable
-fun HomeScreen(userName: String, navController: NavController) {
+fun HomeScreen(navController: NavController) {
+    val context = LocalContext.current
+    val app = context.applicationContext as MyApp
     Scaffold(
-        bottomBar = { CustomBottomNavigationBar(navController) } // Usando el componente modularizado
+        bottomBar = { CustomBottomNavigationBar(navController) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -30,7 +34,8 @@ fun HomeScreen(userName: String, navController: NavController) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            HeaderWithProfile(userName)
+
+            HeaderWithProfile(app.getUser()?.username ?: "Unknown User")
 
             Spacer(modifier = Modifier.height(24.dp))
 

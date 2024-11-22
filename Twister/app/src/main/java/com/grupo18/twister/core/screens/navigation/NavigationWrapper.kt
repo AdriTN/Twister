@@ -49,7 +49,6 @@ fun NavigationWrapper() {
 
         composable<Home> {
             HomeScreen(
-                userName = "Adrian",
                 navController = navController
             )
         }

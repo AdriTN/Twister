@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.grupo18.twister.core.models.UserModel
 
 
@@ -28,8 +27,8 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
-    val mainViewModel: MainViewModel = viewModel()
-    val scope = rememberCoroutineScope()
+    val app = context.applicationContext as MyApp
+
 
     fun showToast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -75,15 +74,15 @@ fun LoginScreen(
                                 if (user != null) {
                                     println("Login successful! Entering to mainviewmodel")
                                     println("Token: ${user.token}")
-                                    onLoginSuccess(
-                                        UserModel(
-                                            token = user.token.toString(),
-                                            username = user.username.toString(),
-                                            email = email,
-                                            password = password,
-                                            age = 0,
-                                        )
+                                    val newUser = UserModel(
+                                        token = user.token.toString(),
+                                        username = user.username.toString(),
+                                        email = email,
+                                        password = password,
+                                        age = 0,
                                     )
+                                    app.saveUser(newUser)
+                                    onLoginSuccess(newUser)
                                     showToast("Login successful!")
                                 } else {
                                     showToast("Login failed!")
@@ -156,3 +155,4 @@ fun LoginScreen(
         }
     }
 }
+

@@ -5,6 +5,7 @@ import android.os.Looper
 import android.util.Log
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
+import com.grupo18.twister.core.models.LoginRequest
 import com.grupo18.twister.core.models.TokenVerificationResponse
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.models.UserResponse
@@ -73,7 +74,14 @@ class AuthManager(
                     token = user?.token
                     user?.let { Result.success(it) } ?: Result.failure(Exception("Respuesta vacía"))
                 } else {
-                    Result.failure(Exception("Error del servidor: ${response.code()}"))
+                    var errorBody = response.errorBody()?.string()
+                    if (response.code() == 401 && errorBody != null) {
+                        errorBody = errorBody.substringAfter("\"error\":\"").substringBefore("\"")
+                        println("Error del servidor: $errorBody")
+                    } else {
+                        println("Error del servidor: ${response.code()}")
+                    }
+                    Result.failure(Exception(errorBody))
                 }
             } catch (e: HttpException) {
                 Result.failure(Exception("Error de red: ${e.message()}"))

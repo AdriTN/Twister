@@ -4,6 +4,14 @@ import jwt from "jsonwebtoken";
 
 const SECRET_KEY = "twistertokenkey";
 
+class CustomError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code; // Añadimos el código de error
+    this.name = this.constructor.name; // Establecemos el nombre del error
+  }
+}
+
 // Función para validar el formato del email
 const validateEmail = (email) => {
   return email.match(
@@ -90,37 +98,38 @@ export async function registerUser(username, email, password) {
 
 // Inicio de sesión de usuario
 export async function loginUser(email, password) {
+  // Validar que el email y la contraseña sean proporcionados
   if (!email || !password) {
     console.error("Error: Se requieren email y password para iniciar sesión.");
-    throw new Error("Faltan campos obligatorios para iniciar sesión.");
+    throw new CustomError("Faltan campos obligatorios para iniciar sesión.", 1); // Código de error 1
   }
 
+  // Validar que el email tenga un formato correcto
   if (!validateEmail(email)) {
     console.error("Error: El email no es válido.");
-    throw new Error("El email no es válido.");
+    throw new CustomError("El email no es válido.", 2); // Código de error 2
   }
 
-  try {
+    // Buscar al usuario en la base de datos
     const sql = "SELECT * FROM users WHERE email = ?";
     const user = await get(sql, [email]);
 
     if (!user || user.length === 0) {
       console.error("Error: Usuario no encontrado.");
-      throw new Error("Usuario o contraseña incorrectos.");
+      throw new CustomError("Usuario o contraseña incorrectos.", 3); // Código de error 3
     }
 
+    // Comparar la contraseña con la almacenada en la base de datos
     const isPasswordValid = await bcrypt.compare(password, user[0].password_hash);
     if (!isPasswordValid) {
       console.error("Error: Contraseña incorrecta.");
-      throw new Error("Usuario o contraseña incorrectos.");
+      throw new CustomError("Usuario o contraseña incorrectos.", 3); // Código de error 3
     }
 
-    // Generar token
+    // Generar y devolver el token de autenticación
     const token = generateToken(user[0].id, user[0].email);
-
     return { token, username: user[0].username };
-  } catch (error) {
-    console.error("Error al intentar iniciar sesión:", error);
-    throw new Error("Error al procesar la solicitud de inicio de sesión.");
-  }
+
 }
+
+
