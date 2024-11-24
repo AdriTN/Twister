@@ -8,7 +8,7 @@ const initDB = async () => {
     connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password: '123patata', // Cambia a tu contraseña real
+      password: '123patata',
     });
 
     console.log('Conexión establecida correctamente.');
@@ -31,14 +31,15 @@ const initDB = async () => {
 
 const createTables = async () => {
   try {
-    // Crear tabla `usuarios`
+    // Crear tabla `users`
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS usuarios (
+      CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        nombre VARCHAR(100) NOT NULL,
+        username VARCHAR(50) NOT NULL UNIQUE,
         email VARCHAR(100) NOT NULL UNIQUE,
-        contrasena VARCHAR(255) NOT NULL,
-        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
 
@@ -46,34 +47,48 @@ const createTables = async () => {
     await connection.query(`
       CREATE TABLE IF NOT EXISTS quizzes (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        titulo VARCHAR(100) NOT NULL,
-        descripcion TEXT,
-        creado_por INT NOT NULL,
-        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (creado_por) REFERENCES usuarios(id)
+        title VARCHAR(100) NOT NULL,
+        description TEXT,
+        creator_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
 
-    // Crear tabla `preguntas`
+    // Crear tabla `questions`
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS preguntas (
+      CREATE TABLE IF NOT EXISTS questions (
         id INT AUTO_INCREMENT PRIMARY KEY,
         quiz_id INT NOT NULL,
-        texto_pregunta TEXT NOT NULL,
-        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
+        question_text TEXT NOT NULL,
+        question_type ENUM('multiple_choice', 'true_false', 'short_answer') NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
       )
     `);
 
-    // Crear tabla `respuestas`
+    // Crear tabla `options`
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS respuestas (
+      CREATE TABLE IF NOT EXISTS options (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        pregunta_id INT NOT NULL,
-        texto_respuesta TEXT NOT NULL,
-        es_correcta BOOLEAN NOT NULL,
-        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (pregunta_id) REFERENCES preguntas(id)
+        question_id INT NOT NULL,
+        option_text TEXT NOT NULL,
+        is_correct TINYINT(1) NOT NULL DEFAULT 0,
+        FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Crear tabla `results`
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS results (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        quiz_id INT NOT NULL,
+        score FLOAT NOT NULL,
+        completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
       )
     `);
 

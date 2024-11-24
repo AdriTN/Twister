@@ -131,5 +131,3 @@ export async function loginUser(email, password) {
     return { token, username: user[0].username };
 
 }
-
-
