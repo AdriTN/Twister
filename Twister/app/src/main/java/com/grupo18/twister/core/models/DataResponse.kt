@@ -17,3 +17,8 @@ data class DecodedToken(
     val userId: String
 )
 
+
+data class GameResponse(
+    val idGame: String,
+)
+

@@ -22,3 +22,6 @@ object Edit
 
 @Serializable
 object Settings
+
+@Serializable
+object QRScanner

@@ -4,6 +4,8 @@ import { getUser, registerUser, loginUser } from "./models/userModel.js";
 import { joinGameHandler } from "./handlers/game_handler.js";
 import { initDB } from "./utils/database.js";
 import { generateAnonToken } from "./models/userModel.js";
+import { startGameHandler } from "./services/gameService.js";
+import { verifyToken } from "./services/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,18 +26,9 @@ app.use(json());
 
 app.post("/users/verify", (req, res) => {
   console.log("Verifying token...");
-  const token = req.headers.authorization?.split(" ")[1]; // Extract token from header
-  console.log("Verifying token:", token);
-  if (!token) {
-      return res.status(401).json({ message: "No token provided" });
-  }
+  verifyToken(req, res);
+  res.status(200).json({ message: "Token valid", decoded });
 
-  try {
-      const decoded = jwt.verify(token, "yourSecretKey"); // Validate token with your secret key
-      res.status(200).json({ message: "Token valid", decoded });
-  } catch (error) {
-      res.status(401).json({ message: "Invalid token" });
-  }
 });
 
 app.post("/users/login/anonymous", (req, res) => {
@@ -109,16 +102,26 @@ app.post("/users/login", async (req, res) => {
 });
 
 
-// Join a game
-app.post("/games/join", async (req, res) => {
-  try {
-    const result = await joinGameHandler(req.body);
-    res.json(result);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: error.message }); // Respond with 500 for server errors
+// Ruta para crear un nuevo juego (anfitrión)
+app.post('/games/create', (req, res) => {
+  getUserWithToken(req, res);
+
+  if (!gameId) {
+      return res.status(400).json({ message: 'Twist not found, please try later.' });
   }
+
+  // Crear una nueva sala de juego
+  startGameHandler(gameId);
+
+  // Enviar respuesta con la nueva sala
+  return res.status(201).json({ message: 'Game created successfully', game: newGame });
 });
+
+// Ruta para que un invitado se una al juego (unirse por QR o código de sala)
+app.post('/games/join', async (req, res) => {
+  joinGame(req, res);
+});
+
 
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err.message);

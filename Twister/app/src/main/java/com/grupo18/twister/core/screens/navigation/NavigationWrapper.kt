@@ -1,32 +1,45 @@
 package com.grupo18.twister.core.screens.navigation
 
+import QRScannerScreen
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.AuthScreen
+import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
 import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
+import com.grupo18.twister.core.screens.twists.LiveTwist
 import com.grupo18.twister.core.screens.twists.Question
 import com.grupo18.twister.core.screens.twists.SingleQuestion
 import com.grupo18.twister.core.screens.twists.SoloTwist
+import com.grupo18.twister.core.screens.twists.TempTwist
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
 
 @Composable
 fun NavigationWrapper() {
     val navController = rememberNavController()
-    var loginData by rememberSaveable { mutableStateOf<UserModel?>(null) }
 
+    // Obtener instancia de MyApp
+    val myApp = LocalContext.current.applicationContext as MyApp
+
+    // Obtener el estado actual del usuario desde MyApp
+    val currentUser = myApp.getUser()
+
+    // Iniciar la navegación dependiendo del estado del usuario
     NavHost(
         navController = navController,
-        startDestination = if (loginData == null) Welcome else Home
+        startDestination = if (currentUser == null) Welcome else Home
     ) {
         composable<Welcome> {
             WelcomeScreen(
@@ -39,7 +52,7 @@ fun NavigationWrapper() {
         composable<Auth> {
             AuthScreen(
                 onAuthSuccess = { data ->
-                    loginData = data
+                    myApp.saveUser(data) // Guardar el usuario en MyApp
                     navController.navigate(Home) {
                         popUpTo(Welcome) { inclusive = true }
                     }
@@ -48,13 +61,11 @@ fun NavigationWrapper() {
         }
 
         composable<Home> {
-            HomeScreen(
-                navController = navController
-            )
+            HomeScreen(navController = navController)
         }
 
         composable<Twists> {
-            SoloTwist(quizData = physicsQuiz)
+            TempTwist()
         }
 
         composable<Search> {
@@ -68,8 +79,24 @@ fun NavigationWrapper() {
         composable<Settings> {
             SettingsScreen(navController = navController)
         }
+
+        composable<QRScanner> {
+            var scannedPIN by remember { mutableStateOf("") }
+            QRScannerScreen(
+                paddingValues = PaddingValues(),
+                onQRCodeScanned = { pin ->
+                    scannedPIN = pin // Asigna el PIN escaneado
+                }
+            )
+
+            // Muestra el PIN escaneado si está disponible
+            if (scannedPIN.isNotEmpty()) {
+                LiveTwist(scannedPIN)
+            }
+        }
     }
 }
+
 
 val physicsQuiz = Question(
     id = 1,

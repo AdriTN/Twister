@@ -2,6 +2,11 @@ import { addPlayerToGame, startGame } from '../models/gameModel.js';
 
 // Función para que un jugador se una al juego
 export async function joinGame(req, res) {
+  const { pin } = req.body; // Recibimos el PIN que el invitado escanea
+
+  if (!pin) {
+      return res.status(400).json({ message: 'PIN is required to join the game.' });
+  }
   const { gameId, userId } = req.body;
 
   try {

@@ -52,6 +52,17 @@ export async function getUser(userId) {
   return user; // Retorna el usuario encontrado
 }
 
+export async function checkUser(userId) {
+  const sql = "SELECT * FROM users WHERE userId = ?";
+  const user = await get(sql, [userId]);
+
+  if (!user) {
+    return false;
+  }
+
+  return true;
+}
+
 // Registro de usuario
 export async function registerUser(username, email, password) {
   if (!username || !email || !password) {

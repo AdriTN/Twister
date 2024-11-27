@@ -1,5 +1,6 @@
 package com.grupo18.twister.core.api
 
+import com.grupo18.twister.core.models.GameResponse
 import com.grupo18.twister.core.models.TokenVerificationResponse
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.models.UserResponse
@@ -21,6 +22,9 @@ interface ApiService {
     @GET("/users/verify")
     fun verifyToken(@Header("Authorization") token: String): Call<TokenVerificationResponse>
 
-    @GET("/users/{id}")
-    fun getUser(@Path("id") id: String): Call<UserModel>
+    @GET("/games/create")
+    fun createGame(@Header("Authorization") token: String): Call<GameResponse>
+
+    @GET("/games/join")
+    fun joinGame(@Header("Authorization") token: String): Call<GameResponse>
 }
