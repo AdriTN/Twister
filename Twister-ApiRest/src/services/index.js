@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 export async function verifyToken(req, res, next) {
     // Extraer el token del encabezado Authorization
@@ -26,7 +26,6 @@ export async function verifyToken(req, res, next) {
         return res.status(403).json({ message: "Invalid or expired token" });
     }
 }
-const jwt = require('jsonwebtoken');
 
 export async function getUserWithToken(req, res) {
     // Extraer el token del encabezado Authorization
