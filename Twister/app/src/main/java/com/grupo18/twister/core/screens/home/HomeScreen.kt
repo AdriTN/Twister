@@ -18,11 +18,30 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
 import com.grupo18.twister.core.screens.authentication.MyApp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+
 
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     val app = context.applicationContext as MyApp
+
+    // Verificar si app es null para evitar ClassCastException
+    if (app == null) {
+        // Manejar el caso donde app es null, por ejemplo, mostrar un mensaje de error
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Error: Aplicación no inicializada correctamente.")
+        }
+        return
+    }
+
+    // Recoger el usuario actual como estado
+    val currentUser by app.getUser().collectAsState()
+
     Scaffold(
         bottomBar = { CustomBottomNavigationBar(navController) }
     ) { padding ->
@@ -35,7 +54,7 @@ fun HomeScreen(navController: NavController) {
             horizontalAlignment = Alignment.Start
         ) {
 
-            HeaderWithProfile(app.getUser()?.username ?: "Unknown User")
+            HeaderWithProfile(currentUser?.username ?: "Unknown User")
 
             Spacer(modifier = Modifier.height(24.dp))
 

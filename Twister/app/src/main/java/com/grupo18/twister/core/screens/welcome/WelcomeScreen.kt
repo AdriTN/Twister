@@ -1,3 +1,4 @@
+// Archivo: WelcomeScreen.kt
 package com.grupo18.twister.core.screens.welcome
 
 import com.grupo18.twister.R
@@ -5,8 +6,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,13 +18,34 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.navigation.NavController
+import kotlinx.coroutines.launch
+import com.grupo18.twister.core.models.UserModel
+import com.grupo18.twister.core.screens.authentication.MyApp
+import com.grupo18.twister.core.screens.navigation.Routes
 
 @Composable
-fun WelcomeScreen(onNavigateToAuth: () -> Unit) {
+fun WelcomeScreen(onNavigateToAuth: () -> Unit, navController: NavController) {
     val jaroFontFamily = FontFamily(Font(R.font.jaro))
     val jockeyFontFamily = FontFamily(Font(R.font.jockeyone))
+    val context = LocalContext.current
+    val app = context.applicationContext as? MyApp
+
+    // Recoger el usuario actual como estado
+    val currentUser by app?.getUser()?.collectAsState() ?: remember { mutableStateOf<UserModel?>(null) }
+
+    // Si el usuario ya está autenticado, navegar automáticamente a HomeScreen
+    LaunchedEffect(currentUser) {
+        if (currentUser != null && !currentUser!!.isAnonymous) {
+            navController.navigate(Routes.HOME) {
+                popUpTo(Routes.WELCOME) { inclusive = true }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -80,7 +103,8 @@ fun WelcomeScreen(onNavigateToAuth: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp, bottom = 10.dp),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE)) // Color personalizado
             ) {
                 Text(
                     text = "Start playing",

@@ -2,12 +2,21 @@
 package com.grupo18.twister.core.screens.navigation
 
 import QRScannerScreen
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.authentication.AuthScreen
@@ -18,7 +27,6 @@ import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.LiveTwist
 import com.grupo18.twister.core.screens.twists.TempTwist
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
-import com.grupo18.twister.ui.theme.TwisterTheme
 
 @Composable
 fun NavigationWrapper(
@@ -26,33 +34,41 @@ fun NavigationWrapper(
     onToggleTheme: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val myApp = context.applicationContext as? MyApp
 
-    // Obtener instancia de MyApp usando conversión segura
-    val myApp = LocalContext.current.applicationContext as? MyApp
+    // Verificar si myApp es null para evitar ClassCastException
+    if (myApp == null) {
+        // Manejar el caso donde myApp es null, por ejemplo, mostrar un mensaje de error
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Error: Aplicación no inicializada correctamente.")
+        }
+        return
+    }
 
-    // Obtener el estado actual del usuario desde MyApp
-    val currentUser: UserModel? = myApp?.getUser()
+    // Recoger el usuario actual como estado
+    val currentUser by myApp.getUser().collectAsState()
 
-    // Determinar la ruta de inicio basada en el estado del usuario
-    val startDestination = if (currentUser == null) Routes.WELCOME else Routes.HOME
-
-    // Iniciar la navegación
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = Routes.WELCOME
     ) {
         composable(Routes.WELCOME) {
             WelcomeScreen(
                 onNavigateToAuth = {
                     navController.navigate(Routes.AUTH)
-                }
+                },
+                navController = navController // Pasar el NavController
             )
         }
 
         composable(Routes.AUTH) {
             AuthScreen(
-                onAuthSuccess = { data ->
-                    myApp?.saveUser(data) // Guardar el usuario en MyApp
+                onAuthSuccess = { user ->
+                    myApp.saveUser(user) // Guarda el usuario en MyApp
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.WELCOME) { inclusive = true }
                     }
@@ -82,20 +98,26 @@ fun NavigationWrapper(
                 isDarkTheme = isDarkTheme,
                 onToggleTheme = onToggleTheme,
                 onLogout = {
-                    myApp?.clearUser()
+                    myApp.clearUser()
                     navController.navigate(Routes.AUTH) {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
-                }
+                },
+                onSendTestNotification = {
+                    NotificationHelper.sendNotification(
+                        context = context,
+                        title = "Notificación de Prueba",
+                        message = "Esta es una notificación de prueba."
+                    )
+                },
+                user = currentUser // Pasar el usuario actual a SettingsScreen
             )
         }
 
         composable(Routes.QR_SCANNER) {
-            var scannedPIN by remember { mutableStateOf("") }
             QRScannerScreen(
                 paddingValues = PaddingValues(),
                 onQRCodeScanned = { pin ->
-                    scannedPIN = pin // Asigna el PIN escaneado
                     navController.navigate("liveTwist/$pin")
                 }
             )
