@@ -1,162 +1,111 @@
+// Archivo: NavigationWrapper.kt
 package com.grupo18.twister.core.screens.navigation
 
 import QRScannerScreen
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.grupo18.twister.core.models.UserModel
-import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.authentication.MyApp
+import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
 import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.LiveTwist
-import com.grupo18.twister.core.screens.twists.Question
-import com.grupo18.twister.core.screens.twists.SingleQuestion
-import com.grupo18.twister.core.screens.twists.SoloTwist
 import com.grupo18.twister.core.screens.twists.TempTwist
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
+import com.grupo18.twister.ui.theme.TwisterTheme
 
 @Composable
-fun NavigationWrapper() {
+fun NavigationWrapper(
+    isDarkTheme: Boolean,
+    onToggleTheme: (Boolean) -> Unit
+) {
     val navController = rememberNavController()
 
-    // Obtener instancia de MyApp
-    val myApp = LocalContext.current.applicationContext as MyApp
+    // Obtener instancia de MyApp usando conversión segura
+    val myApp = LocalContext.current.applicationContext as? MyApp
 
     // Obtener el estado actual del usuario desde MyApp
-    val currentUser = myApp.getUser()
+    val currentUser: UserModel? = myApp?.getUser()
 
-    // Iniciar la navegación dependiendo del estado del usuario
+    // Determinar la ruta de inicio basada en el estado del usuario
+    val startDestination = if (currentUser == null) Routes.WELCOME else Routes.HOME
+
+    // Iniciar la navegación
     NavHost(
         navController = navController,
-        startDestination = if (currentUser == null) Welcome else Home
+        startDestination = startDestination
     ) {
-        composable<Welcome> {
+        composable(Routes.WELCOME) {
             WelcomeScreen(
                 onNavigateToAuth = {
-                    navController.navigate(Auth)
+                    navController.navigate(Routes.AUTH)
                 }
             )
         }
 
-        composable<Auth> {
+        composable(Routes.AUTH) {
             AuthScreen(
                 onAuthSuccess = { data ->
-                    myApp.saveUser(data) // Guardar el usuario en MyApp
-                    navController.navigate(Home) {
-                        popUpTo(Welcome) { inclusive = true }
+                    myApp?.saveUser(data) // Guardar el usuario en MyApp
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.WELCOME) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable<Home> {
+        composable(Routes.HOME) {
             HomeScreen(navController = navController)
         }
 
-        composable<Twists> {
+        composable(Routes.TWISTS) {
             TempTwist()
         }
 
-        composable<Search> {
+        composable(Routes.SEARCH) {
             SearchScreen(navController = navController)
         }
 
-        composable<Edit> {
+        composable(Routes.EDIT) {
             EditScreen(navController = navController)
         }
 
-        composable<Settings> {
-            SettingsScreen(navController = navController)
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                navController = navController,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme,
+                onLogout = {
+                    myApp?.clearUser()
+                    navController.navigate(Routes.AUTH) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                }
+            )
         }
 
-        composable<QRScanner> {
+        composable(Routes.QR_SCANNER) {
             var scannedPIN by remember { mutableStateOf("") }
             QRScannerScreen(
                 paddingValues = PaddingValues(),
                 onQRCodeScanned = { pin ->
                     scannedPIN = pin // Asigna el PIN escaneado
+                    navController.navigate("liveTwist/$pin")
                 }
             )
+        }
 
-            // Muestra el PIN escaneado si está disponible
-            if (scannedPIN.isNotEmpty()) {
-                LiveTwist(scannedPIN)
+        composable(Routes.LIVE_TWIST) { backStackEntry ->
+            val pin = backStackEntry.arguments?.getString("pin") ?: ""
+            if (pin.isNotEmpty()) {
+                LiveTwist(pin)
             }
         }
     }
 }
-
-
-val physicsQuiz = Question(
-    id = 1,
-    description = "Quiz de Física General",
-    image = "https://example.com/physics_quiz_banner.jpg", // Banner opcional para el quiz
-    questions = listOf(
-        SingleQuestion(
-            description = "¿Cuál es la velocidad de la luz en el vacío?",
-            image = null, // No hay imagen para esta pregunta
-            options = listOf(
-                "300,000 km/s",
-                "150,000 km/s",
-                "100,000 km/s",
-                "500,000 km/s"
-            ),
-            solution = 0 // Respuesta correcta es la primera opción
-        ),
-        SingleQuestion(
-            description = "¿Cuál es la unidad de medida de la fuerza?",
-            image = null,
-            options = listOf(
-                "Joule",
-                "Pascal",
-                "Newton",
-                "Watt"
-            ),
-            solution = 2 // Respuesta correcta es "Newton"
-        ),
-        SingleQuestion(
-            description = "Identifica el tipo de onda en la siguiente imagen.",
-            image = "https://example.com/transverse_wave.jpg", // Imagen de una onda transversal
-            options = listOf(
-                "Onda longitudinal",
-                "Onda transversal",
-                "Onda estacionaria",
-                "Onda mecánica"
-            ),
-            solution = 1 // Respuesta correcta es "Onda transversal"
-        ),
-        SingleQuestion(
-            description = "¿Qué ley establece que la energía no se crea ni se destruye, solo se transforma?",
-            image = null,
-            options = listOf(
-                "Primera Ley de la Termodinámica",
-                "Ley de la Gravitación Universal",
-                "Ley de Coulomb",
-                "Ley de Hooke"
-            ),
-            solution = 0 // Respuesta correcta es "Primera Ley de la Termodinámica"
-        ),
-        SingleQuestion(
-            description = "¿Qué sucede cuando un objeto alcanza la velocidad de escape de la Tierra?",
-            image = "https://example.com/rocket_escape_velocity.jpg", // Imagen de un cohete
-            options = listOf(
-                "El objeto orbita alrededor de la Tierra",
-                "El objeto cae de vuelta a la Tierra",
-                "El objeto se aleja indefinidamente de la Tierra",
-                "El objeto queda suspendido en el espacio"
-            ),
-            solution = 2 // Respuesta correcta es "El objeto se aleja indefinidamente de la Tierra"
-        )
-    )
-)

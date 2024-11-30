@@ -1,5 +1,5 @@
+// Archivo: SettingsScreen.kt
 package com.grupo18.twister.core.screens.settings
-
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,12 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.grupo18.twister.R
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(
+    navController: NavController,
+    isDarkTheme: Boolean,
+    onToggleTheme: (Boolean) -> Unit,
+    onLogout: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -43,7 +47,7 @@ fun SettingsScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Sección: Configuración de la cuenta
-            AccountSection(navController)
+            AccountSection()
 
             Divider()
 
@@ -53,18 +57,30 @@ fun SettingsScreen(navController: NavController) {
             Divider()
 
             // Sección: Configuración del tema
-            ThemeSettings()
+            ThemeSettings(isDarkTheme, onToggleTheme)
 
             Divider()
 
             // Sección: Otras opciones
             OtherSettings()
+
+            Divider()
+
+            // Botón para cerrar sesión
+            Button(
+                onClick = { onLogout() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            ) {
+                Text("Log Out")
+            }
         }
     }
 }
 
 @Composable
-fun AccountSection(navController: NavController) {
+fun AccountSection() {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -86,24 +102,6 @@ fun AccountSection(navController: NavController) {
                 Text("user@example.com", color = Color.Gray)
             }
         }
-
-        // Botón para cerrar sesión
-        Button(
-            onClick = {
-                logOut(navController)
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Log Out")
-        }
-    }
-}
-
-fun logOut(navController: NavController) {
-    //FirebaseAuth.getInstance().signOut()
-    // Navegar a la pantalla de inicio de sesión después de cerrar sesión
-    navController.navigate("login") {
-        popUpTo(0) // Elimina todas las pantallas anteriores del stack
     }
 }
 
@@ -138,9 +136,7 @@ fun NotificationSettings() {
 }
 
 @Composable
-fun ThemeSettings() {
-    var darkModeEnabled by remember { mutableStateOf(false) }
-
+fun ThemeSettings(isDarkTheme: Boolean, onToggleTheme: (Boolean) -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -160,8 +156,10 @@ fun ThemeSettings() {
             Text("Dark Mode", fontSize = 18.sp)
             Spacer(modifier = Modifier.weight(1f))
             Switch(
-                checked = darkModeEnabled,
-                onCheckedChange = { darkModeEnabled = it }
+                checked = isDarkTheme,
+                onCheckedChange = {
+                    onToggleTheme(it) // Solo cambia el estado del tema
+                }
             )
         }
     }
