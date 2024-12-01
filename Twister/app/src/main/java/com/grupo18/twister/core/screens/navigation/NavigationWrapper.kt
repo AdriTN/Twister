@@ -1,4 +1,3 @@
-// Archivo: NavigationWrapper.kt
 package com.grupo18.twister.core.screens.navigation
 
 import QRScannerScreen

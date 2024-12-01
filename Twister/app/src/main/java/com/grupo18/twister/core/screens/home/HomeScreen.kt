@@ -27,18 +27,6 @@ fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     val app = context.applicationContext as MyApp
 
-    // Verificar si app es null para evitar ClassCastException
-    if (app == null) {
-        // Manejar el caso donde app es null, por ejemplo, mostrar un mensaje de error
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Error: Aplicación no inicializada correctamente.")
-        }
-        return
-    }
-
     // Recoger el usuario actual como estado
     val currentUser by app.getUser().collectAsState()
 
