@@ -122,6 +122,13 @@ app.post('/games/join', async (req, res) => {
   joinGame(req, res);
 });
 
+app.post("/twists/get", async (req, res) => {
+  getUserWithToken(req, res);
+  const twists = await getUserTwists(token);
+    
+    res.status(200).json({ message: "Twists fetched successfully", twists });
+});
+
 
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err.message);

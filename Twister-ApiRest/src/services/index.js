@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { getUser, getUserIdFromToken } from '../models/userModel.js';
 
 export async function verifyToken(req, res, next) {
     // Extraer el token del encabezado Authorization
@@ -39,7 +40,8 @@ export async function getUserWithToken(req, res) {
     }
 
     try {
-        if (checkUser(token)) return true;
+
+        if (getUser(getUserIdFromToken(token))) return true;
         throw new Error("User not found");
     } catch (error) {
         console.error("Token verification failed:", error.message);
