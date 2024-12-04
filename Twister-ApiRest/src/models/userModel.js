@@ -52,6 +52,19 @@ export async function getUser(userId) {
   return user; // Retorna el usuario encontrado
 }
 
+export const getUserIdFromToken = (token) => {
+  try {
+    // Verifica y decodifica el token
+    const decoded = jwt.verify(token, SECRET_KEY);
+
+    // Retorna el userId del payload decodificado
+    return decoded.id;
+  } catch (error) {
+    console.error("Error verifying token:", error.message);
+    return null; // Retorna null si el token es inválido o ha expirado
+  }
+};
+
 export async function checkUser(userId) {
   const sql = "SELECT * FROM users WHERE userId = ?";
   const user = await get(sql, [userId]);
@@ -141,4 +154,11 @@ export async function loginUser(email, password) {
     const token = generateToken(user[0].id, user[0].email);
     return { token, username: user[0].username };
 
+}
+
+export async function getUserTwists(userId) {
+  const sql = "SELECT * FROM twists WHERE userId = ?";
+  const twists = await get(sql, [userId]);
+
+  return twists;
 }

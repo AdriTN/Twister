@@ -6,6 +6,7 @@ import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.models.UserResponse
 import com.grupo18.twister.core.models.LoginRequest
 import com.grupo18.twister.core.models.QuestionModel
+import com.grupo18.twister.core.models.TwistModel
 import retrofit2.Call
 import retrofit2.http.*
 
@@ -23,8 +24,11 @@ interface ApiService {
     @GET("/users/verify")
     fun verifyToken(@Header("Authorization") token: String): Call<TokenVerificationResponse>
 
+    @GET("/users/twists")
+    fun getUserTwists(@Header("Authorization") token: String): Call<TokenVerificationResponse>
+
     @GET("/games/create")
-    fun createGame(@Header("Authorization") token: String): Call<GameResponse>
+    fun createGame(@Header("Authorization") token: String): Call<List<TwistModel>>
 
     @GET("/games/join")
     fun joinGame(@Header("Authorization") token: String): Call<GameResponse>
