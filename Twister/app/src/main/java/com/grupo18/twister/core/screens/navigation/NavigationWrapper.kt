@@ -36,9 +36,7 @@ fun NavigationWrapper(
     val context = LocalContext.current
     val myApp = context.applicationContext as? MyApp
 
-    // Verificar si myApp es null para evitar ClassCastException
     if (myApp == null) {
-        // Manejar el caso donde myApp es null, por ejemplo, mostrar un mensaje de error
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -109,7 +107,7 @@ fun NavigationWrapper(
                         message = "Esta es una notificación de prueba."
                     )
                 },
-                user = currentUser // Pasar el usuario actual a SettingsScreen
+                user = currentUser
             )
         }
 
