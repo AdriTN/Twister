@@ -77,9 +77,6 @@ fun NavigationWrapper(
             HomeScreen(navController = navController)
         }
 
-        composable(Routes.TWISTS) {
-            TempTwist()
-        }
 
         composable(Routes.SEARCH) {
             SearchScreen(navController = navController)
@@ -118,6 +115,12 @@ fun NavigationWrapper(
                     navController.navigate("liveTwist/$pin")
                 }
             )
+        }
+
+        composable(Routes.TEMP_TWIST) {
+            TempTwist { pin ->
+                navController.navigate("liveTwist/$pin")
+            }
         }
 
         composable(Routes.LIVE_TWIST) { backStackEntry ->

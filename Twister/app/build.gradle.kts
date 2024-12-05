@@ -67,7 +67,12 @@ dependencies {
     implementation("com.google.code.gson:gson:2.9.0")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation("io.socket:socket.io-client:2.0.0")
+    implementation ("org.junit.jupiter:junit-jupiter:5.8.1")
+    implementation ("org.mockito:mockito-core:3.12.4")
+    implementation ("org.mockito:mockito-inline:3.12.4") // Para pruebas con Kotlin
+
 
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -81,6 +86,7 @@ dependencies {
     implementation(libs.androidx.ui.test.android)
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.constraintlayout.compose.android)
+    implementation(libs.junit.jupiter)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

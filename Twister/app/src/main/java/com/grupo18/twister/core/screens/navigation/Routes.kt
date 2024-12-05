@@ -10,4 +10,5 @@ object Routes {
     const val TWISTS = "twists"
     const val QR_SCANNER = "qrscanner"
     const val LIVE_TWIST = "liveTwist/{pin}"
+    const val TEMP_TWIST = "tempTwist"
 }

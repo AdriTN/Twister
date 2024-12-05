@@ -13,59 +13,57 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.components.ColorBlock
-import com.grupo18.twister.core.interfaces.RealTimeApi
 import com.grupo18.twister.core.models.Event
 import com.grupo18.twister.core.viewmodel.RoomViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.CoroutineScope
-
+import io.socket.client.Socket
+import io.socket.emitter.Emitter
 
 // Clase para gestionar eventos en tiempo real
-class RealTimeClient(private val api: RealTimeApi) {
-    private val scope = CoroutineScope(Dispatchers.IO)
-    // Long polling para escuchar eventos
-    fun listenForEvents(roomId: String, onEventReceived: (Event) -> Unit) {
-        scope.launch {
-            try {
-                while (true) { // Hacer solicitudes continuamente
-                    val events = api.getEventsLongPolling(roomId)
-                    // Procesar los eventos
-                    events.forEach { event ->
-                        onEventReceived(event) // Notificar a la UI de un nuevo evento
-                    }
-                    // Puedes agregar un retraso si es necesario para evitar hacer solicitudes
-                    // demasiado frecuentes en intervalos de tiempo cortos
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                // Manejar errores (por ejemplo, reconexión automática si la conexión se pierde)
+class RealTimeClient(private val socket: Socket) {
+
+    // Función para escuchar eventos
+    fun listenForEvents(roomId: String? = null, onEventReceived: (Event) -> Unit) {
+        // Escuchar el evento "newEvent" (esto depende del evento que envíes desde el servidor)
+        socket.on("newEvent", Emitter.Listener { args ->
+            if (args.isNotEmpty() && args[0] is Map<*, *>) {
+                val eventData = args[0] as Map<*, *>
+                val message = eventData["message"] as String
+                val event = Event(message) // Asumiendo que Event tiene un constructor que toma un mensaje
+                onEventReceived(event)
             }
-        }
+        })
     }
 
     // Enviar un evento al servidor
-    suspend fun sendEvent(event: Event) {
-        // Se ejecuta en el scope adecuado
-        withContext(Dispatchers.IO) {
-            api.sendEvent(event)
-        }
+    fun sendEvent(event: Event) {
+        // Aquí deberías usar el método adecuado para enviar el evento por el socket
+        socket.emit("sendEvent", event) // "sendEvent" es un ejemplo; debe coincidir con el evento que tu servidor espera
     }
 }
-
 
 @Composable
 fun LiveTwist(roomId: String) {
     // Estado para almacenar los eventos recibidos
     val events = remember { mutableStateListOf<Event>() }
-    val coroutineScope = rememberCoroutineScope()
     val roomViewModel = remember { RoomViewModel() }
 
-    // Inicia la escucha de eventos en tiempo real con long polling
+    // Inicializa el cliente de sockets
+    val socket = ApiClient.getSocket()
+    val realTimeClient = remember { RealTimeClient(socket) }
+
+    // Inicia la escucha de eventos al cargar la composición
     LaunchedEffect(roomId) {
-        roomViewModel.listenForNewQuestion(roomId)
+        socket.connect() // Conectar el socket
+        realTimeClient.listenForEvents(roomId) { event ->
+            events.add(event) // Agregar el evento recibido a la lista de eventos
+        }
+    }
+
+    // LaunchedEffect para enviar eventos usando el ViewModel
+    LaunchedEffect(roomId) {
+        roomViewModel.listenForNewQuestions(roomId) // Si aún lo necesitas
     }
 
     Column(
@@ -88,9 +86,7 @@ fun LiveTwist(roomId: String) {
                 icon = Icons.Default.ArrowForward,
                 contentDescription = "Arrow",
                 onClick = {
-                    coroutineScope.launch {
-                        roomViewModel.sendEvent(Event("Arrow clicked"))
-                    }
+                    realTimeClient.sendEvent(Event("Arrow clicked"))
                 }
             )
             ColorBlock(
@@ -99,9 +95,7 @@ fun LiveTwist(roomId: String) {
                 icon = Icons.Default.Circle,
                 contentDescription = "Circle",
                 onClick = {
-                    coroutineScope.launch {
-                        roomViewModel.sendEvent(Event("Circle clicked"))
-                    }
+                    realTimeClient.sendEvent(Event("Circle clicked"))
                 }
             )
         }
@@ -118,9 +112,7 @@ fun LiveTwist(roomId: String) {
                 icon = Icons.Default.Stop,
                 contentDescription = "Square",
                 onClick = {
-                    coroutineScope.launch {
-                        roomViewModel.sendEvent(Event("Square clicked"))
-                    }
+                    realTimeClient.sendEvent(Event("Square clicked"))
                 }
             )
             ColorBlock(
@@ -129,9 +121,7 @@ fun LiveTwist(roomId: String) {
                 icon = Icons.Default.Hexagon,
                 contentDescription = "Hexagon",
                 onClick = {
-                    coroutineScope.launch {
-                        roomViewModel.sendEvent(Event("Hexagon clicked"))
-                    }
+                    realTimeClient.sendEvent(Event("Hexagon clicked"))
                 }
             )
         }
@@ -149,5 +139,11 @@ fun LiveTwist(roomId: String) {
             }
         }
     }
-}
 
+    // Desconectar el socket al salir de la composición
+    DisposableEffect(Unit) {
+        onDispose {
+            socket.disconnect()
+        }
+    }
+}

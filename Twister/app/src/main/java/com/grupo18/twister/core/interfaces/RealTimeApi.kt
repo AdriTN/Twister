@@ -3,47 +3,63 @@ package com.grupo18.twister.core.interfaces
 import com.grupo18.twister.core.models.Event
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.twists.Question
-import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
-import retrofit2.http.Query
+import io.socket.client.Socket
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-interface RealTimeApi {
+class RealTimeApi(private val socket: Socket) {
+
+    init {
+        // Conectar el socket al inicio
+        socket.connect()
+    }
 
     // Funciones relacionadas con usuarios
-    @GET("rooms/{roomId}/users")
-    suspend fun getUsersInRoom(@Path("roomId") roomId: String): Map<String, UserModel>
+    suspend fun getUsersInRoom(roomId: String): Map<String, UserModel> {
+        return suspendCoroutine { continuation ->
+            socket.emit("getUsersInRoom", roomId)
 
-    @POST("rooms/{roomId}/users/{userId}/status")
-    suspend fun updateUserStatus(
-        @Path("roomId") roomId: String,
-        @Path("userId") userId: String,
-        @Query("status") status: String
-    ): Response<Unit>
+            socket.on("usersInRoomResponse") { args ->
+                val users = args[0] as Map<String, UserModel>
+                continuation.resume(users) // Continuar con el resultado
+            }
+        }
+    }
 
-    @POST("rooms/{roomId}/users/{userId}/score")
-    suspend fun updateUserScore(
-        @Path("roomId") roomId: String,
-        @Path("userId") userId: String,
-        @Query("score") score: Int
-    ): Response<Unit>
+
+    fun updateUserStatus(roomId: String, userId: String, status: String) {
+        socket.emit("updateUserStatus", roomId, userId, status)
+    }
+
+    fun updateUserScore(roomId: String, userId: String, score: Int) {
+        socket.emit("updateUserScore", roomId, userId, score)
+    }
 
     // Funciones relacionadas con preguntas
-    @POST("rooms/{roomId}/questions")
-    suspend fun sendNewQuestion(
-        @Path("roomId") roomId: String,
-        @Body question: Question
-    ): Response<Unit>
+    fun sendNewQuestion(roomId: String, question: Question) {
+        socket.emit("sendNewQuestion", roomId, question)
+    }
 
-    @GET("rooms/{roomId}/questions")
-    suspend fun listenForNewQuestion(@Path("roomId") roomId: String): Question
+    fun listenForNewQuestion(roomId: String, callback: (Question) -> Unit) {
+        socket.emit("listenForNewQuestion", roomId)
+
+        socket.on("newQuestion") { args ->
+            val question = args[0] as Question
+            callback(question)
+        }
+    }
 
     // Funciones relacionadas con eventos
-    @GET("rooms/{roomId}/events")
-    suspend fun getEventsLongPolling(@Path("roomId") roomId: String): List<Event>
+    fun getEventsLongPolling(roomId: String, callback: (List<Event>) -> Unit) {
+        socket.emit("getEventsLongPolling", roomId)
 
-    @POST("events")
-    suspend fun sendEvent(@Body event: Event): Response<Unit>
+        socket.on("eventsResponse") { args ->
+            val events = args[0] as List<Event>
+            callback(events)
+        }
+    }
+
+    fun sendEvent(event: Event) {
+        socket.emit("sendEvent", event)
+    }
 }

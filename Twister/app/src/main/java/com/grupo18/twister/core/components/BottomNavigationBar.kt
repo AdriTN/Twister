@@ -108,7 +108,7 @@ fun CustomBottomNavigationBar(navController: NavController) {
             contentAlignment = Alignment.Center
         ) {
             FloatingActionButton(
-                onClick = { navController.navigate(Routes.TWISTS) },
+                onClick = { navController.navigate(Routes.TEMP_TWIST) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 elevation = FloatingActionButtonDefaults.elevation(4.dp) // Reducir elevación
             ) {

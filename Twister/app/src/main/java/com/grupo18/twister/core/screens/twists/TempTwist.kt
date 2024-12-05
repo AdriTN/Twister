@@ -23,17 +23,38 @@ import com.grupo18.twister.R
 import com.journeyapps.barcodescanner.CaptureActivity
 
 @Composable
-fun TempTwist() {
+fun TempTwist(onAuthSuccess: (String) -> Unit) {
     val context = LocalContext.current
     val pinText = remember { mutableStateOf("") }
 
+    fun joinGame(pin: String) {
+        // Verificar que el PIN contenga solo dígitos y tenga exactamente 5 caracteres
+        if (pin.length != 5 || !pin.all { it.isDigit() }) {
+            Toast.makeText(context, "Invalid PIN: It must be 5 digits long and contain only numbers.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Toast.makeText(context, "Attempting to join game with PIN: $pin", Toast.LENGTH_SHORT).show()
+        // Llama a la función de éxito de autenticación
+        onAuthSuccess(pin)
+    }
+
     // Llamada al launcher para escanear el QR
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()) { result ->
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
         if (result.resultCode == RESULT_OK) {
             val data = result.data
-            // Procesar QR escaneado
-            Toast.makeText(context, "QR escaneado", Toast.LENGTH_SHORT).show()
+            data?.let {
+                // Suponiendo que el QR escaneado devuelve un string con el PIN
+                val scannedPin = it.getStringExtra("SCAN_RESULT") // Ajusta esto según la implementación de tu escáner
+                scannedPin?.let { pin ->
+                    pinText.value = pin // Asigna el PIN escaneado al TextField
+                    joinGame(pin)
+                } ?: run {
+                    Toast.makeText(context, "No se encontró el PIN en el QR", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -75,10 +96,7 @@ fun TempTwist() {
         ModeButton(
             label = "Join with PIN",
             iconRes = R.drawable.qr,  // Puedes poner un icono adecuado para el PIN
-            onClick = {
-                // Lógica para unirse usando el PIN
-                Toast.makeText(context, "Joining game with PIN: ${pinText.value}", Toast.LENGTH_SHORT).show()
-            }
+            onClick = { joinGame(pinText.value) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
