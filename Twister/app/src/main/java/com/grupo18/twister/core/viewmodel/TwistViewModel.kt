@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
+import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +44,7 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
     }
 
     // Función para crear un nuevo Twist
-    fun createTwist(title: String, description: String) {
+    fun createTwist(title: String, description: String, imageUri: Uri? = null): TwistModel {
         val newTwist = TwistModel(title = title, description = description)
         _twists.value += newTwist
         return newTwist
