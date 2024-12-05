@@ -68,6 +68,7 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation("io.coil-kt:coil-compose:2.2.2")
 
 
     implementation(libs.androidx.lifecycle.runtime.ktx)

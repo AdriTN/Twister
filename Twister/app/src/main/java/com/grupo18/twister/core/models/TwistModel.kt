@@ -1,11 +1,10 @@
 package com.grupo18.twister.core.models
 
-import java.util.UUID
+import android.net.Uri
 
 data class TwistModel(
-    val id: String = UUID.randomUUID().toString(),
-    var title: String,
-    var description: String,
-    val createdAt: Long = System.currentTimeMillis(),
-    var updatedAt: Long = System.currentTimeMillis()
+    val id: String = "00000",
+    val title: String,
+    val description: String,
+    val imageUri: Uri? = null
 )

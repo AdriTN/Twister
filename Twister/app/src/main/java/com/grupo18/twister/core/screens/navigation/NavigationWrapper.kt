@@ -23,6 +23,7 @@ import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
 import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
+import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.LiveTwist
 import com.grupo18.twister.core.screens.twists.TempTwist
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
@@ -126,6 +127,13 @@ fun NavigationWrapper(
             val pin = backStackEntry.arguments?.getString("pin") ?: ""
             if (pin.isNotEmpty()) {
                 LiveTwist(pin)
+            }
+        }
+
+        composable("addQuestion/{twistId}") { backStackEntry ->
+            val twistId = backStackEntry.arguments?.getString("twistId")
+            twistId?.let {
+                AddQuestionScreen(navController = navController, twistId = it)
             }
         }
     }
