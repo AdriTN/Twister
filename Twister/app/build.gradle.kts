@@ -71,8 +71,8 @@ dependencies {
     implementation("io.socket:socket.io-client:2.0.0")
     implementation ("org.junit.jupiter:junit-jupiter:5.8.1")
     implementation ("org.mockito:mockito-core:3.12.4")
-    implementation ("org.mockito:mockito-inline:3.12.4") // Para pruebas con Kotlin
-
+    implementation ("org.mockito:mockito-inline:3.12.4")
+    implementation("io.coil-kt:coil-compose:2.2.2")
 
 
     implementation(libs.androidx.lifecycle.runtime.ktx)

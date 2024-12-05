@@ -1,12 +1,11 @@
 package com.grupo18.twister.core.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.models.TwistModel
-import com.grupo18.twister.core.models.QuestionModel
-import com.grupo18.twister.core.models.AnswerModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,50 +46,16 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
     fun createTwist(title: String, description: String) {
         val newTwist = TwistModel(title = title, description = description)
         _twists.value += newTwist
+        return newTwist
     }
 
-    // Función para editar un Twist existente
-    fun editTwist(id: String, newTitle: String, newDescription: String) {
-        _twists.value = _twists.value.map { twist ->
-            if (twist.id == id) {
-                twist.copy(
-                    title = newTitle,
-                    description = newDescription,
-                    updatedAt = System.currentTimeMillis()
-                )
-            } else {
-                twist
-            }
-        }
+    // Función para obtener un Twist por su ID
+    fun getTwistById(id: String): TwistModel? {
+        return _twists.value.find { it.id == id }
     }
 
     // Función para eliminar un Twist
     fun deleteTwist(id: String) {
         _twists.value = _twists.value.filter { it.id != id }
-    }
-
-    // Función para crear una nueva Pregunta
-    fun createQuestion(questionText: String, answers: List<AnswerModel>) {
-        val newQuestion = QuestionModel(question = questionText, answers = answers)
-        _questions.value += newQuestion
-    }
-
-    // Función para editar una Pregunta existente
-    fun editQuestion(id: String, newQuestionText: String, newAnswers: List<AnswerModel>) {
-        _questions.value = _questions.value.map { question ->
-            if (question.id == id) {
-                question.copy(
-                    question = newQuestionText,
-                    answers = newAnswers
-                )
-            } else {
-                question
-            }
-        }
-    }
-
-    // Función para eliminar una Pregunta
-    fun deleteQuestion(id: String) {
-        _questions.value = _questions.value.filter { it.id != id }
     }
 }

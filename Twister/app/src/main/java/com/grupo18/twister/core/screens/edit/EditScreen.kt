@@ -1,117 +1,87 @@
-// Archivo: EditQuestionsScreen.kt
 package com.grupo18.twister.core.screens.edit
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
-import com.grupo18.twister.core.models.QuestionModel
-import com.grupo18.twister.core.models.AnswerModel
-import com.grupo18.twister.core.screens.authentication.MyApp
+import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.viewmodel.TwistViewModel
-import com.grupo18.twister.core.viewmodel.QuestionViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditScreen(
     navController: NavController,
-    questionViewModel: QuestionViewModel = viewModel()
+    twistViewModel: TwistViewModel = viewModel()
 ) {
-    val context = LocalContext.current
-    val app = context.applicationContext as MyApp
-    val currentUser by app.getUser().collectAsState(initial = null)
-    val authToken = currentUser?.token
-
-    if (authToken == null) {
-        Text("Necesitas iniciar sesión para gestionar las preguntas.")
-        return
-    }
-
-    LaunchedEffect(authToken) {
-        questionViewModel.setAuthToken(authToken)
-    }
-
-    val questions by questionViewModel.questions.collectAsState()
+    val twists by twistViewModel.twists.collectAsState()
 
     var showDialog by remember { mutableStateOf(false) }
-    var selectedQuestion by remember { mutableStateOf<QuestionModel?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestionar Preguntas") },
+                title = { Text("Gestionar Twists") },
                 actions = {
                     IconButton(onClick = { showDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Añadir Pregunta")
+                        Icon(Icons.Default.Add, contentDescription = "Añadir Twist")
                     }
                 }
             )
         },
         bottomBar = { CustomBottomNavigationBar(navController) },
         content = { padding ->
-            if (questions.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No hay preguntas. Toca + para añadir una.", fontSize = 16.sp, color = Color.Gray)
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(questions) { question ->
-                        QuestionItem(
-                            question = question,
-                            onEdit = {
-                                selectedQuestion = question
-                                showDialog = true
-                            },
-                            onDelete = {
-                                questionViewModel.deleteQuestion(question.id)
-                            }
-                        )
-                    }
+            // Mostrar lista de Twists existentes
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(twists) { twist ->
+                    TwistItem(
+                        twist = twist,
+                        onEdit = {
+                            // Implementar edición de Twist si es necesario
+                        },
+                        onDelete = {
+                            twistViewModel.deleteTwist(twist.id)
+                        }
+                    )
                 }
             }
 
+            // Mostrar el diálogo para crear un nuevo Twist
             if (showDialog) {
-                QuestionDialog(
-                    question = selectedQuestion,
-                    onDismiss = {
+                NewItemDialog(
+                    onDismiss = { showDialog = false },
+                    onSave = { title, description, imageUri ->
+                        val newTwist = twistViewModel.createTwist(title, description, imageUri)
                         showDialog = false
-                        selectedQuestion = null
-                    },
-                    onSave = { questionText, answers ->
-                        if (selectedQuestion == null) {
-                            questionViewModel.createQuestion(questionText, answers)
-                        } else {
-                            questionViewModel.editQuestion(selectedQuestion!!.id, questionText, answers)
-                        }
-                        showDialog = false
-                        selectedQuestion = null
+                        navController.navigate("addQuestion/${newTwist.id}")
                     }
                 )
             }
@@ -120,35 +90,42 @@ fun EditScreen(
 }
 
 @Composable
-fun QuestionItem(
-    question: QuestionModel,
+fun TwistItem(
+    twist: TwistModel,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E88E5))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(question.question, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(twist.title, color = MaterialTheme.colorScheme.onPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(twist.description, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontSize = 14.sp)
             Spacer(modifier = Modifier.height(8.dp))
-            question.answers.forEach { answer ->
-                Text(
-                    text = if (answer.isCorrect) "✔ ${answer.text}" else answer.text,
-                    color = if (answer.isCorrect) Color.Yellow else Color.White.copy(alpha = 0.8f),
-                    fontSize = 14.sp
+            // Mostrar la imagen si está disponible
+            twist.imageUri?.let { uri ->
+                Image(
+                    painter = rememberAsyncImagePainter(uri),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentScale = ContentScale.Crop
                 )
+                Spacer(modifier = Modifier.height(8.dp))
             }
             Row(
                 horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Editar Pregunta", tint = Color.White)
+                    Icon(Icons.Default.Edit, contentDescription = "Editar Twist", tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Eliminar Pregunta", tint = Color.White)
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminar Twist", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -156,100 +133,73 @@ fun QuestionItem(
 }
 
 @Composable
-fun QuestionDialog(
-    question: QuestionModel? = null,
+fun NewItemDialog(
     onDismiss: () -> Unit,
-    onSave: (String, List<AnswerModel>) -> Unit
+    onSave: (String, String, Uri?) -> Unit
 ) {
-    var questionText by remember { mutableStateOf(question?.question ?: "") }
-    val answers = remember { mutableStateListOf<AnswerModel>() }
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Inicializar la lista de respuestas cuando la pregunta cambia
-    LaunchedEffect(question) {
-        answers.clear()
-        answers.addAll(question?.answers ?: emptyList())
+    val context = LocalContext.current
+
+    // Lanzador para seleccionar imagen
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        imageUri = uri
     }
-
-    var answerText by remember { mutableStateOf("") }
-    var isCorrect by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = if (question == null) "Añadir Nueva Pregunta" else "Editar Pregunta") },
+        title = { Text("Crear Nuevo Twist") },
         text = {
             Column {
                 OutlinedTextField(
-                    value = questionText,
-                    onValueChange = { questionText = it },
-                    label = { Text("Pregunta") },
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Título") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-
-                // Mostrar las respuestas actuales
-                answers.forEach { answer ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Checkbox(
-                            checked = answer.isCorrect,
-                            onCheckedChange = null, // Solo lectura
-                            enabled = false
-                        )
-                        Text(
-                            text = answer.text,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = {
-                            answers.remove(answer)
-                        }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar Respuesta")
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Campos para añadir una nueva respuesta
                 OutlinedTextField(
-                    value = answerText,
-                    onValueChange = { answerText = it },
-                    label = { Text("Respuesta") },
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Descripción") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = isCorrect,
-                        onCheckedChange = { isCorrect = it }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Mostrar imagen seleccionada
+                if (imageUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(imageUri),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentScale = ContentScale.Crop
                     )
-                    Text("Es la respuesta correcta")
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
+
                 Button(
                     onClick = {
-                        if (answerText.isNotBlank()) {
-                            answers.add(AnswerModel(text = answerText, isCorrect = isCorrect))
-                            answerText = ""
-                            isCorrect = false
-                        }
+                        launcher.launch("image/*")
                     },
-                    modifier = Modifier.align(Alignment.End)
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Text("Añadir Respuesta")
+                    Text("Seleccionar Imagen")
                 }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (questionText.isNotBlank() && answers.isNotEmpty() && answers.any { it.isCorrect }) {
-                        onSave(questionText, answers.toList()) // Pasamos una copia inmutable de la lista
+                    if (title.isNotBlank() && description.isNotBlank()) {
+                        onSave(title, description, imageUri)
                     }
                 }
             ) {
-                Text("Guardar")
+                Text("Crear")
             }
         },
         dismissButton = {
