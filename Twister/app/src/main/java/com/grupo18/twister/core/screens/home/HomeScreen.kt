@@ -1,6 +1,7 @@
 package com.grupo18.twister.core.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyRow
@@ -20,7 +21,7 @@ import com.grupo18.twister.core.components.CustomBottomNavigationBar
 import com.grupo18.twister.core.screens.authentication.MyApp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-
+import com.grupo18.twister.core.models.UserModel
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -42,7 +43,7 @@ fun HomeScreen(navController: NavController) {
             horizontalAlignment = Alignment.Start
         ) {
 
-            HeaderWithProfile(currentUser?.username ?: "Unknown User")
+            HeaderWithProfile(currentUser, navController)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -60,7 +61,7 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun HeaderWithProfile(userName: String) {
+fun HeaderWithProfile(currentUser: UserModel?, navController: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth(),
@@ -69,7 +70,7 @@ fun HeaderWithProfile(userName: String) {
     ) {
         Column {
             Text(
-                text = "Hi, $userName",
+                text = "Hi, ${currentUser?.username ?: "Unknown User"}",
                 fontSize = 24.sp
             )
             Text(
@@ -79,11 +80,18 @@ fun HeaderWithProfile(userName: String) {
             )
         }
 
-        // Ícono de perfil
+        // Ícono de perfil con funcionalidad de clic
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(Color.LightGray, CircleShape), // Fondo circular
+                .background(Color.LightGray, CircleShape)
+                .clickable {
+                    if (currentUser?.username != "null") {
+                        navController.navigate("profile")
+                    } else {
+                        navController.navigate("auth")
+                    }
+                },
             contentAlignment = Alignment.Center
         ) {
             Icon(

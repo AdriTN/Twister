@@ -4,6 +4,7 @@ object Routes {
     const val WELCOME = "welcome"
     const val AUTH = "auth"
     const val HOME = "home"
+    const val PROFILE = "profile"
     const val SETTINGS = "settings"
     const val SEARCH = "search"
     const val EDIT = "edit"

@@ -21,6 +21,7 @@ import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
+import com.grupo18.twister.core.screens.home.ProfileScreen
 import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.AddQuestionScreen
@@ -78,6 +79,7 @@ fun NavigationWrapper(
             HomeScreen(navController = navController)
         }
 
+        composable(Routes.PROFILE) { ProfileScreen(navController) }
 
         composable(Routes.SEARCH) {
             SearchScreen(navController = navController)

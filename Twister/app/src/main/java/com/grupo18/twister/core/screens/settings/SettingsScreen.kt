@@ -83,6 +83,17 @@ fun SettingsScreen(
                 AccountSection(user = user)
             }
 
+            // Botón para cerrar sesión
+            item {
+                Button(
+                    onClick = { onLogout() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text("Log Out")
+                }
+            }
+
             // Divider
             item {
                 Divider()
@@ -103,6 +114,17 @@ fun SettingsScreen(
                     },
                     permissionState = notificationPermissionState
                 )
+            }
+
+            // Botón para enviar una notificación de prueba
+            item {
+                Button(
+                    onClick = { onSendTestNotification() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text("Enviar Notificación de Prueba")
+                }
             }
 
             // Divider
@@ -128,38 +150,6 @@ fun SettingsScreen(
             // Divider
             item {
                 Divider()
-            }
-
-            // Espacio antes de los botones
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Botón para enviar una notificación de prueba
-            item {
-                Button(
-                    onClick = { onSendTestNotification() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text("Enviar Notificación de Prueba")
-                }
-            }
-
-            // Espacio entre botones
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Botón para cerrar sesión
-            item {
-                Button(
-                    onClick = { onLogout() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text("Log Out")
-                }
             }
         }
     }
