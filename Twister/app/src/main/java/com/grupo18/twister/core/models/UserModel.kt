@@ -7,6 +7,7 @@ data class UserModel(
     val password: String,
     val age: Int? = null,
     val avatarUrl: String? = null,
+    val achievements: List<String>? = null,
     val isAnonymous: Boolean = false
 )
 

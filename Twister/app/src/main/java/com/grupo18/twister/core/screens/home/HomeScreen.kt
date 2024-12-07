@@ -28,7 +28,6 @@ fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     val app = context.applicationContext as MyApp
 
-    // Recoger el usuario actual como estado
     val currentUser by app.getUser().collectAsState()
 
     Scaffold(
@@ -80,7 +79,6 @@ fun HeaderWithProfile(currentUser: UserModel?, navController: NavController) {
             )
         }
 
-        // Ícono de perfil con funcionalidad de clic
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -118,13 +116,13 @@ fun GridSection(items: List<String>) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.Center // Centra los grupos horizontalmente
+        horizontalArrangement = Arrangement.Center
     ) {
-        val groupedItems = items.chunked(4) // Agrupa los elementos de 4 en 4
+        val groupedItems = items.chunked(4)
         items(groupedItems) { group ->
             Box(
                 modifier = Modifier
-                    .fillParentMaxWidth(), // Ocupa todo el ancho para centrar los twists
+                    .fillParentMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -134,7 +132,7 @@ fun GridSection(items: List<String>) {
                     // Primera fila (2 elementos)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center // Centra los twists dentro de la fila
+                        horizontalArrangement = Arrangement.Center
                     ) {
                         group.take(2).forEach { item ->
                             GridItem(item)
@@ -143,7 +141,7 @@ fun GridSection(items: List<String>) {
                     // Segunda fila (2 elementos)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center // Centra los twists dentro de la fila
+                        horizontalArrangement = Arrangement.Center
                     ) {
                         group.drop(2).forEach { item ->
                             GridItem(item)
@@ -159,7 +157,7 @@ fun GridSection(items: List<String>) {
 fun GridItem(text: String) {
     Column(
         modifier = Modifier
-            .size(100.dp) // Tamaño de cada ítem
+            .size(100.dp)
             .background(Color.LightGray)
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
