@@ -34,7 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 fun EditScreen(
     navController: NavController,
-    twistViewModel: TwistViewModel = viewModel()
+    twistViewModel: TwistViewModel
 ) {
     val twists by twistViewModel.twists.collectAsState()
 

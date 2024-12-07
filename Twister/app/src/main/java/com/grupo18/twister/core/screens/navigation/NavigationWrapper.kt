@@ -11,10 +11,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.MyApp
@@ -28,6 +30,7 @@ import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.LiveTwist
 import com.grupo18.twister.core.screens.twists.TempTwist
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
+import com.grupo18.twister.core.viewmodel.TwistViewModel
 
 @Composable
 fun NavigationWrapper(
@@ -86,7 +89,9 @@ fun NavigationWrapper(
         }
 
         composable(Routes.EDIT) {
-            EditScreen(navController = navController)
+            val factory = TwistViewModelFactory(myApp)
+            val twistViewModel: TwistViewModel = viewModel(factory = factory)
+            EditScreen(navController = navController, twistViewModel = twistViewModel)
         }
 
         composable(Routes.SETTINGS) {
