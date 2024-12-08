@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 fun ManageQuestionsScreen(
     navController: NavController,
     twistId: String,
+    token: String,
     questionViewModel: QuestionViewModel
 ) {
     val questions by questionViewModel.getQuestionsForTwist(twistId).collectAsState()
@@ -91,6 +92,7 @@ fun ManageQuestionsScreen(
                         if (!valid) {
                             showError = true
                         } else {
+                            questionViewModel.saveChanges(twistId, token)
                             navController.popBackStack() // Guardar y volver atrás
                         }
                     }) {
@@ -114,7 +116,8 @@ fun ManageQuestionsScreen(
                         }
                         showQuestionDialog = false
                         selectedQuestion = null
-                    }
+                    },
+                    twistId = twistId,
                 )
             }
         }

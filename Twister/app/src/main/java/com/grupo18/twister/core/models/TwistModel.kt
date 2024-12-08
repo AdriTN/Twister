@@ -6,5 +6,6 @@ data class TwistModel(
     val id: String = "00000",
     val title: String,
     val description: String,
-    val imageUri: Uri? = null
+    val imageUri: Uri? = null,
+    val twistQuestions: List<QuestionModel> = emptyList()
 )

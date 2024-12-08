@@ -5,7 +5,6 @@ import { generateAnonToken, registerUser, loginUser } from "../models/userModel.
 const router = express.Router();
 
 router.post("/verify", (req, res) => {
-  console.log("Verifying token...");
   verifyToken(req, res);
   res.status(200).json({ message: "Token valid" });
 });
@@ -42,11 +41,9 @@ router.post("/login", async (req, res) => {
 
   try {
     const { jwtToken, username } = await loginUser(email, password);
-    console.log("User login successful:", email);
-
     res.status(200).json({
       message: "Login successful",
-      jwtToken,
+      token: jwtToken,
       username,
     });
   } catch (error) {

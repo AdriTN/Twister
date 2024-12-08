@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import com.grupo18.twister.core.api.ApiClient
@@ -52,7 +53,7 @@ fun EditScreen(
     // Efecto que carga los twists desde el servidor al iniciar la pantalla
     LaunchedEffect(Unit) {
         val user = app.currentUser.value ?: return@LaunchedEffect
-        twistViewModel.loadTwists(user.token, coroutineScope ) { loading ->
+        twistViewModel.loadTwists(user.token, coroutineScope) { loading ->
             isLoading = loading // Cambiar el estado de carga
         }
     }
@@ -149,6 +150,7 @@ fun EditScreen(
 }
 
 
+
 @Composable
 fun TwistItem(
     twist: TwistModel,
@@ -158,9 +160,14 @@ fun TwistItem(
     val context = LocalContext.current
     val repository = ImageService(ApiClient.retrofit.create(ApiService::class.java))
 
-    // Asegúrate de que extractDominantColorFromUri devuelva un Int
-    val dominantColorInt = remember { repository.extractDominantColorFromUri(twist.imageUri!!, context) }
-    val dominantColor = Color(dominantColorInt) // Convierte el Int a Color
+    // Verificación de imagen: si es null, se puede utilizar un color de fondo predeterminado
+    val dominantColorInt = if (twist.imageUri != null) {
+        repository.extractDominantColorFromUri(twist.imageUri, context)
+    } else {
+        Color.Gray.toArgb() // Color de fondo predeterminado si no hay imagen
+    }
+
+    val dominantColor = Color(dominantColorInt)
 
     // Función para determinar el color del texto (iconos) basado en el brillo
     fun getContrastColor(color: Color): Color {
@@ -199,6 +206,14 @@ fun TwistItem(
                                 )
                             )
                         )
+                )
+            } ?: run {
+                // Si imageUri es null, muestra un color de fondo por defecto
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .background(dominantColor) // Usar color dominante o un color predeterminado
                 )
             }
 

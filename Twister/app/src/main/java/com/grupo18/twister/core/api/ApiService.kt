@@ -41,19 +41,20 @@ interface ApiService {
     fun getUserTwists(@Header("Authorization") token: String): Call<TokenVerificationResponse>
 
     // Endpoint para crear una nueva pregunta
-    @POST("/twist/create")
+    @POST("/twists/create")
     fun createQuestion(
         @Header("Authorization") token: String,
         @Body question: QuestionModel
     ): Call<QuestionModel>
 
     // Endpoint para editar un quizz existente
-    @PUT("/twist/edit/{id}")
-    fun editQuestion(
+    @PUT("/twists/edit/{id}")
+    fun editTwist(
         @Header("Authorization") token: String,
         @Path("id") id: String,
-        @Body question: QuestionModel
-    ): Call<QuestionModel>
+        @Body twistData: TwistModel // Cambia aquí si es necesario
+    ): Call<TwistModel> // Asegúrate de que esto coincida con el modelo que esperas
+
 
     @Multipart
     @POST("/images/upload")

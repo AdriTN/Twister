@@ -20,13 +20,14 @@ const validateEmail = (email) => {
 };
 
 // Función para generar el token
-const generateToken = (userId, email) => {
+const generateToken = (userId) => {
   return jwt.sign(
-    { id: userId, email }, // Datos a incluir en el token
+    { id: userId }, // Datos a incluir en el token
     SECRET_KEY, // Clave secreta
     { expiresIn: "1h" } // Expiración del token
   );
 };
+
 // Función para generar el token
 export const generateAnonToken = () => {
   const anonId = `anon-${Date.now()}`;
@@ -56,6 +57,7 @@ export const getUserIdFromToken = (token) => {
   try {
     // Verifica y decodifica el token
     const decoded = jwt.verify(token, SECRET_KEY);
+    console.log("Decoded token:", decoded);
 
     // Retorna el userId del payload decodificado
     return decoded.id;
@@ -151,8 +153,8 @@ export async function loginUser(email, password) {
     }
 
     // Generar y devolver el token de autenticación
-    const token = generateToken(user[0].id, user[0].email);
-    return { token, username: user[0].username };
+    const jwtToken = generateToken(user[0].id, user[0].email);
+    return { jwtToken, username: user[0].username };
 
 }
 

@@ -95,6 +95,7 @@ fun EditQuestionsScreen(
 
             if (showDialog) {
                 QuestionDialog(
+                    twistId = twistId,
                     question = selectedQuestion,
                     onDismiss = {
                         showDialog = false
@@ -158,6 +159,7 @@ fun QuestionItem(
 
 @Composable
 fun QuestionDialog(
+    twistId: String, // También puedes pasar twistId si lo necesitas
     question: QuestionModel? = null,
     onDismiss: () -> Unit,
     onSave: (String, List<AnswerModel>) -> Unit
@@ -165,7 +167,6 @@ fun QuestionDialog(
     var questionText by remember { mutableStateOf(question?.question ?: "") }
     val answers = remember { mutableStateListOf<AnswerModel>() }
 
-    // Inicializar la lista de respuestas cuando la pregunta cambia
     LaunchedEffect(question) {
         answers.clear()
         answers.addAll(question?.answers ?: emptyList())
@@ -187,7 +188,6 @@ fun QuestionDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Mostrar las respuestas actuales
                 answers.forEachIndexed { index, answer ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -215,7 +215,6 @@ fun QuestionDialog(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
 
-                // Campo para añadir nueva respuesta (máximo cuatro respuestas)
                 if (answers.size < 4) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

@@ -1,5 +1,5 @@
-import { redisClient } from '../app.js'; // Asegúrate de exportar el cliente de Redis desde aquí
-import { createTwist, updateTwist, deleteTwist, getTwistById } from '../models/twistModel.js';
+import { redisClient } from '../app.js';
+import { createTwist, updateTwist, deleteTwist, getTwistsByUserId } from '../models/twistModel.js';
 
 // Función para crear un nuevo twist
 export async function handleCreateTwist(req, res) {
@@ -19,19 +19,21 @@ export async function handleCreateTwist(req, res) {
 }
 
 // Función para editar un twist existente
-export async function handleupdateTwist(req, res) {
-    const { token, id, question } = req.body; // Recibe el token, ID y modelo de pregunta
-
-    if (!token || !id || !question) {
-        return res.status(400).json({ message: 'Authorization token, ID and question are required.' });
-    }
+export async function handleupdateTwist(userId, twistId, twistData) {
 
     try {
-        const updatedTwist = await updateTwist(id, question);
-        res.json({ message: 'Twist updated successfully', twist: updatedTwist });
+        // Asegúrate de que el userId y twistId sean válidos
+        if (!userId || !twistId || !twistData) {
+            throw new Error("Invalid input: userId, twistId, and twistData are required.");
+        }
+        const updatedTwist = await updateTwist(userId, twistId, twistData);
+        if (updatedTwist === -1) {
+            throw new Error("You are not the owner of this twist.");
+        }
+        return { message: 'Twist updated successfully', twist: updatedTwist }; // Retorna el mensaje y el twist actualizado
     } catch (error) {
         console.error("Error editing twist:", error.message);
-        res.status(500).json({ error: error.message });
+        throw new Error(error.message); // Lanza el error para que se maneje más arriba en la cadena de llamadas
     }
 }
 
@@ -93,7 +95,8 @@ export async function handleUploadImage(req, res) {
 
 export async function handleGetUserTwists(userId) {
     try {
-        const twists = await getTwistById(userId);
+        const twists = await getTwistsByUserId(userId);
+        console.log("Twists fetched successfully:", twists);
         return twists;
     } catch (error) {
         console.error("Error fetching twists:", error.message);

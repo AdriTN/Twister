@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { getUser, getUserIdFromToken } from "../models/userModel.js";
+import { get } from "../utils/database.js";
 
 export async function verifyToken(req, res, next) {
   // Extraer el token del encabezado Authorization
@@ -29,7 +30,6 @@ export async function verifyToken(req, res, next) {
 
 export async function getUserWithToken(req, res) {
   // Extraer el token del encabezado Authorization
-  console.log("req.headers.authorization = ", req.headers.authorization);
     var token = null;
   // Verifica que el encabezado esté presente y tenga el formato esperado
   if (
@@ -37,9 +37,7 @@ export async function getUserWithToken(req, res) {
     req.headers.authorization.startsWith("Bearer ")
   ) {
     token = req.headers.authorization.split(" ")[1]; // Extraer el token del encabezado
-    console.log("Verifying token:", token);
   } else {
-
     if (!req.headers.authorization) {
       console.log("Authorization header is missing");
       // Manejar el caso en el que no se encuentra el token
@@ -47,19 +45,28 @@ export async function getUserWithToken(req, res) {
         .status(400)
         .json({ message: "Authorization header is missing" });
     }
-    token = req.headers.authorization?.trim().split(" ")[1];
+    token = req.headers.authorization?.trim();
   }
 
   // Verificar si no existe un token
-  if (!token) {
+  if (!token || token.length < 10) {
     return res.status(401).json({ message: "No token provided" });
   }
 
   try {
-    if (getUser(getUserIdFromToken(token))) return true;
-    throw new Error("User not found");
-  } catch (error) {
+    const user = getUserIdFromToken(token);    
+    // Verificar si el usuario es anónimo
+    if (typeof user === "string" && user.includes("anon-")) {
+        return res.status(403).json({ message: "User is anonymous" });
+    }
+    // Comprobar si el usuario no fue encontrado
+    if (!user) {
+        throw new Error("User not found");
+    }
+    return user;
+} catch (error) {
     console.error("Token verification failed:", error.message);
     return res.status(403).json({ message: "Invalid or expired token" });
-  }
+}
+
 }

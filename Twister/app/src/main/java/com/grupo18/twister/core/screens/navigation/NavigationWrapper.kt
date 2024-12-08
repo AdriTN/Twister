@@ -14,6 +14,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.grupo18.twister.core.api.ApiClient
+import com.grupo18.twister.core.api.ApiService
+import com.grupo18.twister.core.factories.QuestionViewModelFactory
 
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
@@ -56,7 +59,9 @@ fun NavigationWrapper(
 
     val twistViewModelFactory = TwistViewModelFactory(myApp)
     val twistViewModel: TwistViewModel = viewModel(factory = twistViewModelFactory)
-    val questionViewModel: QuestionViewModel = viewModel()
+    val apiService: ApiService = ApiClient.retrofit.create(ApiService::class.java)
+    val questionViewModelFactory = QuestionViewModelFactory(apiService)
+    val questionViewModel: QuestionViewModel = viewModel(factory = questionViewModelFactory)
 
     NavHost(
         navController = navController,
@@ -124,16 +129,12 @@ fun NavigationWrapper(
         composable(Routes.QR_SCANNER) {
             QRScannerScreen(
                 paddingValues = PaddingValues(),
-                onQRCodeScanned = { pin ->
-                    navController.navigate("liveTwist/$pin")
-                }
+                onQRCodeScanned = { pin -> navController.navigate("liveTwist/$pin") }
             )
         }
 
         composable(Routes.TEMP_TWIST) {
-            TempTwist { pin ->
-                navController.navigate("liveTwist/$pin")
-            }
+            TempTwist { pin -> navController.navigate("liveTwist/$pin") }
         }
 
         composable(Routes.LIVE_TWIST) { backStackEntry ->
@@ -143,17 +144,17 @@ fun NavigationWrapper(
             }
         }
 
-        composable("addQuestion/{twistId}") { backStackEntry ->
+        composable(Routes.ADD_QUESTION) { backStackEntry ->
             val twistId = backStackEntry.arguments?.getString("twistId")
             twistId?.let {
                 AddQuestionScreen(navController = navController, twistId = it)
             }
         }
 
-        composable("manageQuestions/{twistId}") { backStackEntry ->
+        composable(Routes.MANAGE_QUESTIONS) { backStackEntry ->
             val twistId = backStackEntry.arguments?.getString("twistId")
             twistId?.let {
-                ManageQuestionsScreen(navController = navController, twistId = it, questionViewModel = questionViewModel)
+                ManageQuestionsScreen(navController = navController, twistId = it, questionViewModel = questionViewModel, token = myApp.currentUser.value?.token ?: "")
             }
         }
     }
