@@ -36,7 +36,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.google.firebase.firestore.auth.User
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 

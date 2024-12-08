@@ -12,6 +12,7 @@ router.post("/verify", (req, res) => {
 
 router.post("/login/anonymous", (req, res) => {
   try {
+    console.log("Creating anonymous token...");
     const decoded = generateAnonToken();
     res.status(200).json({ message: "Token created", token: decoded });
   } catch (error) {

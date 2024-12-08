@@ -102,14 +102,22 @@ class AuthManager(
     fun signInAnonymously() {
         executor.execute {
             val result = try {
+                println("Intentando iniciar sesión anónima")
                 val response = apiService.getAnonymousUser().execute()
+                println("Respuesta del servidor: ${response.body()}")
                 if (response.isSuccessful) {
-                    val token = response.body()?.token ?: throw Exception("Token no encontrado")
-                    this.token = token
-                    val anonymousUser = UserResponse(token = token, message = null)
-                    Result.success(anonymousUser)
+                    val user = response.body()
+                    token = user?.token
+                    user?.let { Result.success(it) } ?: Result.failure(Exception("Respuesta vacía"))
                 } else {
-                    Result.failure(Exception("Error del servidor: ${response.code()}"))
+                    var errorBody = response.errorBody()?.string()
+                    if (response.code() == 401 && errorBody != null) {
+                        errorBody = errorBody.substringAfter("\"error\":\"").substringBefore("\"")
+                        println("Error del servidor: $errorBody")
+                    } else {
+                        println("Error del servidor: ${response.code()}")
+                    }
+                    Result.failure(Exception(errorBody))
                 }
             } catch (e: HttpException) {
                 Result.failure(Exception("Error de red: ${e.message()}"))

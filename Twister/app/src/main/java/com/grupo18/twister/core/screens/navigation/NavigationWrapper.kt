@@ -74,6 +74,7 @@ fun NavigationWrapper(
         composable(Routes.AUTH) {
             AuthScreen(
                 onAuthSuccess = { user ->
+                    println("New user logged in: ${user.token}")
                     myApp.saveUser(user)
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.WELCOME) { inclusive = true }
@@ -95,7 +96,7 @@ fun NavigationWrapper(
         }
 
         composable(Routes.EDIT) {
-            EditScreen(navController = navController, twistViewModel = twistViewModel, questionViewModel = questionViewModel)
+            EditScreen(navController = navController, twistViewModel = twistViewModel)
         }
 
         composable(Routes.SETTINGS) {

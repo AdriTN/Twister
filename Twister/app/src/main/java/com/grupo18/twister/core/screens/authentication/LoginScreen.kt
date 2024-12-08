@@ -15,6 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.grupo18.twister.core.components.Incognito
 import com.grupo18.twister.core.models.UserModel
 
 
@@ -123,36 +125,58 @@ fun LoginScreen(
             onClick = {
                 val authManager = AuthManager { result ->
                     result.onSuccess { user ->
-                        if (user != null) {
-                            println("Login successful! Entering to mainviewmodel")
-                            println("Token: ${user.token}")
-                            onLoginSuccess(
-                                UserModel(
-                                    token = user.token.toString(),
-                                    username = user.username.toString(),
-                                    email = email,
-                                    password = password,
-                                )
+                        if (user?.token != null) {
+                            println("Anonymous login successful! Entering main view")
+                            val newUser = UserModel(
+                                token = user.token.toString(),
+                                username = "anonymous",
+                                email = "",
+                                password = "",
+                                isAnonymous = true
                             )
-                            showToast("Login successful!")
+                            app.saveUser(newUser)
+                            onLoginSuccess(newUser)
+                            showToast("Anonymous login successful!")
                         } else {
-                            showToast("Login failed!")
+                            showToast("Anonymous login failed!")
                         }
                     }.onFailure { exception ->
                         errorMessage = exception.message ?: "An error occurred"
+                        showToast("Error: $errorMessage")
                     }
                 }
+
                 authManager.signInAnonymously()
             },
             modifier = Modifier
-                .padding(16.dp),
-            colors = ButtonDefaults.buttonColors(Color(0xFF7E7E7E))
+                .widthIn(min = 200.dp, max = 220.dp)
+                .heightIn(min = 60.dp, max = 70.dp)
+                .padding(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7E7E7E))
         ) {
-            Text(
-                text = "Ingresar como Anónimo",
-                color = Color.White,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp) // Espaciado entre ícono y texto
+            ) {
+                // Icono adaptable
+                Icon(
+                    imageVector = Incognito, // Cambia a tu ícono preferido
+                    contentDescription = "Anonymous Login Icon",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .fillMaxHeight(0.6f) // Ocupa el 60% de la altura del botón
+                )
+                // Texto adaptable
+                Text(
+                    text = "Login anonymously",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * 1.1f // Escala relativa
+                    ),
+                    color = Color.White
+                )
+            }
         }
+
     }
 }
 

@@ -75,6 +75,8 @@ dependencies {
     implementation ("org.mockito:mockito-core:3.12.4")
     implementation ("org.mockito:mockito-inline:3.12.4")
     implementation("io.coil-kt:coil-compose:2.2.2")
+    implementation("androidx.palette:palette-ktx:1.0.0")
+
 
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -89,7 +91,6 @@ dependencies {
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.constraintlayout.compose.android)
     implementation(libs.junit.jupiter)
-    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -1,6 +1,8 @@
 package com.grupo18.twister.core.screens.edit
 
+
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -13,19 +15,39 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.grupo18.twister.core.models.TwistModel
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.grupo18.twister.core.api.ApiClient
+import com.grupo18.twister.core.api.ApiService
+import com.grupo18.twister.core.api.ImageService
+import com.grupo18.twister.core.factories.TwistViewModelFactory
+import com.grupo18.twister.core.screens.authentication.MyApp
+import com.grupo18.twister.core.viewmodel.TwistViewModel
+import androidx.compose.ui.graphics.Color
+import java.util.UUID
 
 @Composable
 fun EditTwistDialog(
-    initialTwist: TwistModel?,
+    initialTwist: TwistModel? = null,
     onDismiss: () -> Unit,
     onSave: (TwistModel, Boolean) -> Unit
 ) {
+    val viewModelFactory = TwistViewModelFactory(MyApp())
+    val twistViewModel: TwistViewModel = viewModel(factory = viewModelFactory)
+    val context = LocalContext.current
     var title by remember { mutableStateOf(initialTwist?.title ?: "") }
     var description by remember { mutableStateOf(initialTwist?.description ?: "") }
     var imageUri by remember { mutableStateOf<Uri?>(initialTwist?.imageUri) }
 
-    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
-        imageUri = it
+    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        imageUri = uri
     }
 
     AlertDialog(
@@ -49,17 +71,13 @@ fun EditTwistDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 imageUri?.let { uri ->
-                    Image(
-                        painter = rememberAsyncImagePainter(uri),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    // Mostrar la imagen seleccionada y permitir eliminarla
+                    ImageWithRemoveButton(uri) {
+                        imageUri = null
+                    }
                 }
 
+                // Botón para seleccionar una nueva imagen
                 Button(
                     onClick = { imageLauncher.launch("image/*") },
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -79,7 +97,6 @@ fun EditTwistDialog(
                                 description = description,
                                 imageUri = imageUri
                             )
-                            // true indica que se navegará a la pantalla de preguntas después de guardar
                             onSave(updatedTwist, true)
                         }
                     }) {
@@ -87,10 +104,14 @@ fun EditTwistDialog(
                     }
                 }
 
+                // Estado para manejar la carga
+                var isLoading by remember { mutableStateOf(false) }
+
                 TextButton(onClick = {
                     if (title.isNotBlank() && description.isNotBlank()) {
-                        val updatedTwist = if (initialTwist == null) {
+                        val newTwist = if (initialTwist == null) {
                             TwistModel(
+                                id = UUID.randomUUID().toString(),
                                 title = title,
                                 description = description,
                                 imageUri = imageUri
@@ -102,11 +123,39 @@ fun EditTwistDialog(
                                 imageUri = imageUri
                             )
                         }
-                        // false: no navegar directamente a la pantalla de preguntas
-                        onSave(updatedTwist, false)
+
+                        // Cambiar el estado a "cargando"
+                        isLoading = true
+                        // Si hay imagen, subirla
+                        imageUri?.let { uri ->
+                            twistViewModel.uploadImage(uri, context.contentResolver) { response ->
+                                isLoading = false // Detener la barra de carga al finalizar
+                                when {
+                                    response.isSuccessful -> {
+                                        // Manejar el caso de éxito
+                                        onSave(newTwist, false)
+                                    }
+                                    else -> {
+                                        Toast.makeText(context, "Error al subir la imagen", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        } ?: run {
+                            // Si no hay imagen, simplemente guardar el twist
+                            isLoading = false // Detener la barra de carga
+                            onSave(newTwist, false)
+                        }
                     }
                 }) {
-                    Text("Guardar")
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Guardar")
+                    }
                 }
             }
         },
@@ -116,4 +165,49 @@ fun EditTwistDialog(
             }
         }
     )
+}
+
+@Composable
+fun ImageWithRemoveButton(uri: Uri, onRemove: () -> Unit) {
+    val context = LocalContext.current
+    val repository = ImageService(ApiClient.retrofit.create(ApiService::class.java))
+    val dominantColor = remember { repository.extractDominantColorFromUri(uri, context) }
+
+    // Asegúrate de que dominantColor es del tipo Color
+    val color = Color(dominantColor) // Ajusta esto según el tipo que devuelva tu función
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+    ) {
+        Image(
+            painter = rememberAsyncImagePainter(uri),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // Cruz roja a la derecha
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+        ) {
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier
+                    .size(25.dp) // Tamaño del botón
+                    .clip(CircleShape) // Forma circular
+                    .background(Color.White.copy(alpha = 0.8f))
+                    .padding(4.dp) // Espaciado interno
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Eliminar imagen",
+                    tint = Color.Red // Cambia el color del icono si es necesario
+                )
+            }
+        }
+    }
 }

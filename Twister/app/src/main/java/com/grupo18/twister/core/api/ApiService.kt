@@ -7,6 +7,8 @@ import com.grupo18.twister.core.models.UserResponse
 import com.grupo18.twister.core.models.LoginRequest
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.TwistModel
+import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
 
@@ -24,9 +26,6 @@ interface ApiService {
     @GET("/users/verify")
     fun verifyToken(@Header("Authorization") token: String): Call<TokenVerificationResponse>
 
-    @GET("/users/twists")
-    fun getUserTwists(@Header("Authorization") token: String): Call<TokenVerificationResponse>
-
     @GET("/games/create")
     fun createGame(@Header("Authorization") token: String): Call<List<TwistModel>>
 
@@ -34,28 +33,32 @@ interface ApiService {
     fun joinGame(@Header("Authorization") token: String): Call<GameResponse>
 
     // Endpoint para obtener todas las preguntas
-    @GET("/questions")
+    @GET("/games/get/{id}")
     fun getAllQuestions(@Header("Authorization") token: String): Call<List<QuestionModel>>
 
+    // Endpoint para obtener todas las preguntas de un usuario
+    @GET("/twists/get")
+    fun getUserTwists(@Header("Authorization") token: String): Call<TokenVerificationResponse>
+
     // Endpoint para crear una nueva pregunta
-    @POST("/questions")
+    @POST("/twist/create")
     fun createQuestion(
         @Header("Authorization") token: String,
         @Body question: QuestionModel
     ): Call<QuestionModel>
 
-    // Endpoint para editar una pregunta existente
-    @PUT("/questions/{id}")
+    // Endpoint para editar un quizz existente
+    @PUT("/twist/edit/{id}")
     fun editQuestion(
         @Header("Authorization") token: String,
         @Path("id") id: String,
         @Body question: QuestionModel
     ): Call<QuestionModel>
 
-    // Endpoint para eliminar una pregunta
-    @DELETE("/questions/{id}")
-    fun deleteQuestion(
-        @Header("Authorization") token: String,
-        @Path("id") id: String
-    ): Call<Unit>
+    @Multipart
+    @POST("/images/upload")
+    fun uploadImage(@Part image: MultipartBody.Part): Call<ResponseBody>
+
+    @GET("/images/download/{fileName}")
+    fun downloadImage(@Path("fileName") fileName: String): Call<ResponseBody>
 }

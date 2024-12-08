@@ -6,6 +6,8 @@ import redis from "redis";
 
 import usersRoutes from "./routes/usersRoutes.js";
 import gamesRoutes from "./routes/gamesRoutes.js";
+import imagesRoutes from "./routes/imagesRoutes.js";
+import twistRoutes from "./routes/twistRoutes.js";
 import { initDB } from "./utils/database.js";
 import { socketHandlers } from "./handlers/socket_handler.js";
 
@@ -47,6 +49,8 @@ app.use(json());
 // Usar las rutas
 app.use("/users", usersRoutes);
 app.use("/games", gamesRoutes);
+app.use("/images", imagesRoutes);
+app.use("/twists", twistRoutes);
 
 // Manejo de errores generales
 app.use((err, req, res, next) => {
