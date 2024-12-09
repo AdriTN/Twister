@@ -6,10 +6,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import androidx.palette.graphics.Palette
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -20,8 +17,9 @@ import java.io.File
 
 class ImageService(private val apiService: ApiService) {
     @SuppressLint("NewApi")
-    fun extractDominantColorFromUri(uri: Uri, context: Context): Int {
-        val inputStream = context.contentResolver.openInputStream(uri)
+    fun extractDominantColorFromUri(uri: String, context: Context): Int {
+        println("Extracting dominant color from URI: $uri")
+        val inputStream = context.contentResolver.openInputStream(Uri.parse(uri))
         val originalBitmap = BitmapFactory.decodeStream(inputStream)
 
         // Verificar si el bitmap está en formato hardware
@@ -43,8 +41,8 @@ class ImageService(private val apiService: ApiService) {
         return dominantColor
     }
     companion object {
-        fun prepareImageFile(uri: Uri, contentResolver: ContentResolver): MultipartBody.Part? {
-            val inputStream = contentResolver.openInputStream(uri) ?: return null
+        fun prepareImageFile(uri: String, contentResolver: ContentResolver): MultipartBody.Part? {
+            val inputStream = contentResolver.openInputStream(Uri.parse(uri)) ?: return null
             val tempFile = File.createTempFile("image", ".jpg")
             tempFile.outputStream().use { inputStream.copyTo(it) }
 

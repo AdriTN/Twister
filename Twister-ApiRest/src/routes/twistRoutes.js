@@ -1,5 +1,5 @@
 import express from "express"; 
-import { handleGetUserTwists, handleupdateTwist } from "../services/twistService.js";
+import { handleGetUserTwists, handleupdateTwist, handleDeleteTwist } from "../services/twistService.js";
 import { getUserWithToken } from "../services/authService.js";
 
 const router = express.Router();
@@ -16,7 +16,7 @@ router.put("/edit/:id", async (req, res) => {
         if (!userId || userId === -1) {
             return res.status(401).json({ message: "Unauthorized" }); // Respuesta para usuario no autenticado
         }
-
+        console.log("Twist to save: ", req.body);
         const twistId = req.params.id; // Obtener el ID del twist desde los parámetros de la solicitud
         const twistData = req.body;
         const updatedTwist = await handleupdateTwist(userId, twistId, twistData);
@@ -45,12 +45,36 @@ router.get("/get", async (req, res) => {
         }
 
         const twists = await handleGetUserTwists(user);
-        console.log("Twists fetched:", twists);
         return res.status(200).json({ message: "Twists fetched successfully", twists });
     } catch (error) {
         console.error("Error fetching twists:", error.message);
         if (!res.headersSent) {
             return res.status(500).json({ message: "Failed to fetch twists." }); // Respuesta en caso de error
+        }
+    }
+});
+
+// Ruta para eliminar un twist existente
+router.delete("/delete/:id", async (req, res) => {
+    try {
+        console.log("Deleting twist with id: ", req.params.id);
+        const userId = await getUserWithToken(req, res);
+        if (!userId || userId === -1) {
+            return res.status(401).json({ message: "Unauthorized" }); // Respuesta para usuario no autenticado
+        }
+
+        const twistId = req.params.id; // Obtener el ID del twist desde los parámetros de la solicitud
+        const deleted = await handleDeleteTwist(userId, twistId); // Llamar a la función que maneja la eliminación
+
+        if (!deleted) {
+            return res.status(404).json({ message: "Twist not found." }); // Respuesta si no se encuentra el twist
+        }
+
+        return res.status(200).json({ message: "Twist deleted successfully." }); // Respuesta exitosa
+    } catch (error) {
+        console.error("Error deleting twist:", error.message);
+        if (!res.headersSent) {
+            return res.status(500).json({ message: "Failed to delete twist." }); // Respuesta en caso de error
         }
     }
 });

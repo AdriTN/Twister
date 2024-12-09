@@ -20,6 +20,7 @@ import com.grupo18.twister.core.factories.QuestionViewModelFactory
 
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
+import com.grupo18.twister.core.models.ImageUri
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.authentication.AuthScreen
@@ -153,8 +154,21 @@ fun NavigationWrapper(
 
         composable(Routes.MANAGE_QUESTIONS) { backStackEntry ->
             val twistId = backStackEntry.arguments?.getString("twistId")
-            twistId?.let {
-                ManageQuestionsScreen(navController = navController, twistId = it, questionViewModel = questionViewModel, token = myApp.currentUser.value?.token ?: "")
+            val title = backStackEntry.arguments?.getString("title")
+            val description = backStackEntry.arguments?.getString("description")
+            val imageUriString = backStackEntry.arguments?.getString("imageUri")
+            val imageUri = imageUriString?.let { ImageUri(it) } ?: ImageUri("")
+
+            twistId?.let { id ->
+                ManageQuestionsScreen(
+                    navController = navController,
+                    twistId = id,
+                    questionViewModel = questionViewModel,
+                    token = myApp.currentUser.value?.token ?: "",
+                    title = title ?: "",
+                    description = description ?: "",
+                    imageUri = imageUri
+                )
             }
         }
     }

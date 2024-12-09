@@ -82,10 +82,10 @@ export async function getTwistById(userId, twistId) {
     try {
       // Crea la clave en el formato userId-twistId
       const key = `${userId}-${twistId}`;
+      console.log("Fetching twist with ID:", key);
   
       // Obtener el twist desde Redis
       const twist = await redisClient.get(key);
-  
       // Verificar si se encontró el twist
       if (!twist) {
         return null; // Retorna null si no se encuentra el twist
@@ -145,16 +145,25 @@ export async function updateTwist(userId, twistId, twistData) {
   
 
 // Función para eliminar un twist
-export async function deleteTwist(twistId) {
+export async function deleteTwist(userId, twistId) {
   await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
-
-  const twist = await getTwistById(twistId);
+  const twist = await getTwistById(userId, twistId); // Obtén el twist
   if (!twist) {
-    throw new Error("Twist not found");
+      throw new Error("Twist not found"); // Si no se encuentra, lanza un error
+  }
+
+  // Verifica que el usuario tenga permiso para eliminar el twist
+  if (twist.userId !== userId) {
+      throw new Error("Unauthorized: You do not have permission to delete this twist."); // Manejo de autorización
   }
 
   // Elimina el twist de Redis
-  await redisClient.del(twistId);
+  const result = await redisClient.del(`${userId}-${twistId}`);
+
+  // Verifica si la eliminación fue exitosa
+  if (result === 0) {
+      throw new Error("Failed to delete twist."); // Maneja el caso en que la eliminación no fue exitosa
+  }
 
   return { message: "Twist deleted successfully" }; // Retorna un mensaje de confirmación
 }

@@ -57,7 +57,6 @@ export const getUserIdFromToken = (token) => {
   try {
     // Verifica y decodifica el token
     const decoded = jwt.verify(token, SECRET_KEY);
-    console.log("Decoded token:", decoded);
 
     // Retorna el userId del payload decodificado
     return decoded.id;

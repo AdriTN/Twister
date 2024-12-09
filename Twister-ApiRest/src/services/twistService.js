@@ -37,22 +37,6 @@ export async function handleupdateTwist(userId, twistId, twistData) {
     }
 }
 
-// Función para eliminar un twist
-export async function handleDeleteTwist(req, res) {
-    const { token, id } = req.body; // Recibe el token y ID del twist
-
-    if (!token || !id) {
-        return res.status(400).json({ message: 'Authorization token and ID are required.' });
-    }
-
-    try {
-        await deleteTwist(id);
-        res.json({ message: 'Twist deleted successfully.' });
-    } catch (error) {
-        console.error("Error deleting twist:", error.message);
-        res.status(500).json({ error: error.message });
-    }
-}
 
 // Función para obtener un twist por ID
 export async function handleGetTwist(req, res) {
@@ -101,5 +85,15 @@ export async function handleGetUserTwists(userId) {
     } catch (error) {
         console.error("Error fetching twists:", error.message);
         return null;
+    }
+}
+
+export async function handleDeleteTwist(userId, twistId) {
+    try {
+        const deleted = await deleteTwist(userId, twistId);
+        return deleted;
+    } catch (error) {
+        console.error("Error deleting twist:", error.message);
+        return false;
     }
 }

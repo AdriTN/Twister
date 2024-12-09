@@ -28,3 +28,7 @@ data class UploadResponse(
     val imageUrl: String
 )
 
+data class TwistRequest(
+    val message: String,
+    val twists: List<TwistModel>
+)

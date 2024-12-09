@@ -35,6 +35,7 @@ import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.api.ImageService
 import com.grupo18.twister.core.screens.authentication.MyApp
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditScreen(
@@ -46,15 +47,17 @@ fun EditScreen(
     val twists by twistViewModel.twists.collectAsState()
     var isLoading by remember { mutableStateOf(true) } // Estado de carga
     val coroutineScope = rememberCoroutineScope()
+    var user = app.currentUser.value ?: return
 
     var showDialog by remember { mutableStateOf(false) }
     var selectedTwist by remember { mutableStateOf<TwistModel?>(null) }
 
     // Efecto que carga los twists desde el servidor al iniciar la pantalla
     LaunchedEffect(Unit) {
-        val user = app.currentUser.value ?: return@LaunchedEffect
+        twistViewModel.clearTwists()
+        user = app.currentUser.value ?: return@LaunchedEffect
         twistViewModel.loadTwists(user.token, coroutineScope) { loading ->
-            isLoading = loading // Cambiar el estado de carga
+            isLoading = loading
         }
     }
 
@@ -104,7 +107,7 @@ fun EditScreen(
                                         showDialog = true
                                     },
                                     onDelete = {
-                                        twistViewModel.deleteTwist(twist.id)
+                                        twistViewModel.deleteTwist(user.token, twist.id, coroutineScope, context)
                                     }
                                 )
                             }
@@ -131,14 +134,14 @@ fun EditScreen(
                                 showDialog = false
                                 selectedTwist = null
                                 // Navegación obligatoria a la pantalla de preguntas
-                                navController.navigate("manageQuestions/${newTwist.id}")
+                                navController.navigate("manageQuestions/${newTwist.id}?title=${newTwist.title}&description=${newTwist.description}&imageUri=${newTwist.imageUri}")
                             } else {
                                 // Editar Twist existente
                                 twistViewModel.updateTwist(updatedTwist)
                                 showDialog = false
                                 selectedTwist = null
                                 if (navigateToQuestions) {
-                                    navController.navigate("manageQuestions/${updatedTwist.id}")
+                                    navController.navigate("manageQuestions/${updatedTwist.id}?title=${updatedTwist.title}&description=${updatedTwist.description}&imageUri=${updatedTwist.imageUri}")
                                 }
                             }
                         }
@@ -159,12 +162,12 @@ fun TwistItem(
 ) {
     val context = LocalContext.current
     val repository = ImageService(ApiClient.retrofit.create(ApiService::class.java))
-
-    // Verificación de imagen: si es null, se puede utilizar un color de fondo predeterminado
-    val dominantColorInt = if (twist.imageUri != null) {
-        repository.extractDominantColorFromUri(twist.imageUri, context)
+    val uriString = twist.imageUri?.uri
+    val dominantColorInt = if (twist.imageUri?.uri != null && twist.imageUri.uri.isEmpty()) {
+        println("literalmente es ${twist.imageUri}")
+        repository.extractDominantColorFromUri(uriString.toString(), context)
     } else {
-        Color.Gray.toArgb() // Color de fondo predeterminado si no hay imagen
+        Color.Gray.toArgb()
     }
 
     val dominantColor = Color(dominantColorInt)
@@ -181,9 +184,14 @@ fun TwistItem(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent) // Hacer el fondo de la tarjeta transparente
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent) // Puedes cambiarlo a Color.White para pruebas
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+        ) { // Asegúrate de establecer una altura
+
             // Imagen de fondo con degradado
             twist.imageUri?.let { uri ->
                 Image(
@@ -208,18 +216,16 @@ fun TwistItem(
                         )
                 )
             } ?: run {
-                // Si imageUri es null, muestra un color de fondo por defecto
+                // Si no hay imagen, aplica el color de fondo
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .background(dominantColor) // Usar color dominante o un color predeterminado
+                        .fillMaxSize() // Asegúrate de que este box llene el espacio
+                        .background(dominantColor) // Usar color dominante
                 )
             }
 
             // Contenido del card
             Column(modifier = Modifier.padding(16.dp)) {
-                // Aplicar el color de contraste al texto
                 Text(twist.title, color = iconColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(twist.description, color = iconColor.copy(alpha = 0.8f), fontSize = 14.sp)
@@ -232,7 +238,6 @@ fun TwistItem(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Icono de editar con fondo circular más pequeño
                     IconButton(
                         onClick = onEdit,
                         modifier = Modifier
@@ -240,7 +245,11 @@ fun TwistItem(
                             .clip(CircleShape)
                             .background(iconColor.copy(alpha = 0.4f))
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "Editar Twist", tint = Color.White)
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar Twist",
+                            tint = Color.White
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -252,7 +261,11 @@ fun TwistItem(
                             .clip(CircleShape)
                             .background(iconColor.copy(alpha = 0.4f))
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Eliminar Twist", tint = Color.White)
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Eliminar Twist",
+                            tint = Color.White
+                        )
                     }
                 }
             }

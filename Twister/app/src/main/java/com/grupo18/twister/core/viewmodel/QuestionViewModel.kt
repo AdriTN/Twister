@@ -1,9 +1,11 @@
 package com.grupo18.twister.core.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.models.AnswerModel
+import com.grupo18.twister.core.models.ImageUri
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.TwistModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,7 +71,13 @@ class QuestionViewModel(private val apiService: ApiService) : ViewModel() {
     }
 
     // Método para guardar cambios en la API
-    fun saveChanges(twistId: String, token: String) {
+    fun saveChanges(
+        token: String,
+        twistId: String,
+        title: String,
+        description: String,
+        imageUri: ImageUri?
+    ) {
         viewModelScope.launch {
             try {
                 // Lógica para enviar las preguntas actuales al servidor
@@ -77,7 +85,7 @@ class QuestionViewModel(private val apiService: ApiService) : ViewModel() {
                 println("Preguntas a guardar: $questionsToSave")
 
                 // Crear un nuevo objeto TwistModel con los datos necesarios
-                val newQuizz = TwistModel(id = twistId, title = "", description = "", twistQuestions = questionsToSave)
+                val newQuizz = TwistModel(id = twistId, title = title, description = description, imageUri = imageUri, twistQuestions = questionsToSave)
 
                 // Realizar la llamada a la API
                 val response = apiService.editTwist(token = token, id = twistId, twistData = newQuizz)
@@ -112,5 +120,12 @@ class QuestionViewModel(private val apiService: ApiService) : ViewModel() {
         val questions = _questionsByTwist.value[twistId] ?: return false
         if (questions.isEmpty()) return false
         return questions.any { question -> question.answers.any { it.isCorrect } }
+    }
+
+    fun reloadDataFromApi(twistId: String) {
+        // Borrar los datos locales para el twistId
+        _questionsByTwist.value = _questionsByTwist.value.toMutableMap().apply {
+            remove(twistId)
+        }
     }
 }

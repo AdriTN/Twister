@@ -17,6 +17,7 @@ import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
+import com.grupo18.twister.core.models.ImageUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +25,9 @@ fun ManageQuestionsScreen(
     navController: NavController,
     twistId: String,
     token: String,
+    title: String,
+    description: String,
+    imageUri: ImageUri? = null,
     questionViewModel: QuestionViewModel
 ) {
     val questions by questionViewModel.getQuestionsForTwist(twistId).collectAsState()
@@ -31,7 +35,6 @@ fun ManageQuestionsScreen(
     var showQuestionDialog by remember { mutableStateOf(false) }
     var selectedQuestion by remember { mutableStateOf<QuestionModel?>(null) }
     var showError by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -92,7 +95,8 @@ fun ManageQuestionsScreen(
                         if (!valid) {
                             showError = true
                         } else {
-                            questionViewModel.saveChanges(twistId, token)
+                            questionViewModel.saveChanges(token, twistId, title, description, imageUri)
+                            questionViewModel.reloadDataFromApi(twistId)
                             navController.popBackStack() // Guardar y volver atrás
                         }
                     }) {

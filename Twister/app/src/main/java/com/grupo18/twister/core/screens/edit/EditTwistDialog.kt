@@ -1,6 +1,5 @@
 package com.grupo18.twister.core.screens.edit
 
-
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,18 +19,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.grupo18.twister.core.api.ApiClient
-import com.grupo18.twister.core.api.ApiService
-import com.grupo18.twister.core.api.ImageService
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import androidx.compose.ui.graphics.Color
 import java.util.UUID
+import com.grupo18.twister.core.models.ImageUri
 
 @Composable
 fun EditTwistDialog(
@@ -44,10 +39,14 @@ fun EditTwistDialog(
     val context = LocalContext.current
     var title by remember { mutableStateOf(initialTwist?.title ?: "") }
     var description by remember { mutableStateOf(initialTwist?.description ?: "") }
-    var imageUri by remember { mutableStateOf<Uri?>(initialTwist?.imageUri) }
+
+    // Change imageUri to a String to match the expected type
+    var imageUri by remember { mutableStateOf<String?>(initialTwist?.imageUri?.uri) } // Assuming imageUri is of type ImageUri in the model
 
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        imageUri = uri
+        uri?.let {
+            imageUri = ImageUri(it.toString()).uri // Store the URI string
+        }
     }
 
     AlertDialog(
@@ -72,7 +71,7 @@ fun EditTwistDialog(
 
                 imageUri?.let { uri ->
                     // Mostrar la imagen seleccionada y permitir eliminarla
-                    ImageWithRemoveButton(uri) {
+                    ImageWithRemoveButton(uri) { // Use the string representation of the URI
                         imageUri = null
                     }
                 }
@@ -95,7 +94,7 @@ fun EditTwistDialog(
                             val updatedTwist = initialTwist.copy(
                                 title = title,
                                 description = description,
-                                imageUri = imageUri
+                                imageUri = imageUri?.let { ImageUri(it) } // Convert String back to ImageUri
                             )
                             onSave(updatedTwist, true)
                         }
@@ -114,13 +113,13 @@ fun EditTwistDialog(
                                 id = UUID.randomUUID().toString(),
                                 title = title,
                                 description = description,
-                                imageUri = imageUri
+                                imageUri = imageUri?.let { ImageUri(it) } // Convert String to ImageUri
                             )
                         } else {
                             initialTwist.copy(
                                 title = title,
                                 description = description,
-                                imageUri = imageUri
+                                imageUri = imageUri?.let { ImageUri(it) } // Convert String to ImageUri
                             )
                         }
 
@@ -168,14 +167,7 @@ fun EditTwistDialog(
 }
 
 @Composable
-fun ImageWithRemoveButton(uri: Uri, onRemove: () -> Unit) {
-    val context = LocalContext.current
-    val repository = ImageService(ApiClient.retrofit.create(ApiService::class.java))
-    val dominantColor = remember { repository.extractDominantColorFromUri(uri, context) }
-
-    // Asegúrate de que dominantColor es del tipo Color
-    val color = Color(dominantColor) // Ajusta esto según el tipo que devuelva tu función
-
+fun ImageWithRemoveButton(uri: String, onRemove: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()

@@ -1,11 +1,12 @@
 package com.grupo18.twister.core.models
 
-import android.net.Uri
+data class ImageUri(val uri: String)
+
 
 data class TwistModel(
     val id: String = "00000",
     val title: String,
     val description: String,
-    val imageUri: Uri? = null,
+    val imageUri: ImageUri? = null,
     val twistQuestions: List<QuestionModel> = emptyList()
 )
