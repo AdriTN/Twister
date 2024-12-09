@@ -14,14 +14,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.factories.QuestionViewModelFactory
-
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.core.models.ImageUri
-import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
@@ -102,6 +101,7 @@ fun NavigationWrapper(
         }
 
         composable(Routes.EDIT) {
+            // Pasar twistViewModel al EditScreen
             EditScreen(navController = navController, twistViewModel = twistViewModel)
         }
 
@@ -157,9 +157,12 @@ fun NavigationWrapper(
             val title = backStackEntry.arguments?.getString("title")
             val description = backStackEntry.arguments?.getString("description")
             val imageUriString = backStackEntry.arguments?.getString("imageUri")
-            val imageUri = imageUriString?.let { ImageUri(it) } ?: ImageUri("")
+            val imageUri = if (!imageUriString.isNullOrEmpty()) ImageUri(imageUriString) else null
 
             twistId?.let { id ->
+                // Aquí le pasamos twistViewModel y questionViewModel
+                // También debemos recordar que ManageQuestionsScreen necesita un scope, lo puede crear internamente con rememberCoroutineScope()
+
                 ManageQuestionsScreen(
                     navController = navController,
                     twistId = id,
@@ -167,7 +170,9 @@ fun NavigationWrapper(
                     token = myApp.currentUser.value?.token ?: "",
                     title = title ?: "",
                     description = description ?: "",
-                    imageUri = imageUri
+                    imageUri = imageUri,
+                    twistViewModel = twistViewModel, // Pasamos el twistViewModel
+                    scope = androidx.compose.runtime.rememberCoroutineScope() // Creamos un scope local
                 )
             }
         }

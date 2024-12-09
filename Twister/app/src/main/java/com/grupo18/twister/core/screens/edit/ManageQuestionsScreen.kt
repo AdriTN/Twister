@@ -11,13 +11,18 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.grupo18.twister.core.models.AnswerModel
+import com.grupo18.twister.core.models.ImageUri
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.Color
-import com.grupo18.twister.core.models.ImageUri
+import com.grupo18.twister.core.viewmodel.TwistViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,13 +33,16 @@ fun ManageQuestionsScreen(
     title: String,
     description: String,
     imageUri: ImageUri? = null,
-    questionViewModel: QuestionViewModel
+    questionViewModel: QuestionViewModel,
+    twistViewModel: TwistViewModel,
+    scope: CoroutineScope
 ) {
     val questions by questionViewModel.getQuestionsForTwist(twistId).collectAsState()
 
     var showQuestionDialog by remember { mutableStateOf(false) }
     var selectedQuestion by remember { mutableStateOf<QuestionModel?>(null) }
     var showError by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -90,14 +98,25 @@ fun ManageQuestionsScreen(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = {
-                        // Verificar que haya al menos una pregunta con respuesta correcta
                         val valid = questionViewModel.hasAtLeastOneCorrectAnswer(twistId)
                         if (!valid) {
                             showError = true
                         } else {
-                            questionViewModel.saveChanges(token, twistId, title, description, imageUri)
-                            questionViewModel.reloadDataFromApi(twistId)
-                            navController.popBackStack() // Guardar y volver atrás
+                            // Guardar los cambios en el backend y esperar la respuesta antes de volver
+                            questionViewModel.saveChanges(token, twistId, title, description, imageUri) { success ->
+                                if (success) {
+                                    twistViewModel.loadTwists(token, scope) { loading ->
+                                        if (!loading) {
+                                            // Aseguramos que popBackStack se llame en el hilo principal
+                                            scope.launch(Dispatchers.Main) {
+                                                navController.popBackStack()
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    println("Error al guardar cambios en las preguntas.")
+                                }
+                            }
                         }
                     }) {
                         Text("Guardar")

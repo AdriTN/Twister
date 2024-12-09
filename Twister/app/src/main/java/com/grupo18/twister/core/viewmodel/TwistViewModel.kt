@@ -14,7 +14,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -53,7 +52,6 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
                 }
             }
             catch (e: Exception) {
-                // Maneja la excepción y llama a onLoadingFinished con false
                 e.printStackTrace()
             }
         }
@@ -61,10 +59,6 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
 
     fun getTwistById(id: String): TwistModel? {
         return _twists.value.find { it.id == id }
-    }
-
-    fun getTwists(): List<TwistModel> {
-        return _twists.value
     }
 
     fun clearTwists() {
@@ -76,28 +70,20 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
         scope: CoroutineScope,
         onLoading: (Boolean) -> Unit
     ) {
-        scope.launch(Dispatchers.IO) { // Utiliza el scope proporcionado
+        onLoading(true)
+        scope.launch(Dispatchers.IO) {
             try {
-                // Realiza la llamada a la API
                 val response = apiService.getUserTwists(token).execute()
-                response.body()?.twists?.forEach { twist ->  // Cambia collect por forEach
-                    val imageUri = twist.imageUri?.uri ?: "No hay imagen disponible"
-                    println("ID: ${twist.id}, Title: ${twist.title}, Image URI: $imageUri")
-                }
-
-                // Verifica si la respuesta fue exitosa
                 if (response.isSuccessful) {
                     val twists = response.body()?.twists ?: emptyList()
                     println("Twists obtenidos: $twists")
-                    _twists.value = twists // Actualiza el estado con los twists obtenidos
-                    onLoading(false) // Indica que la carga fue exitosa
+                    _twists.value = twists
+                    onLoading(false)
                 } else {
-                    // Maneja el error y llama a onLoadingFinished con false
                     println("Error: ${response.code()} - ${response.message()}")
                     onLoading(false)
                 }
             } catch (e: Exception) {
-                // Maneja la excepción y llama a onLoadingFinished con false
                 e.printStackTrace()
                 onLoading(false)
             }
@@ -121,5 +107,4 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
             onResult(Response.error(400, ResponseBody.create(null, "File part is null")))
         }
     }
-
 }
