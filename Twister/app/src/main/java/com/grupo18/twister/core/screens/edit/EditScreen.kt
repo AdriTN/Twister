@@ -73,7 +73,7 @@ fun EditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestionar Twists") },
+                title = { Text("Manage Twists") },
                 actions = {
                     IconButton(onClick = {
                         // Si el usuario es anónimo, no permitir crear Twists directamente
@@ -84,7 +84,7 @@ fun EditScreen(
                             showDialog = true
                         }
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Añadir Twist")
+                        Icon(Icons.Default.Add, contentDescription = "Add Twist")
                     }
                 }
             )
@@ -284,7 +284,7 @@ fun TwistItem(
                     ) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Editar Twist",
+                            contentDescription = "Edit Twist",
                             tint = Color.White
                         )
                     }
@@ -300,7 +300,7 @@ fun TwistItem(
                     ) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Eliminar Twist",
+                            contentDescription = "Eliminate Twist",
                             tint = Color.White
                         )
                     }

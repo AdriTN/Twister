@@ -27,7 +27,7 @@ import com.grupo18.twister.core.screens.navigation.Routes
 sealed class BottomNavItem(val route: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: String) {
     object Home : BottomNavItem(Routes.HOME, Icons.Default.Home, "Home")
     object Search : BottomNavItem(Routes.SEARCH, Icons.Default.Search, "Search")
-    object Edit : BottomNavItem(Routes.EDIT, Icons.Default.Edit, "Edit")
+    object Edit : BottomNavItem(Routes.EDIT, Icons.Default.Edit, "Create")
     object Settings : BottomNavItem(Routes.SETTINGS, Icons.Default.Settings, "Settings")
     // Agrega más ítems según sea necesario
 }

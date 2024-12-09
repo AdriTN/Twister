@@ -46,7 +46,7 @@ fun ManageQuestionsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestionar Preguntas") },
+                title = { Text("Manage Questions") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
@@ -58,7 +58,7 @@ fun ManageQuestionsScreen(
                             selectedQuestion = null
                             showQuestionDialog = true
                         }) {
-                            Icon(Icons.Default.Add, contentDescription = "Añadir Pregunta")
+                            Icon(Icons.Default.Add, contentDescription = "Add Question")
                         }
                     }
                 }
@@ -67,7 +67,7 @@ fun ManageQuestionsScreen(
         content = { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
                 if (questions.isEmpty()) {
-                    Text("No hay preguntas. Añade al menos una con una respuesta correcta antes de guardar.", color = Color.Gray)
+                    Text("No questions available. Add at least one with a correct answer before saving.", color = Color.Gray)
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(questions) { question ->
@@ -88,13 +88,13 @@ fun ManageQuestionsScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 if (showError) {
-                    Text("Debes tener al menos una pregunta con una respuesta correcta para guardar.", color = Color.Red)
+                    Text("You must have at least one question with a correct answer to save.", color = Color.Red)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                     TextButton(onClick = { navController.popBackStack() }) {
-                        Text("Cancelar")
+                        Text("Cancel")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = {
@@ -114,12 +114,12 @@ fun ManageQuestionsScreen(
                                         }
                                     }
                                 } else {
-                                    println("Error al guardar cambios en las preguntas.")
+                                    println("Error saving changes to the questions.")
                                 }
                             }
                         }
                     }) {
-                        Text("Guardar")
+                        Text("Save")
                     }
                 }
             }
@@ -171,10 +171,10 @@ fun QuestionCard(
             }
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Editar Pregunta", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Question", tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Eliminar Pregunta", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminate Question", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

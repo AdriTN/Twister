@@ -35,7 +35,7 @@ fun EditQuestionsScreen(
 ) {
     val twist = twistViewModel.getTwistById(twistId)
     if (twist == null) {
-        Text("Elemento no encontrado")
+        Text("Element not found")
         return
     }
 
@@ -55,7 +55,7 @@ fun EditQuestionsScreen(
                 },
                 actions = {
                     IconButton(onClick = { showDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Añadir Pregunta")
+                        Icon(Icons.Default.Add, contentDescription = "Add Question")
                     }
                 }
             )
@@ -68,7 +68,7 @@ fun EditQuestionsScreen(
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No hay preguntas. Toca + para añadir una.", fontSize = 16.sp, color = Color.Gray)
+                    Text("There are no questions. Tap + to add one.", fontSize = 16.sp, color = Color.Gray)
                 }
             } else {
                 LazyColumn(
@@ -147,10 +147,10 @@ fun QuestionItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Editar Pregunta", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Question", tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Eliminar Pregunta", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminate Question", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -177,13 +177,13 @@ fun QuestionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = if (question == null) "Añadir Nueva Pregunta" else "Editar Pregunta") },
+        title = { Text(text = if (question == null) "Add New Question" else "Editar Pregunta") },
         text = {
             Column {
                 OutlinedTextField(
                     value = questionText,
                     onValueChange = { questionText = it },
-                    label = { Text("Pregunta") },
+                    label = { Text("Question") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -227,7 +227,7 @@ fun QuestionDialog(
                         OutlinedTextField(
                             value = answerText,
                             onValueChange = { answerText = it },
-                            label = { Text("Respuesta") },
+                            label = { Text("Answer") },
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(
@@ -239,7 +239,7 @@ fun QuestionDialog(
                                 }
                             }
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "Agregar Respuesta")
+                            Icon(Icons.Default.Add, contentDescription = "Add Answer")
                         }
                     }
                 }
@@ -253,12 +253,12 @@ fun QuestionDialog(
                     }
                 }
             ) {
-                Text("Guardar")
+                Text("Save")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text("Cancel")
             }
         }
     )

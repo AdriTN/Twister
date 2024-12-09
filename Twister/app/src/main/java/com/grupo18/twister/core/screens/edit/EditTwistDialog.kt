@@ -51,20 +51,20 @@ fun EditTwistDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initialTwist == null) "Crear Nuevo Twist" else "Editar Twist") },
+        title = { Text(if (initialTwist == null) "Create New Twist" else "Edit Twist") },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Título") },
+                    label = { Text("Title") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descripción") },
+                    label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -81,7 +81,7 @@ fun EditTwistDialog(
                     onClick = { imageLauncher.launch("image/*") },
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Text("Seleccionar Imagen")
+                    Text("Select Image")
                 }
             }
         },
@@ -99,7 +99,7 @@ fun EditTwistDialog(
                             onSave(updatedTwist, true)
                         }
                     }) {
-                        Text("Gestionar Preguntas")
+                        Text("Manage Questions")
                     }
                 }
 
@@ -135,7 +135,7 @@ fun EditTwistDialog(
                                         onSave(newTwist, false)
                                     }
                                     else -> {
-                                        Toast.makeText(context, "Error al subir la imagen", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Error uploading the image", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
@@ -153,14 +153,14 @@ fun EditTwistDialog(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Guardar")
+                        Text("Save")
                     }
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text("Cancel")
             }
         }
     )
@@ -196,7 +196,7 @@ fun ImageWithRemoveButton(uri: String, onRemove: () -> Unit) {
             ) {
                 Icon(
                     imageVector = Icons.Filled.Close,
-                    contentDescription = "Eliminar imagen",
+                    contentDescription = "Eliminate image",
                     tint = Color.Red // Cambia el color del icono si es necesario
                 )
             }
