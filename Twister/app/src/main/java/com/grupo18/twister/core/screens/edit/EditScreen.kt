@@ -1,40 +1,44 @@
 package com.grupo18.twister.core.screens.edit
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.grupo18.twister.core.components.CustomBottomNavigationBar
-import com.grupo18.twister.core.models.TwistModel
-import com.grupo18.twister.core.viewmodel.TwistViewModel
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.rememberAsyncImagePainter
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.api.ImageService
+import com.grupo18.twister.core.components.CustomBottomNavigationBar
+import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.screens.authentication.MyApp
+import com.grupo18.twister.core.viewmodel.TwistViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditScreen(
@@ -50,9 +54,14 @@ fun EditScreen(
     var showDialog by remember { mutableStateOf(false) }
     var selectedTwist by remember { mutableStateOf<TwistModel?>(null) }
 
+    // Popup para usuarios anónimos
+    var showAnonymousAlert by remember { mutableStateOf(false) }
+
+    val currentUser = app.currentUser.value
+
     // Efecto que carga los twists desde el servidor al iniciar la pantalla
     LaunchedEffect(Unit) {
-        val user = app.currentUser.value ?: return@LaunchedEffect
+        val user = currentUser ?: return@LaunchedEffect
         twistViewModel.loadTwists(user.token, coroutineScope) { loading ->
             isLoading = loading // Cambiar el estado de carga
         }
@@ -64,8 +73,13 @@ fun EditScreen(
                 title = { Text("Gestionar Twists") },
                 actions = {
                     IconButton(onClick = {
-                        selectedTwist = null
-                        showDialog = true
+                        // Si el usuario es anónimo, no permitir crear Twists directamente
+                        if (currentUser?.isAnonymous == true) {
+                            showAnonymousAlert = true
+                        } else {
+                            selectedTwist = null
+                            showDialog = true
+                        }
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Añadir Twist")
                     }
@@ -112,7 +126,7 @@ fun EditScreen(
                     }
                 }
 
-                // Mostrar diálogo si está habilitado
+                // Mostrar diálogo si está habilitado (para crear/editar twist)
                 if (showDialog) {
                     EditTwistDialog(
                         initialTwist = selectedTwist,
@@ -144,12 +158,36 @@ fun EditScreen(
                         }
                     )
                 }
+
+                // Mostrar popup si el usuario es anónimo y trata de crear un Twist
+                if (showAnonymousAlert) {
+                    AlertDialog(
+                        onDismissRequest = { showAnonymousAlert = false },
+                        title = { Text("Login Required") },
+                        text = {
+                            Text(
+                                "You are currently browsing as a guest. Please log in to create new twists and access all features."
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                showAnonymousAlert = false
+                                navController.navigate("auth") // Navegar a login
+                            }) {
+                                Text("Go to Login")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showAnonymousAlert = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
             }
         }
     )
 }
-
-
 
 @Composable
 fun TwistItem(
@@ -181,7 +219,7 @@ fun TwistItem(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent) // Hacer el fondo de la tarjeta transparente
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             // Imagen de fondo con degradado
@@ -202,7 +240,7 @@ fun TwistItem(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) // Degradado hacia el color principal
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                                 )
                             )
                         )
@@ -213,26 +251,22 @@ fun TwistItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(150.dp)
-                        .background(dominantColor) // Usar color dominante o un color predeterminado
+                        .background(dominantColor)
                 )
             }
 
-            // Contenido del card
             Column(modifier = Modifier.padding(16.dp)) {
-                // Aplicar el color de contraste al texto
                 Text(twist.title, color = iconColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(twist.description, color = iconColor.copy(alpha = 0.8f), fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Espaciador para separar contenido de los botones
                 Spacer(modifier = Modifier.weight(1f))
 
                 Row(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Icono de editar con fondo circular más pequeño
                     IconButton(
                         onClick = onEdit,
                         modifier = Modifier
