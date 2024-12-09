@@ -1,6 +1,7 @@
 // Archivo: SettingsScreen.kt
 package com.grupo18.twister.core.screens.settings
 
+import android.Manifest
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,14 +33,12 @@ fun SettingsScreen(
     onToggleTheme: (Boolean) -> Unit,
     onLogout: () -> Unit,
     onSendTestNotification: () -> Unit,
-    user: UserModel? // Recibir el objeto UserModel
+    user: UserModel?
 ) {
-    // Estado de permiso para notificaciones
     val notificationPermissionState = rememberPermissionState(
         android.Manifest.permission.POST_NOTIFICATIONS
     )
 
-    // Estado para controlar si las notificaciones están habilitadas
     var notificationsEnabled by rememberSaveable { mutableStateOf(false) }
 
     // Solicitar permiso cuando las notificaciones están habilitadas
@@ -78,19 +77,28 @@ fun SettingsScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Sección: Configuración de la cuenta
+            // Sección de cuenta
             item {
-                AccountSection(user = user)
+                AccountSection(user = user, navController = navController)
             }
 
-            // Botón para cerrar sesión
-            item {
-                Button(
-                    onClick = { onLogout() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text("Log Out")
+            if (user != null && user.isAnonymous == false) {
+                item {
+                    Button(
+                        onClick = { onLogout() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Log Out")
+                    }
+                }
+            } else {
+                item {
+                    Button(
+                        onClick = { navController.navigate("auth") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Log In")
+                    }
                 }
             }
 
@@ -99,7 +107,7 @@ fun SettingsScreen(
                 Divider()
             }
 
-            // Sección: Configuración de notificaciones
+            // Sección: Notificaciones
             item {
                 NotificationSettings(
                     notificationsEnabled = notificationsEnabled,
@@ -108,8 +116,7 @@ fun SettingsScreen(
                         if (isEnabled) {
                             notificationPermissionState.launchPermissionRequest()
                         } else {
-                            // Lógica para deshabilitar notificaciones (opcional)
-                            // Por ejemplo, cancelar suscripciones o servicios de notificaciones
+                            // Aquí puedes implementar lógica adicional para deshabilitar notificaciones
                         }
                     },
                     permissionState = notificationPermissionState
@@ -117,9 +124,17 @@ fun SettingsScreen(
             }
 
             // Botón para enviar una notificación de prueba
+            // Verificamos el estado de notificationsEnabled antes de enviar
             item {
                 Button(
-                    onClick = { onSendTestNotification() },
+                    onClick = {
+                        if (notificationsEnabled) {
+                            onSendTestNotification()
+                        } else {
+                            // Si las notificaciones están deshabilitadas, no enviamos nada
+                            // Opcional: Mostrar un mensaje al usuario indicando que las notificaciones están desactivadas
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
@@ -132,7 +147,7 @@ fun SettingsScreen(
                 Divider()
             }
 
-            // Sección: Configuración del tema
+            // Sección: Tema
             item {
                 ThemeSettings(isDarkTheme, onToggleTheme)
             }
@@ -142,12 +157,11 @@ fun SettingsScreen(
                 Divider()
             }
 
-            // Sección: Otras opciones
+            // Otras opciones
             item {
                 OtherSettings()
             }
 
-            // Divider
             item {
                 Divider()
             }
@@ -166,10 +180,7 @@ fun NotificationSettings(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            "Notifications",
-            style = MaterialTheme.typography.titleLarge
-        )
+        Text("Notifications", style = MaterialTheme.typography.titleLarge)
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -189,7 +200,6 @@ fun NotificationSettings(
             )
         }
 
-        // Mostrar el estado del permiso
         when (permissionState.status) {
             is PermissionStatus.Granted -> {
                 Text(
@@ -198,8 +208,7 @@ fun NotificationSettings(
                 )
             }
             is PermissionStatus.Denied -> {
-                val shouldShowRationale =
-                    permissionState.status.shouldShowRationale
+                val shouldShowRationale = permissionState.status.shouldShowRationale
                 if (shouldShowRationale) {
                     Text(
                         "Please allow notifications to stay updated.",
@@ -217,33 +226,41 @@ fun NotificationSettings(
 }
 
 @Composable
-fun AccountSection(user: UserModel?) {
+fun AccountSection(user: UserModel?, navController: NavController) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("Account", style = MaterialTheme.typography.titleLarge)
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Account",
-                modifier = Modifier.size(40.dp)
+        if (user == null || user.isAnonymous) {
+            Text(
+                text = "You are browsing as a guest. Limited functionality is available.",
+                fontSize = 16.sp,
+                color = Color.Gray
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = user?.username ?: "Nombre de Usuario",
-                    fontSize = 18.sp,
-                    color = Color.Black
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Account",
+                    modifier = Modifier.size(40.dp)
                 )
-                Text(
-                    text = user?.email ?: "correo@ejemplo.com",
-                    color = Color.Gray
-                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = user.username,
+                        fontSize = 18.sp,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = user.email,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }
