@@ -12,11 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.grupo18.twister.core.models.AnswerModel
-import com.grupo18.twister.core.models.ImageUri
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
 import com.grupo18.twister.core.viewmodel.TwistViewModel
@@ -32,7 +31,7 @@ fun ManageQuestionsScreen(
     token: String,
     title: String,
     description: String,
-    imageUri: ImageUri? = null,
+    imageUri: String? = null,
     questionViewModel: QuestionViewModel,
     twistViewModel: TwistViewModel,
     scope: CoroutineScope
@@ -42,6 +41,7 @@ fun ManageQuestionsScreen(
     var showQuestionDialog by remember { mutableStateOf(false) }
     var selectedQuestion by remember { mutableStateOf<QuestionModel?>(null) }
     var showError by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -105,7 +105,7 @@ fun ManageQuestionsScreen(
                             // Guardar los cambios en el backend y esperar la respuesta antes de volver
                             questionViewModel.saveChanges(token, twistId, title, description, imageUri) { success ->
                                 if (success) {
-                                    twistViewModel.loadTwists(token, scope) { loading ->
+                                    twistViewModel.loadTwists(token, scope, context = context) { loading ->
                                         if (!loading) {
                                             // Aseguramos que popBackStack se llame en el hilo principal
                                             scope.launch(Dispatchers.Main) {

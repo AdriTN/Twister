@@ -1,5 +1,10 @@
 import { redisClient } from "../app.js"; // Importa el cliente de Redis
 
+function cleanImageUri(url) {
+  // Busca el patrón "ImageUri()" y lo elimina si está presente
+  return url.replace(/ImageUri\(\)/g, "").trim();
+}
+
 // Función para asegurarse de que el cliente de Redis esté conectado
 async function ensureRedisClient() {
   if (!redisClient.isOpen) {
@@ -25,6 +30,7 @@ export async function createTwist(twistData, userId) {
     const twist = {
         id: twistId,
         ...twistData,
+        imageUrl: twistData.imageUrl ? cleanImageUri(twistData.imageUrl) : undefined,
         createdAt: Date.now(),
         userId: userId // Asegúrate de que userId sea válido
     };

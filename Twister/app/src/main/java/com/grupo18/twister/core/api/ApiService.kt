@@ -66,6 +66,13 @@ interface ApiService {
     @POST("/images/upload")
     fun uploadImage(@Part image: MultipartBody.Part): Call<ResponseBody>
 
-    @GET("/images/download/{fileName}")
-    fun downloadImage(@Path("fileName") fileName: String): Call<ResponseBody>
+    @GET("/images/download/{imageUri}")
+    fun downloadImage(@Path("imageUri") imageUri: String): Call<ResponseBody>
+
+    @GET("/images/check/{imageUri}")
+    fun checkImageUpdate(
+        @Path("imageUri") imageUri: String,
+        @Header("If-Modified-Since") lastModified: Long
+    ): Call<Void>
+
 }

@@ -80,7 +80,6 @@ export async function handleUploadImage(req, res) {
 export async function handleGetUserTwists(userId) {
     try {
         const twists = await getTwistsByUserId(userId);
-        console.log("Twists fetched successfully:", twists);
         return twists;
     } catch (error) {
         console.error("Error fetching twists:", error.message);

@@ -1,6 +1,7 @@
 package com.grupo18.twister.core.screens.edit
 
 import android.annotation.SuppressLint
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -37,6 +39,7 @@ import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.File
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +68,7 @@ fun EditScreen(
         twistViewModel.clearTwists()
         user = app.currentUser.value ?: return@LaunchedEffect
         val user = currentUser ?: return@LaunchedEffect
-        twistViewModel.loadTwists(user.token, coroutineScope) { loading ->
+        twistViewModel.loadTwists(user.token, coroutineScope, context = context) { loading ->
             isLoading = loading
         }
     }
@@ -111,7 +114,7 @@ fun EditScreen(
                                 .fillMaxSize()
                                 .padding(padding)
                                 .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(twists) { twist ->
                                 TwistItem(
@@ -143,8 +146,9 @@ fun EditScreen(
                                 val newTwist = twistViewModel.createTwist(
                                     title = updatedTwist.title,
                                     description = updatedTwist.description,
-                                    imageUri = updatedTwist.imageUri
+                                    imageUri = updatedTwist.imageUri.toString()
                                 )
+                                println("El nuevo imageUri es ${newTwist.imageUri}")
                                 showDialog = false
                                 selectedTwist = null
                                 // Navegación obligatoria a la pantalla de preguntas
@@ -200,9 +204,9 @@ fun TwistItem(
 ) {
     val context = LocalContext.current
     val repository = ImageService(ApiClient.retrofit.create(ApiService::class.java))
-    val uriString = twist.imageUri?.uri
-    val dominantColorInt = if (twist.imageUri?.uri != null && twist.imageUri.uri.isEmpty()) {
-        println("literalmente es ${twist.imageUri}")
+    val uriString = twist.imageUri
+    println("Aqui el twist.imageUri es $uriString")
+    val dominantColorInt = if (twist.imageUri != null && twist.imageUri!!.length <= 6) {
         repository.extractDominantColorFromUri(uriString.toString(), context)
     } else {
         Color.Gray.toArgb()
@@ -229,8 +233,22 @@ fun TwistItem(
                 .fillMaxWidth()
                 .height(150.dp)
         ) { // Asegúrate de establecer una altura
+            val filePath = File(context.getExternalFilesDir(null), twist.imageUri)
+            if (filePath.exists()) {
+                val bitmap = BitmapFactory.decodeFile(filePath.absolutePath)
+                println("Aqui el bitmap es $bitmap")
+            } else {
+                println("El archivo no existe en la ruta $filePath")
+            }
+            Image(
+                painter = rememberAsyncImagePainter("file://${context.getExternalFilesDir(null)}/${twist.imageUri}"),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
+                contentScale = ContentScale.Crop
+            )
 
-            // Imagen de fondo con degradado
             twist.imageUri?.let { uri ->
                 Image(
                     painter = rememberAsyncImagePainter(uri),

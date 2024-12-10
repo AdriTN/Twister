@@ -20,7 +20,6 @@ import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.factories.QuestionViewModelFactory
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
-import com.grupo18.twister.core.models.ImageUri
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
@@ -157,7 +156,7 @@ fun NavigationWrapper(
             val title = backStackEntry.arguments?.getString("title")
             val description = backStackEntry.arguments?.getString("description")
             val imageUriString = backStackEntry.arguments?.getString("imageUri")
-            val imageUri = if (!imageUriString.isNullOrEmpty()) ImageUri(imageUriString) else null
+            val imageUri = if (!imageUriString.isNullOrEmpty()) imageUriString else null
 
             twistId?.let { id ->
                 // Aquí le pasamos twistViewModel y questionViewModel

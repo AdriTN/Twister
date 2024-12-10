@@ -23,9 +23,8 @@ data class GameResponse(
 )
 
 data class UploadResponse(
-    val success: Boolean,
     val message: String,
-    val imageUrl: String
+    val urlId: String
 )
 
 data class TwistRequest(

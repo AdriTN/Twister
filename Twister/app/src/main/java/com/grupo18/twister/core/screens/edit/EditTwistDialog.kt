@@ -26,7 +26,6 @@ import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import androidx.compose.ui.graphics.Color
 import java.util.UUID
-import com.grupo18.twister.core.models.ImageUri
 
 @Composable
 fun EditTwistDialog(
@@ -41,11 +40,11 @@ fun EditTwistDialog(
     var description by remember { mutableStateOf(initialTwist?.description ?: "") }
 
     // Change imageUri to a String to match the expected type
-    var imageUri by remember { mutableStateOf<String?>(initialTwist?.imageUri?.uri) } // Assuming imageUri is of type ImageUri in the model
+    var imageUri by remember { mutableStateOf<String?>(initialTwist?.imageUri) } // Assuming imageUri is of type ImageUri in the model
 
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            imageUri = ImageUri(it.toString()).uri // Store the URI string
+            imageUri = it.toString() // Store the URI string
         }
     }
 
@@ -94,7 +93,7 @@ fun EditTwistDialog(
                             val updatedTwist = initialTwist.copy(
                                 title = title,
                                 description = description,
-                                imageUri = imageUri?.let { ImageUri(it) } // Convert String back to ImageUri
+                                imageUri = imageUri // Convert String back to ImageUri
                             )
                             onSave(updatedTwist, true)
                         }
@@ -113,13 +112,11 @@ fun EditTwistDialog(
                                 id = UUID.randomUUID().toString(),
                                 title = title,
                                 description = description,
-                                imageUri = imageUri?.let { ImageUri(it) } // Convert String to ImageUri
                             )
                         } else {
                             initialTwist.copy(
                                 title = title,
                                 description = description,
-                                imageUri = imageUri?.let { ImageUri(it) } // Convert String to ImageUri
                             )
                         }
 
@@ -127,12 +124,19 @@ fun EditTwistDialog(
                         isLoading = true
                         // Si hay imagen, subirla
                         imageUri?.let { uri ->
-                            twistViewModel.uploadImage(uri, context.contentResolver) { response ->
+                            twistViewModel.uploadImage(context, uri, context.contentResolver) { response ->
                                 isLoading = false // Detener la barra de carga al finalizar
                                 when {
                                     response.isSuccessful -> {
-                                        // Manejar el caso de éxito
-                                        onSave(newTwist, false)
+                                        // Obtener el objeto UploadResponse de la respuesta exitosa
+                                        val uploadResponse = response.body()
+                                        uploadResponse?.let { upload ->
+                                            println("La nueva url es ${upload.urlId}")
+                                            newTwist.imageUri = upload.urlId
+                                            onSave(newTwist, false) // Guarda el nuevo twist
+                                        } ?: run {
+                                            Toast.makeText(context, "Error parsing the response", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                     else -> {
                                         Toast.makeText(context, "Error uploading the image", Toast.LENGTH_SHORT).show()
@@ -144,6 +148,7 @@ fun EditTwistDialog(
                             isLoading = false // Detener la barra de carga
                             onSave(newTwist, false)
                         }
+
                     }
                 }) {
                     if (isLoading) {

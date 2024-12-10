@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.models.AnswerModel
-import com.grupo18.twister.core.models.ImageUri
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.TwistModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +67,7 @@ class QuestionViewModel(private val apiService: ApiService) : ViewModel() {
         twistId: String,
         title: String,
         description: String,
-        imageUri: ImageUri?,
+        imageUri: String?,
         onSuccess: (Boolean) -> Unit = {}
     ) {
         viewModelScope.launch {
