@@ -10,16 +10,14 @@ router.post("/create", async (req, res) => {
 });
 
 // Ruta para editar un twist existente
-router.put("/edit/:id", async (req, res) => {
+router.put("/edit", async (req, res) => {
     try {
         const userId = await getUserWithToken(req, res);
         if (!userId || userId === -1) {
             return res.status(401).json({ message: "Unauthorized" }); // Respuesta para usuario no autenticado
         }
-        console.log("Twist to save: ", req.body);
-        const twistId = req.params.id; // Obtener el ID del twist desde los parámetros de la solicitud
         const twistData = req.body;
-        const updatedTwist = await handleupdateTwist(userId, twistId, twistData);
+        const updatedTwist = await handleupdateTwist(userId, twistData);
 
         if (!updatedTwist) {
             return res.status(404).json({ message: "Twist not found." }); // Respuesta si no se encuentra el twist

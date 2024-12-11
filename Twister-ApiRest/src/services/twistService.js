@@ -19,14 +19,14 @@ export async function handleCreateTwist(req, res) {
 }
 
 // Función para editar un twist existente
-export async function handleupdateTwist(userId, twistId, twistData) {
+export async function handleupdateTwist(userId, twistData) {
 
     try {
         // Asegúrate de que el userId y twistId sean válidos
-        if (!userId || !twistId || !twistData) {
+        if (!userId || !twistData) {
             throw new Error("Invalid input: userId, twistId, and twistData are required.");
         }
-        const updatedTwist = await updateTwist(userId, twistId, twistData);
+        const updatedTwist = await updateTwist(userId, twistData);
         if (updatedTwist === -1) {
             throw new Error("You are not the owner of this twist.");
         }
@@ -73,7 +73,7 @@ export async function handleUploadImage(req, res) {
         res.status(201).json({ message: "Image uploaded successfully", fileName });
     } catch (error) {
         console.error("Error uploading image:", error.message);
-        res.status(500).json({ error: error.message });
+        //res.status(500).json({ error: error.message });
     }
 }
 

@@ -49,18 +49,17 @@ interface ApiService {
     ): Call<QuestionModel>
 
     // Endpoint para editar un quizz existente
-    @PUT("/twists/edit/{id}")
+    @PUT("/twists/edit")
     fun editTwist(
         @Header("Authorization") token: String,
-        @Path("id") id: String,
         @Body twistData: TwistModel // Cambia aquí si es necesario
     ): Call<TwistModel> // Asegúrate de que esto coincida con el modelo que esperas
 
-    @DELETE("/twists/delete/{id}")
-    fun deleteTwist(
-        @Header("Authorization") token: String,
-        @Path("id") id: String
-    ): Call<ResponseBody>
+        @DELETE("/twists/delete/{id}")
+        fun deleteTwist(
+            @Header("Authorization") token: String,
+            @Path("id") id: String
+        ): Call<ResponseBody>
 
     @Multipart
     @POST("/images/upload")
@@ -69,10 +68,16 @@ interface ApiService {
     @GET("/images/download/{imageUri}")
     fun downloadImage(@Path("imageUri") imageUri: String): Call<ResponseBody>
 
-    @GET("/images/check/{imageUri}")
+    @HEAD("/images/check/{imageUri}")
     fun checkImageUpdate(
         @Path("imageUri") imageUri: String,
         @Header("If-Modified-Since") lastModified: Long
     ): Call<Void>
+
+    @DELETE("/images/delete")
+    fun deleteImage(
+        @Header("Authorization") token: String,
+        @Body twistData: TwistModel
+    ): Call<ResponseBody>
 
 }

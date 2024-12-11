@@ -2,8 +2,10 @@ package com.grupo18.twister.core.viewmodel
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
@@ -21,11 +23,23 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
+import java.io.FileNotFoundException
 import java.util.UUID
 
 class TwistViewModel(private val myApp: MyApp) : ViewModel() {
     private val _twists = MutableStateFlow<List<TwistModel>>(emptyList())
     val twists: StateFlow<List<TwistModel>> = _twists
+    init {
+        observeTwistChanges()
+    }
+
+    private fun observeTwistChanges() {
+        viewModelScope.launch {
+            twists.collect { twistList ->
+                println("ATENCION: Lista de Twists actualizada: $twistList")
+            }
+        }
+    }
 
     private val apiService: ApiService = ApiClient.retrofit.create(ApiService::class.java)
 
@@ -36,15 +50,28 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
         return newTwist
     }
 
-    fun updateTwist(updatedTwist: TwistModel) {
-        _twists.value = _twists.value.map { twist ->
-            if (twist.id == updatedTwist.id) updatedTwist else twist
+    fun updateTwist(token: String, twist: TwistModel, scope: CoroutineScope, context: Context) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = apiService.editTwist(token, twist).execute()
+                if (response.isSuccessful) {
+                    _twists.value = _twists.value.filter { it.id != twist.id }
+                } else {
+                    println("Error: ${response.code()} - ${response.message()}")
+                    Toast.makeText(context, "Error al eliminar el Twist", Toast.LENGTH_SHORT).show()
+                }
+            }
+            catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     fun deleteTwist(token: String, id: String, scope: CoroutineScope, context: Context) {
         scope.launch(Dispatchers.IO) {
             try {
+                if (id.isEmpty()) throw Exception("ID is empty")
+                println("Se va a eliminar el Twist con ID: $id")
                 val response = apiService.deleteTwist(token, id).execute()
                 if (response.isSuccessful) {
                     _twists.value = _twists.value.filter { it.id != id }
@@ -61,6 +88,10 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
 
     fun getTwistById(id: String): TwistModel? {
         return _twists.value.find { it.id == id }
+    }
+
+    fun getAllTwists(): List<TwistModel> {
+        return _twists.value
     }
 
     fun clearTwists() {
@@ -108,29 +139,8 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
     }
 
 
-    private fun saveImageLocally(context: Context, urlId: String, contentResolver: ContentResolver, uri: String): String {
-        // Obtén el InputStream de la imagen
-        val inputStream = contentResolver.openInputStream(android.net.Uri.parse(uri))
-        val localFilePath = "${context.filesDir}/images/$urlId.jpg" // Define la ruta donde quieres guardar la imagen
-        val file = File(localFilePath)
-
-        // Crea el directorio si no existe
-        if (!file.parentFile.exists()) {
-            file.parentFile.mkdirs()
-        }
-
-        // Escribe la imagen en el archivo local
-        inputStream?.use { input ->
-            file.outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
-
-        return localFilePath
-    }
-
-    fun uploadImage(context : Context, uri: String, contentResolver: ContentResolver, onResult: (Response<UploadResponse>) -> Unit) {
-        val filePart = ImageService.prepareImageFile(uri, contentResolver)
+    fun uploadImage(context : Context, imageUri: String, contentResolver: ContentResolver, onResult: (Response<UploadResponse>) -> Unit) {
+        val filePart = ImageService.prepareImageFile(imageUri)
         filePart?.let {
             val call = apiService.uploadImage(it)
             call.enqueue(object : Callback<ResponseBody> {
@@ -139,7 +149,8 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
                         response.body()?.let { responseBody ->
                             val jsonString = responseBody.string()
                             val uploadResponse = Gson().fromJson(jsonString, UploadResponse::class.java)
-                            saveImageLocally(context, uploadResponse.urlId, contentResolver, uri)
+                            val destinationPath = "${context.filesDir}/images/${uploadResponse.urlId}"
+                            println("Imagen del servidor guardada en: $destinationPath")
                             onResult(Response.success(uploadResponse))
                         } ?: run {
                             onResult(Response.error(500, ResponseBody.create(null, "Response body is null")))
@@ -158,6 +169,83 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
         }
     }
 
+    fun deleteImageFromTwist(token: String, Twist: TwistModel, scope: CoroutineScope, context: Context) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                if (Twist.imageUri?.isEmpty() == true) throw Exception("Image URI is empty")
+                val response = apiService.deleteImage(token = token, twistData = Twist).execute()
+                if (response.isSuccessful) {
+                    println("Imagen eliminada correctamente del servidor: ${Twist.imageUri}")
+
+                    // Eliminar la imagen localmente
+                    val localFilePath = "${context.filesDir}/images/${Twist.imageUri}"
+                    val file = File(localFilePath)
+                    if (file.exists()) {
+                        val deleted = file.delete()
+                        if (deleted) {
+                            println("Imagen eliminada localmente: $localFilePath")
+                        } else {
+                            println("No se pudo eliminar la imagen localmente: $localFilePath")
+                        }
+                    }
+
+                    Toast.makeText(context, "Imagen eliminada exitosamente", Toast.LENGTH_SHORT).show()
+                } else {
+                    println("Error al eliminar la imagen del servidor: ${response.code()} - ${response.message()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                println("Excepción al eliminar la imagen: ${e.message}")
+            }
+        }
+    }
+
+    fun isSameImage(currentImageUri: String?, newImageUri: String?, context: Context): Boolean {
+        if (currentImageUri == null || newImageUri == null) {
+            return false
+        }
+
+        val currentFile = File(currentImageUri)
+        val newFile = File(newImageUri)
+
+        println("Se va a comparar la imagen $currentFile con $newFile")
+
+        if (!currentFile.exists() || !newFile.exists()) {
+            println("No se ha encontró alguno de los archivos " + currentFile.exists() + " " + newFile.exists())
+            return false
+        }
+
+        // Compara los contenidos de ambos archivos
+        return currentFile.readBytes().contentEquals(newFile.readBytes())
+    }
+
+
+
+
+
+    private fun saveImageLocally(context: Context, localFilePath: String, sourceFilePath: String): String {
+        // Archivo fuente (imagen local)
+        val sourceFile = File(sourceFilePath)
+
+        // Directorio destino (misma carpeta de imágenes)
+        val destinationFile = File(localFilePath)
+
+        // Verifica si el archivo fuente existe antes de intentar copiarlo
+        if (!sourceFile.exists()) {
+            throw FileNotFoundException("El archivo fuente no existe: $sourceFilePath")
+        }
+
+        // Copia el contenido del archivo fuente al archivo destino
+        sourceFile.inputStream().use { input ->
+            destinationFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        println("Archivo guardado en: ${destinationFile.absolutePath}")
+        return destinationFile.absolutePath // Retorna la ruta del archivo guardado
+    }
+
 
     fun downloadImagesForTwist(
         context: Context,
@@ -165,19 +253,28 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
         localFilePath: String,
         onImageUpdated: (Boolean) -> Unit
     ) {
-        println("Se ha solicitado descargar la imagen con URI: $imageUri")
         CoroutineScope(Dispatchers.IO).launch {
+            println("Comenzando descarga de imágenes para $imageUri en $localFilePath")
             val file = File(localFilePath)
+
+            file.parentFile?.let { parent ->
+                if (!parent.exists()) {
+                    println("Creando directorio: ${parent.absolutePath}")
+                    parent.mkdirs()
+                }
+            }
 
             // Comprobar si el archivo ya existe
             if (file.exists()) {
-                println("La imagen ya existe en $localFilePath")
-                // Si ya existe, verifica si necesita ser actualizada
+                println("La imagen ya existe en ${file.absolutePath}")
+                // Verificar si necesita actualización
                 val lastModified = file.lastModified()
+                println("Se va a comprobar el estado de la imagen $imageUri en $lastModified")
                 val response = apiService.checkImageUpdate(imageUri, lastModified).execute()
 
+                println("Respuesta del servidor: ${response.code()} - ${response.message()}")
+
                 if (response.code() == 304) {
-                    // La imagen no ha cambiado
                     println("La imagen no ha cambiado, no es necesario descargar.")
                     onImageUpdated(false)
                     return@launch
@@ -201,7 +298,7 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
                         val imageBytes = body.bytes()
                         if (imageBytes.isNotEmpty()) {
                             file.writeBytes(imageBytes)
-                            println("Imagen descargada y guardada en $localFilePath")
+                            println("Imagen descargada y guardada en ${file.absolutePath}")
                             onImageUpdated(true)
                         } else {
                             println("Error: La respuesta del servidor no contiene datos de imagen.")
@@ -223,6 +320,4 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
             }
         }
     }
-
-
 }

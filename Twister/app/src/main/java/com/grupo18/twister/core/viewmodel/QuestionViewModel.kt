@@ -75,7 +75,7 @@ class QuestionViewModel(private val apiService: ApiService) : ViewModel() {
                 val questionsToSave = _questionsByTwist.value[twistId] ?: emptyList()
                 val newQuizz = TwistModel(id = twistId, title = title, description = description, imageUri = imageUri, twistQuestions = questionsToSave)
 
-                val response = apiService.editTwist(token = token, id = twistId, twistData = newQuizz)
+                val response = apiService.editTwist(token = token, twistData = newQuizz)
 
                 response.enqueue(object : Callback<TwistModel> {
                     override fun onResponse(call: Call<TwistModel>, response: Response<TwistModel>) {

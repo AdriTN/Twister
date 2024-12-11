@@ -82,12 +82,11 @@ export async function getAllTwists() {
 }
 
 // Función para obtener un twist por su clave en el formato userId-twistId
-export async function getTwistById(userId, twistId) {
+export async function getTwistById(key) {
     await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
   
     try {
       // Crea la clave en el formato userId-twistId
-      const key = `${userId}-${twistId}`;
       console.log("Fetching twist with ID:", key);
   
       // Obtener el twist desde Redis
@@ -107,21 +106,20 @@ export async function getTwistById(userId, twistId) {
   
 
 // Función para actualizar un twist
-export async function updateTwist(userId, twistId, twistData) {
+export async function updateTwist(userId, twistData) {
     await ensureRedisClient();
   
     // Crea la clave en el formato userId-twistId
-    const key = `${userId}-${twistId}`;
+    const key = `${userId}-${twistData.id}`;
   
     // Intenta obtener el twist existente
     let twist = await getTwistById(key); // Asegúrate de que esta función use la nueva clave
-    console.log("Twist:", twist);
   
     // Si no se encuentra el twist, crea uno nuevo
     if (!twist) {
         console.log("Twist not found, creating new twist...");
         twist = {
-            id: twistId,
+            id: twistData.id,
             userId: userId,
             ...twistData, // Usa los datos proporcionados
             createdAt: Date.now(),
@@ -131,7 +129,6 @@ export async function updateTwist(userId, twistId, twistData) {
         // Verifica que el usuario tenga permiso para editar
         if (twist.userId !== userId) return -1;
         console.log("Twist found, updating twist...");
-        console.log("Old twist data ", twist);
   
         // Actualiza los datos del twist existente
         twist = {
@@ -139,7 +136,6 @@ export async function updateTwist(userId, twistId, twistData) {
             ...twistData, // Combina los datos existentes con los datos actualizados
             updatedAt: Date.now(), // Actualiza la marca de tiempo
         };
-        console.log("New twist data ", twist);
     }
   
     // Guarda el twist (nuevo o actualizado) en Redis con la nueva clave
@@ -153,7 +149,7 @@ export async function updateTwist(userId, twistId, twistData) {
 // Función para eliminar un twist
 export async function deleteTwist(userId, twistId) {
   await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
-  const twist = await getTwistById(userId, twistId); // Obtén el twist
+  const twist = await getTwistById(`${userId}-${twistId}`); // Obtén el twist
   if (!twist) {
       throw new Error("Twist not found"); // Si no se encuentra, lanza un error
   }

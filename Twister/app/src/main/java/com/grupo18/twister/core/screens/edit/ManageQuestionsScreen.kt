@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.grupo18.twister.core.models.QuestionModel
+import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -27,16 +28,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun ManageQuestionsScreen(
     navController: NavController,
-    twistId: String,
     token: String,
-    title: String,
-    description: String,
-    imageUri: String? = null,
     questionViewModel: QuestionViewModel,
     twistViewModel: TwistViewModel,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    twist: TwistModel
 ) {
-    val questions by questionViewModel.getQuestionsForTwist(twistId).collectAsState()
+    val questions by questionViewModel.getQuestionsForTwist(twist.toString()).collectAsState(initial = emptyList())
+
+    println("Questions: $questions of questionViewModel $questionViewModel")
 
     var showQuestionDialog by remember { mutableStateOf(false) }
     var selectedQuestion by remember { mutableStateOf<QuestionModel?>(null) }
@@ -49,7 +49,7 @@ fun ManageQuestionsScreen(
                 title = { Text("Manage Questions") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -78,7 +78,7 @@ fun ManageQuestionsScreen(
                                     showQuestionDialog = true
                                 },
                                 onDelete = {
-                                    questionViewModel.deleteQuestion(twistId, question.id)
+                                    questionViewModel.deleteQuestion(twist.id, question.id)
                                 }
                             )
                         }
@@ -98,12 +98,12 @@ fun ManageQuestionsScreen(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = {
-                        val valid = questionViewModel.hasAtLeastOneCorrectAnswer(twistId)
+                        val valid = questionViewModel.hasAtLeastOneCorrectAnswer(twist.id)
                         if (!valid) {
                             showError = true
                         } else {
                             // Guardar los cambios en el backend y esperar la respuesta antes de volver
-                            questionViewModel.saveChanges(token, twistId, title, description, imageUri) { success ->
+                            questionViewModel.saveChanges(token, twist.id, twist.title, twist.description, twist.imageUri) { success ->
                                 if (success) {
                                     twistViewModel.loadTwists(token, scope, context = context) { loading ->
                                         if (!loading) {
@@ -133,14 +133,14 @@ fun ManageQuestionsScreen(
                     },
                     onSave = { questionText, answers ->
                         if (selectedQuestion == null) {
-                            questionViewModel.createQuestion(twistId, questionText, answers)
+                            questionViewModel.createQuestion(twist.id, questionText, answers)
                         } else {
-                            questionViewModel.editQuestion(twistId, selectedQuestion!!.id, questionText, answers)
+                            questionViewModel.editQuestion(twist.id, selectedQuestion!!.id, questionText, answers)
                         }
                         showQuestionDialog = false
                         selectedQuestion = null
                     },
-                    twistId = twistId,
+                    twistId = twist.id,
                 )
             }
         }

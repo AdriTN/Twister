@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
+import android.util.Log
 import androidx.palette.graphics.Palette
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -14,13 +15,27 @@ import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
 import java.io.File
+import java.io.FileNotFoundException
 
 class ImageService(private val apiService: ApiService) {
     @SuppressLint("NewApi")
     fun extractDominantColorFromUri(uri: String, context: Context): Int {
         println("Extracting dominant color from URI: $uri")
-        val inputStream = context.contentResolver.openInputStream(Uri.parse(uri))
+        val destinationPath = "${context.filesDir}/images/${uri}"
+        // Comprobar si el archivo existe localmente
+        val file = File(destinationPath)
+        if (!file.exists()) {
+            println("File does not exist: $destinationPath")
+            return Color.TRANSPARENT // Retornar un color predeterminado o manejar el error
+        }
+
+        // Abrir InputStream usando ContentResolver
+        val inputStream = context.contentResolver.openInputStream(Uri.fromFile(file))
+            ?: throw FileNotFoundException("Unable to open InputStream for URI: $destinationPath")
+
+        // Crear Bitmap desde el InputStream
         val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            ?: throw IllegalArgumentException("Unable to decode Bitmap from URI: $destinationPath")
 
         // Verificar si el bitmap está en formato hardware
         val bitmap = if (originalBitmap.config == Bitmap.Config.HARDWARE) {
@@ -40,27 +55,17 @@ class ImageService(private val apiService: ApiService) {
 
         return dominantColor
     }
+
     companion object {
-        fun prepareImageFile(uri: String, contentResolver: ContentResolver): MultipartBody.Part? {
-            val inputStream = contentResolver.openInputStream(Uri.parse(uri)) ?: return null
-            val tempFile = File.createTempFile("image", ".jpg")
-            tempFile.outputStream().use { inputStream.copyTo(it) }
+        fun prepareImageFile(fileName: String): MultipartBody.Part? {
+            val file = File(fileName) // Suponiendo que el archivo está en cacheDir
+            if (!file.exists()) {
+                Log.e("ImageService", "File not found: ${file.absolutePath}")
+                return null
+            }
 
-            val requestBody = RequestBody.create("image/*".toMediaTypeOrNull(), tempFile)
-            return MultipartBody.Part.createFormData("image", tempFile.name, requestBody)
-        }
-
-        fun uploadImage(quizzId: String, uri: Uri, contentResolver: ContentResolver, apiService: ApiService): Call<ResponseBody> {
-            // Obtén el nombre del archivo
-            val fileName = uri.lastPathSegment?.substringAfterLast("/") ?: "image.jpg"
-            val inputStream = contentResolver.openInputStream(uri) ?: throw IllegalArgumentException("Invalid URI")
-            val filePart = MultipartBody.Part.createFormData(
-                "image",
-                fileName,
-                RequestBody.create("image/jpeg".toMediaTypeOrNull(), inputStream.readBytes())
-            )
-
-            return apiService.uploadImage(filePart)
+            val requestBody = RequestBody.create("image/*".toMediaTypeOrNull(), file)
+            return MultipartBody.Part.createFormData("image", file.name, requestBody)
         }
     }
 }

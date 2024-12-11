@@ -25,6 +25,8 @@ import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import androidx.compose.ui.graphics.Color
+import java.io.File
+import java.io.FileOutputStream
 import java.util.UUID
 
 @Composable
@@ -36,15 +38,41 @@ fun EditTwistDialog(
     val viewModelFactory = TwistViewModelFactory(MyApp())
     val twistViewModel: TwistViewModel = viewModel(factory = viewModelFactory)
     val context = LocalContext.current
+    val app = context.applicationContext as MyApp
     var title by remember { mutableStateOf(initialTwist?.title ?: "") }
     var description by remember { mutableStateOf(initialTwist?.description ?: "") }
+    val scope = rememberCoroutineScope()
+    val lastimageUri = initialTwist?.imageUri
 
-    // Change imageUri to a String to match the expected type
-    var imageUri by remember { mutableStateOf<String?>(initialTwist?.imageUri) } // Assuming imageUri is of type ImageUri in the model
+    var imageUri by remember { mutableStateOf<String?>(initialTwist?.imageUri) }
+    var imageToRemove by remember { mutableStateOf(false) }
 
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            imageUri = it.toString() // Store the URI string
+        uri?.let { newUri ->
+            val tempDir = File(context.cacheDir, "tempImages")
+            if (!tempDir.exists()) {
+                tempDir.mkdir()
+            }
+
+            // Crear archivo temporal
+            val tempFile = File(tempDir, "${System.currentTimeMillis()}.jpg")
+
+            // Copiar contenido
+            context.contentResolver.openInputStream(newUri)?.use { inputStream ->
+                FileOutputStream(tempFile).use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+
+            val tempFilePath = tempFile.absolutePath
+
+            // Verificar si es la misma imagen
+            val isSame = twistViewModel.isSameImage("${context.filesDir}/images/${lastimageUri}", tempFilePath, context)
+            if (!isSame) {
+                imageUri = tempFilePath
+            } else {
+                Toast.makeText(context, "Debes seleccionar una imagen diferente a la actual", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -69,9 +97,29 @@ fun EditTwistDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 imageUri?.let { uri ->
-                    // Mostrar la imagen seleccionada y permitir eliminarla
-                    ImageWithRemoveButton(uri) { // Use the string representation of the URI
-                        imageUri = null
+                    val localFilePath = "${context.filesDir}/images/${uri}"
+
+                    // Verifica si el archivo existe
+                    val imageFile = File(localFilePath)
+                    if (imageFile.exists()) {
+                        // Si el archivo existe, se muestra la imagen
+                        ImageWithRemoveButton(uri = localFilePath) {
+                            imageToRemove = true
+                            imageUri = null
+                        }
+
+                    } else {
+                        // Si el archivo no existe, intenta usar la imagen temporal
+                        val tempImagePath = "${context.cacheDir}/tempImages/${imageFile.name}"
+                        val tempImageFile = File(tempImagePath)
+                        if (tempImageFile.exists()) {
+                            ImageWithRemoveButton(tempImagePath) {
+                                imageToRemove = true
+                                imageUri = null
+                            }
+                        } else {
+                            println("No se encontró ninguna imagen en el path especificado.")
+                        }
                     }
                 }
 
@@ -93,7 +141,7 @@ fun EditTwistDialog(
                             val updatedTwist = initialTwist.copy(
                                 title = title,
                                 description = description,
-                                imageUri = imageUri // Convert String back to ImageUri
+                                imageUri = imageUri
                             )
                             onSave(updatedTwist, true)
                         }
@@ -112,6 +160,7 @@ fun EditTwistDialog(
                                 id = UUID.randomUUID().toString(),
                                 title = title,
                                 description = description,
+                                imageUri = imageUri // Añadimos aquí la imageUri
                             )
                         } else {
                             initialTwist.copy(
@@ -120,35 +169,63 @@ fun EditTwistDialog(
                             )
                         }
 
-                        // Cambiar el estado a "cargando"
-                        isLoading = true
-                        // Si hay imagen, subirla
-                        imageUri?.let { uri ->
-                            twistViewModel.uploadImage(context, uri, context.contentResolver) { response ->
-                                isLoading = false // Detener la barra de carga al finalizar
-                                when {
-                                    response.isSuccessful -> {
-                                        // Obtener el objeto UploadResponse de la respuesta exitosa
-                                        val uploadResponse = response.body()
-                                        uploadResponse?.let { upload ->
-                                            println("La nueva url es ${upload.urlId}")
-                                            newTwist.imageUri = upload.urlId
-                                            onSave(newTwist, false) // Guarda el nuevo twist
-                                        } ?: run {
-                                            Toast.makeText(context, "Error parsing the response", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                    else -> {
-                                        Toast.makeText(context, "Error uploading the image", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            }
-                        } ?: run {
-                            // Si no hay imagen, simplemente guardar el twist
-                            isLoading = false // Detener la barra de carga
-                            onSave(newTwist, false)
+                        // Manejo de eliminación de la imagen
+                        if (imageToRemove) {
+                            println("Se va a eliminar la imagen")
+                            twistViewModel.deleteImageFromTwist(
+                                token = app.currentUser.value?.token ?: "",
+                                Twist = newTwist,
+                                scope = scope,
+                                context = context
+                            )
+                            imageUri = null // Resetea el estado de la imagen
                         }
 
+                        isLoading = true
+                        println("Aqui imageUri es $imageUri")
+
+                        imageUri?.let {
+                            // Asegúrate de que no sea la misma imagen antes de intentar cargarla
+                            if (it != lastimageUri) {
+                                twistViewModel.uploadImage(
+                                    context,
+                                    imageUri!!,
+                                    context.contentResolver
+                                ) { response ->
+                                    isLoading = false
+                                    when {
+                                        response.isSuccessful -> {
+                                            val uploadResponse = response.body()
+                                            uploadResponse?.let { upload ->
+                                                newTwist.imageUri = upload.urlId
+                                                println("Se ha cambiado la imagen por ${newTwist.imageUri}")
+                                                onSave(newTwist, false)
+                                            } ?: run {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Error parsing the response",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+
+                                        else -> {
+                                            Toast.makeText(
+                                                context,
+                                                "Error uploading the image",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
+                            } else {
+                                isLoading = false
+                                onSave(newTwist, false) // No se sube imagen nueva
+                            }
+                        } ?: run {
+                            isLoading = false
+                            onSave(newTwist, false) // Si no hay imageUri, solo guarda sin imagen
+                        }
                     }
                 }) {
                     if (isLoading) {
@@ -185,24 +262,23 @@ fun ImageWithRemoveButton(uri: String, onRemove: () -> Unit) {
             contentScale = ContentScale.Crop
         )
 
-        // Cruz roja a la derecha
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(4.dp)
         ) {
             IconButton(
-                onClick = onRemove,
+                onClick = { onRemove() },
                 modifier = Modifier
-                    .size(25.dp) // Tamaño del botón
-                    .clip(CircleShape) // Forma circular
+                    .size(25.dp)
+                    .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.8f))
-                    .padding(4.dp) // Espaciado interno
+                    .padding(4.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Close,
                     contentDescription = "Eliminate image",
-                    tint = Color.Red // Cambia el color del icono si es necesario
+                    tint = Color.Red
                 )
             }
         }

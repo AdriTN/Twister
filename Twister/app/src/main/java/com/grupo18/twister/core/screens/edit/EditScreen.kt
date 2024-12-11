@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.gson.Gson
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.api.ImageService
@@ -54,6 +55,7 @@ fun EditScreen(
     var isLoading by remember { mutableStateOf(true) } // Estado de carga
     val coroutineScope = rememberCoroutineScope()
     var user = app.currentUser.value ?: return
+    val scope = rememberCoroutineScope()
 
     var showDialog by remember { mutableStateOf(false) }
     var selectedTwist by remember { mutableStateOf<TwistModel?>(null) }
@@ -142,24 +144,23 @@ fun EditScreen(
                         },
                         onSave = { updatedTwist, navigateToQuestions ->
                             if (selectedTwist == null) {
-                                // Crear nuevo Twist
                                 val newTwist = twistViewModel.createTwist(
                                     title = updatedTwist.title,
                                     description = updatedTwist.description,
                                     imageUri = updatedTwist.imageUri.toString()
                                 )
-                                println("El nuevo imageUri es ${newTwist.imageUri}")
+                                println("El nuevo imageUri es ESTE ${newTwist.imageUri}")
                                 showDialog = false
                                 selectedTwist = null
-                                // Navegación obligatoria a la pantalla de preguntas
-                                navController.navigate("manageQuestions/${newTwist.id}?title=${newTwist.title}&description=${newTwist.description}&imageUri=${newTwist.imageUri}")
+                                val twistJson = Gson().toJson(newTwist)
+                                navController.navigate("manageQuestions/${twistJson}")
                             } else {
-                                // Editar Twist existente
-                                twistViewModel.updateTwist(updatedTwist)
+                                twistViewModel.updateTwist(user.token, updatedTwist, scope, context)
                                 showDialog = false
                                 selectedTwist = null
                                 if (navigateToQuestions) {
-                                    navController.navigate("manageQuestions/${updatedTwist.id}?title=${updatedTwist.title}&description=${updatedTwist.description}&imageUri=${updatedTwist.imageUri}")
+                                    val twistJson = Gson().toJson(updatedTwist)
+                                    navController.navigate("manageQuestions/${twistJson}")
                                 }
                             }
                         }
@@ -205,12 +206,18 @@ fun TwistItem(
     val context = LocalContext.current
     val repository = ImageService(ApiClient.retrofit.create(ApiService::class.java))
     val uriString = twist.imageUri
-    println("Aqui el twist.imageUri es $uriString")
-    val dominantColorInt = if (twist.imageUri != null && twist.imageUri!!.length <= 6) {
-        repository.extractDominantColorFromUri(uriString.toString(), context)
-    } else {
+    val dominantColorInt = try {
+        if (!uriString.isNullOrEmpty() && uriString.length > 6) {
+            repository.extractDominantColorFromUri(uriString, context)
+        } else {
+            Color.Gray.toArgb()
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        // Devolver un color predeterminado en caso de error
         Color.Gray.toArgb()
     }
+
 
     val dominantColor = Color(dominantColorInt)
 
@@ -233,15 +240,17 @@ fun TwistItem(
                 .fillMaxWidth()
                 .height(150.dp)
         ) { // Asegúrate de establecer una altura
-            val filePath = File(context.getExternalFilesDir(null), twist.imageUri)
-            if (filePath.exists()) {
-                val bitmap = BitmapFactory.decodeFile(filePath.absolutePath)
+            val localFilePath = "${context.filesDir}/images/${twist.imageUri}"
+            val localFile = File(localFilePath)
+            if (localFile.exists()) {
+                val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
                 println("Aqui el bitmap es $bitmap")
             } else {
-                println("El archivo no existe en la ruta $filePath")
+                println("El archivo no existe en la ruta $localFile")
             }
+
             Image(
-                painter = rememberAsyncImagePainter("file://${context.getExternalFilesDir(null)}/${twist.imageUri}"),
+                painter = rememberAsyncImagePainter(localFile),
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()

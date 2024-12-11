@@ -33,13 +33,25 @@ export async function saveImageToRedis(key, imageBuffer) {
     try {
         await initRedisClient(); // Asegurarse de que Redis está inicializado
 
+        // Guarda la imagen en formato Base64
         await redisClient.set(key, imageBuffer.toString('base64'));
         console.log('Imagen guardada con éxito:', key);
+
+        // Genera y guarda los metadatos
+        const metadataKey = `${key}:metadata`;
+        const metadata = {
+            lastModified: new Date().toISOString(), // Fecha actual
+            size: imageBuffer.length, // Tamaño de la imagen en bytes
+        };
+        await redisClient.set(metadataKey, JSON.stringify(metadata));
+        console.log('Metadatos guardados con éxito:', metadataKey);
+
         return key;
     } catch (error) {
-        console.error('Error al guardar la imagen:', error);
+        console.error('Error al guardar la imagen y metadatos:', error);
     }
 }
+
 
 // Recuperar imagen de Redis
 export async function getImageFromRedis(key) {
@@ -61,6 +73,17 @@ export async function getImageFromRedis(key) {
         throw error; // Lanza el error para que se maneje en el router
     }
 }
+
+export const deleteImageFromRedis = async (imageId) => {
+    try {
+      await initRedisClient();
+      const result = await redisClient.del(imageId);
+      return result > 0; // Retorna true si se eliminó con éxito
+    } catch (error) {
+      console.error("Error deleting image from Redis:", error.message);
+      throw error;
+    }
+  };
 
 
 // Recuperar metadatos de imagen desde Redis
