@@ -91,8 +91,12 @@ fun NavigationWrapper(
         }
 
         composable(Routes.HOME) {
-            HomeScreen(navController = navController)
+            HomeScreen(
+                navController = navController,
+                twistViewModel = twistViewModel
+            )
         }
+
 
         composable(Routes.PROFILE) {
             ProfileScreen(navController)
