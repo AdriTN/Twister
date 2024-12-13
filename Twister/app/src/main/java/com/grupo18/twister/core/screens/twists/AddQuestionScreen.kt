@@ -14,6 +14,7 @@ import com.grupo18.twister.core.models.AnswerModel
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +27,7 @@ fun AddQuestionScreen(
     val answers = remember { mutableStateListOf<AnswerModel>() }
     var answerText by remember { mutableStateOf("") }
     var isCorrect by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -116,7 +118,7 @@ fun AddQuestionScreen(
                 Button(
                     onClick = {
                         if (questionText.isNotBlank() && answers.isNotEmpty()) {
-                            questionViewModel.createQuestion(twistId, questionText, answers.toList())
+                            questionViewModel.createQuestion(scope, questionText, answers.toList())
                             navController.navigateUp() // Regresar a la pantalla anterior
                         }
                     },

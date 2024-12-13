@@ -173,7 +173,7 @@ fun EditTwistDialog(
                         if (imageToRemove) {
                             println("Se va a eliminar la imagen")
                             twistViewModel.deleteImageFromTwist(
-                                token = app.currentUser.value?.token ?: "",
+                                token = "Bearer ${app.currentUser.value?.token ?: ""}", // Cambio aquí
                                 Twist = newTwist,
                                 scope = scope,
                                 context = context
@@ -189,6 +189,7 @@ fun EditTwistDialog(
                             if (it != lastimageUri) {
                                 twistViewModel.uploadImage(
                                     context,
+                                    "Bearer ${app.currentUser.value?.token ?: ""}", // Cambio aquí
                                     imageUri!!,
                                     context.contentResolver
                                 ) { response ->

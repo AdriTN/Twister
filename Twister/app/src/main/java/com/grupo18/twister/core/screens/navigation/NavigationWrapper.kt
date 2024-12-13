@@ -19,7 +19,6 @@ import com.google.gson.Gson
 
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
-import com.grupo18.twister.core.factories.QuestionViewModelFactory
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.core.models.TwistModel
@@ -36,6 +35,7 @@ import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.LiveTwist
 import com.grupo18.twister.core.screens.twists.TempTwist
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
+import com.grupo18.twister.core.viewmodel.QuestionViewModelFactory
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 
 @Composable
@@ -62,8 +62,6 @@ fun NavigationWrapper(
     val twistViewModelFactory = TwistViewModelFactory(myApp)
     val twistViewModel: TwistViewModel = viewModel(factory = twistViewModelFactory)
     val apiService: ApiService = ApiClient.retrofit.create(ApiService::class.java)
-    val questionViewModelFactory = QuestionViewModelFactory(apiService)
-    val questionViewModel: QuestionViewModel = viewModel(factory = questionViewModelFactory)
 
     NavHost(
         navController = navController,
@@ -167,10 +165,9 @@ fun NavigationWrapper(
                 ManageQuestionsScreen(
                     navController = navController,
                     twist = twist,
-                    questionViewModel = questionViewModel,
                     token = myApp.currentUser.value?.token ?: "",
-                    twistViewModel = twistViewModel, // Pasamos el twistViewModel
-                    scope = androidx.compose.runtime.rememberCoroutineScope() // Creamos un scope local
+                    twistViewModel = twistViewModel,
+                    scope = androidx.compose.runtime.rememberCoroutineScope()
                 )
             }
         }

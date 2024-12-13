@@ -29,17 +29,6 @@ import java.util.UUID
 class TwistViewModel(private val myApp: MyApp) : ViewModel() {
     private val _twists = MutableStateFlow<List<TwistModel>>(emptyList())
     val twists: StateFlow<List<TwistModel>> = _twists
-    init {
-        observeTwistChanges()
-    }
-
-    private fun observeTwistChanges() {
-        viewModelScope.launch {
-            twists.collect { twistList ->
-                println("ATENCION: Lista de Twists actualizada: $twistList")
-            }
-        }
-    }
 
     private val apiService: ApiService = ApiClient.retrofit.create(ApiService::class.java)
 
@@ -139,10 +128,10 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
     }
 
 
-    fun uploadImage(context : Context, imageUri: String, contentResolver: ContentResolver, onResult: (Response<UploadResponse>) -> Unit) {
+    fun uploadImage(context : Context, token: String, imageUri: String, contentResolver: ContentResolver, onResult: (Response<UploadResponse>) -> Unit) {
         val filePart = ImageService.prepareImageFile(imageUri)
         filePart?.let {
-            val call = apiService.uploadImage(it)
+            val call = apiService.uploadImage(token, it)
             call.enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     if (response.isSuccessful) {

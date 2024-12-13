@@ -15,10 +15,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
+import com.grupo18.twister.core.viewmodel.QuestionViewModelFactory
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,12 +31,14 @@ import kotlinx.coroutines.launch
 fun ManageQuestionsScreen(
     navController: NavController,
     token: String,
-    questionViewModel: QuestionViewModel,
     twistViewModel: TwistViewModel,
     scope: CoroutineScope,
     twist: TwistModel
 ) {
-    val questions by questionViewModel.getQuestionsForTwist(twist.toString()).collectAsState(initial = emptyList())
+    val questionViewModel: QuestionViewModel = viewModel(
+        factory = QuestionViewModelFactory(twist)
+    )
+    val questions by questionViewModel.questions.collectAsState()
 
     println("Questions: $questions of questionViewModel $questionViewModel")
 
@@ -78,7 +82,7 @@ fun ManageQuestionsScreen(
                                     showQuestionDialog = true
                                 },
                                 onDelete = {
-                                    questionViewModel.deleteQuestion(twist.id, question.id)
+                                    questionViewModel.deleteQuestion(scope, question.id)
                                 }
                             )
                         }
@@ -98,12 +102,12 @@ fun ManageQuestionsScreen(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = {
-                        val valid = questionViewModel.hasAtLeastOneCorrectAnswer(twist.id)
+                        val valid = questionViewModel.hasAtLeastOneCorrectAnswer()
                         if (!valid) {
                             showError = true
                         } else {
                             // Guardar los cambios en el backend y esperar la respuesta antes de volver
-                            questionViewModel.saveChanges(token, twist.id, twist.title, twist.description, twist.imageUri) { success ->
+                            questionViewModel.saveChanges(scope, token) { success ->
                                 if (success) {
                                     twistViewModel.loadTwists(token, scope, context = context) { loading ->
                                         if (!loading) {
@@ -133,9 +137,9 @@ fun ManageQuestionsScreen(
                     },
                     onSave = { questionText, answers ->
                         if (selectedQuestion == null) {
-                            questionViewModel.createQuestion(twist.id, questionText, answers)
+                            questionViewModel.createQuestion(scope, questionText, answers)
                         } else {
-                            questionViewModel.editQuestion(twist.id, selectedQuestion!!.id, questionText, answers)
+                            questionViewModel.editQuestion(scope, selectedQuestion!!.id, questionText, answers)
                         }
                         showQuestionDialog = false
                         selectedQuestion = null

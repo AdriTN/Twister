@@ -17,8 +17,9 @@ router.put("/edit", async (req, res) => {
             return res.status(401).json({ message: "Unauthorized" }); // Respuesta para usuario no autenticado
         }
         const twistData = req.body;
+        console.log("Se va a editar un twist", JSON.stringify(twistData, null, 2));
         const updatedTwist = await handleupdateTwist(userId, twistData);
-
+        
         if (!updatedTwist) {
             return res.status(404).json({ message: "Twist not found." }); // Respuesta si no se encuentra el twist
         }

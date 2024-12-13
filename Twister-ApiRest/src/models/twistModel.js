@@ -116,6 +116,7 @@ export async function updateTwist(userId, twistData) {
     let twist = await getTwistById(key); // Asegúrate de que esta función use la nueva clave
   
     // Si no se encuentra el twist, crea uno nuevo
+    console.log("Old twist: ", twist)
     if (!twist) {
         console.log("Twist not found, creating new twist...");
         twist = {
@@ -129,7 +130,7 @@ export async function updateTwist(userId, twistData) {
         // Verifica que el usuario tenga permiso para editar
         if (twist.userId !== userId) return -1;
         console.log("Twist found, updating twist...");
-  
+        console.log("New twist: ", twist)
         // Actualiza los datos del twist existente
         twist = {
             ...twist,

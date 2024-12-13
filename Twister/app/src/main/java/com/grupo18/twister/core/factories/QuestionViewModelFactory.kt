@@ -1,18 +1,16 @@
-package com.grupo18.twister.core.factories
+// Archivo: QuestionViewModelFactory.kt
+package com.grupo18.twister.core.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.grupo18.twister.core.api.ApiService
-import com.grupo18.twister.core.viewmodel.QuestionViewModel
+import com.grupo18.twister.core.models.TwistModel
 
 class QuestionViewModelFactory(
-    private val apiService: ApiService
+    private val twist: TwistModel
 ) : ViewModelProvider.Factory {
-
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(QuestionViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return QuestionViewModel(apiService) as T
+            return QuestionViewModel(twist) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
