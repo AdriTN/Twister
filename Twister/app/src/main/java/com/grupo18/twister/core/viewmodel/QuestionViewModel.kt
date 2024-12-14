@@ -12,7 +12,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
 import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 
 class QuestionViewModel(
@@ -79,11 +82,25 @@ class QuestionViewModel(
             val gson = Gson()
             val twistJson = gson.toJson(twist)
             println("Se va a guardar el nuevo twist: $twistJson")
-            apiService.editTwist(token, twistData = twist)
+            val call = apiService.editTwist(token, twistData = twist)
+            call.enqueue(object : Callback<TwistModel> {
+                override fun onResponse(call: Call<TwistModel>, response: Response<TwistModel>) {
+                    if (response.isSuccessful) {
+                        println("Twist editado con éxito: ${response.body()}")
+                        callback(true)
+                    } else {
+                        println("Error en la respuesta: ${response.code()} - ${response.message()}")
+                        callback(false)
+                    }
+                }
+
+                override fun onFailure(call: Call<TwistModel>, t: Throwable) {
+                    println("Fallo al editar el twist: ${t.message}")
+                    callback(false)
+                }
+            })
         }
-
     }
-
     // Generar un ID único para nuevas preguntas
     private fun generateUniqueId(): String {
         return java.util.UUID.randomUUID().toString()

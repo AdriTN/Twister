@@ -104,7 +104,7 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
                     twists.forEach { twist ->
                         twist.imageUri?.let { imageUri ->
                             val localFilePath = "${context.filesDir}/images/${imageUri}"
-                            downloadImagesForTwist(context, imageUri, localFilePath) { imageUpdated ->
+                            downloadImagesForTwist(context, token, imageUri, localFilePath) { imageUpdated ->
                                 if (imageUpdated) {
                                     println("Imagen actualizada para el Twist ID: ${twist.id}")
                                 } else {
@@ -238,6 +238,7 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
 
     fun downloadImagesForTwist(
         context: Context,
+        token: String,
         imageUri: String,
         localFilePath: String,
         onImageUpdated: (Boolean) -> Unit
@@ -254,12 +255,13 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
             }
 
             // Comprobar si el archivo ya existe
-            if (file.exists()) {
+            //if (file.exists()) {
+            if (false) {
                 println("La imagen ya existe en ${file.absolutePath}")
                 // Verificar si necesita actualización
                 val lastModified = file.lastModified()
                 println("Se va a comprobar el estado de la imagen $imageUri en $lastModified")
-                val response = apiService.checkImageUpdate(imageUri, lastModified).execute()
+                val response = apiService.checkImageUpdate(token, imageUri, lastModified).execute()
 
                 println("Respuesta del servidor: ${response.code()} - ${response.message()}")
 
@@ -280,7 +282,7 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
 
             try {
                 // Descargar la imagen si no existe o ha cambiado
-                val downloadResponse = apiService.downloadImage(imageUri).execute()
+                val downloadResponse = apiService.downloadImage(token, imageUri).execute()
                 if (downloadResponse.isSuccessful) {
                     val body = downloadResponse.body()
                     if (body != null) {

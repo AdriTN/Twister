@@ -4,8 +4,6 @@ import { saveImageToRedis, getImageFromRedis, getImageMetadata, deleteImageFromR
 import { handleupdateTwist } from "../services/twistService.js";
 import { getUserWithToken } from "../services/authService.js";
 
-
-
 const router = express.Router();
 const upload = multer();
 
@@ -15,6 +13,7 @@ router.post("/upload", upload.single("image"), async (req, res) => {
     const userId = await getUserWithToken(req, res);
 
     if (!userId || userId === -1) {
+        console.log("Unauthorized access"); // Log para acceso no autorizado
         return res.status(401).json({ message: "Unauthorized" }); // Respuesta para usuario no autenticado
     }
     
@@ -36,7 +35,6 @@ router.post("/upload", upload.single("image"), async (req, res) => {
 // Ruta para descargar imágenes
 router.get("/download/:fileName", async (req, res) => {
   const userId = await getUserWithToken(req, res);
-
     if (!userId || userId === -1) {
         return res.status(401).json({ message: "Unauthorized" }); // Respuesta para usuario no autenticado
     }
@@ -47,6 +45,7 @@ router.get("/download/:fileName", async (req, res) => {
     const imageBuffer = await getImageFromRedis(fileName); // Recupera la imagen desde Redis sin guardar
 
     if (!imageBuffer) {
+      console.log("Image not found:", fileName);
       return res.status(404).json({ message: "Image not found" });
     }
 

@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.TwistModel
+import com.grupo18.twister.core.screens.navigation.Routes
 import com.grupo18.twister.core.viewmodel.QuestionViewModel
 import com.grupo18.twister.core.viewmodel.QuestionViewModelFactory
 import com.grupo18.twister.core.viewmodel.TwistViewModel
@@ -111,9 +112,10 @@ fun ManageQuestionsScreen(
                                 if (success) {
                                     twistViewModel.loadTwists(token, scope, context = context) { loading ->
                                         if (!loading) {
-                                            // Aseguramos que popBackStack se llame en el hilo principal
                                             scope.launch(Dispatchers.Main) {
-                                                navController.popBackStack()
+                                                navController.navigate(Routes.EDIT) {
+                                                    popUpTo(Routes.EDIT) { inclusive = true }
+                                                }
                                             }
                                         }
                                     }

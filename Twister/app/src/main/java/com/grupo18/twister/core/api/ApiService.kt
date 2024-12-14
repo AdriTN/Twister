@@ -92,12 +92,14 @@ interface ApiService {
 
     @GET("/images/download/{imageUri}")
     fun downloadImage(
+        @Header("Authorization") token: String,
         @Path("imageUri") imageUri: String
     ): Call<ResponseBody>
 
     @HEAD("/images/check/{imageUri}")
     fun checkImageUpdate(
         @Path("imageUri") imageUri: String,
+        @Header("Authorization") token: String,
         @Header("If-Modified-Since") lastModified: Long
     ): Call<Void>
 

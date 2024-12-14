@@ -33,7 +33,6 @@ redisClient.on("error", (err) => {
   console.error("Error de conexión a Redis:", err);
 });
 
-
 app.use(json());
 
 // Initialize the database
@@ -63,9 +62,9 @@ io.on("connection", (socket) => {
   socketHandlers(io, socket); // Pasar el servidor y el socket al manejador
 });
 
-// Iniciar el servidor HTTP (que incluye sockets)
-httpServer.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+// Iniciar el servidor HTTP (que incluye sockets) en todas las interfaces
+httpServer.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server listening on http://0.0.0.0:${PORT}`);
 });
 
 // Exportar para AWS Lambda o entornos serverless
