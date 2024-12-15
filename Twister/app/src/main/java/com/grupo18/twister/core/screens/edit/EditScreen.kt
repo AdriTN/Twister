@@ -316,7 +316,7 @@ fun TwistItem(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(20.dp))
 
                     IconButton(
                         onClick = onDelete,

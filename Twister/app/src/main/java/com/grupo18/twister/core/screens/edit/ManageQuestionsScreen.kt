@@ -68,89 +68,108 @@ fun ManageQuestionsScreen(
                     }
                 }
             )
-        },
-        content = { padding ->
-            Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-                if (questions.isEmpty()) {
-                    Text("No questions available. Add at least one with a correct answer before saving.", color = Color.Gray)
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(questions) { question ->
-                            QuestionCard(
-                                question = question,
-                                onEdit = {
-                                    selectedQuestion = question
-                                    showQuestionDialog = true
-                                },
-                                onDelete = {
-                                    questionViewModel.deleteQuestion(scope, question.id)
-                                }
-                            )
-                        }
+        }
+    ) { padding ->
+        // Colocamos todo en una Column
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            // Lista de preguntas o mensaje "No questions..."
+            if (questions.isEmpty()) {
+                Text(
+                    "No questions available. Add at least one with a correct answer before saving.",
+                    color = Color.Gray
+                )
+            } else {
+                // LazyColumn con weight(1f) para que ocupe todo el espacio restante
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(questions) { question ->
+                        QuestionCard(
+                            question = question,
+                            onEdit = {
+                                selectedQuestion = question
+                                showQuestionDialog = true
+                            },
+                            onDelete = {
+                                questionViewModel.deleteQuestion(scope, question.id)
+                            }
+                        )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                if (showError) {
-                    Text("You must have at least one question with a correct answer to save.", color = Color.Red)
-                    Spacer(modifier = Modifier.height(8.dp))
+            // Si hay error, lo mostramos encima de los botones
+            if (showError) {
+                Text(
+                    "You must have at least one question with a correct answer to save.",
+                    color = Color.Red
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Fila de botones (siempre al final)
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { navController.popBackStack() }) {
+                    Text("Cancel")
                 }
-
-                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                    TextButton(onClick = { navController.popBackStack() }) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = {
-                        val valid = questionViewModel.hasAtLeastOneCorrectAnswer()
-                        if (!valid) {
-                            showError = true
-                        } else {
-                            // Guardar los cambios en el backend y esperar la respuesta antes de volver
-                            questionViewModel.saveChanges(scope, token) { success ->
-                                if (success) {
-                                    twistViewModel.loadTwists(token, scope, context = context) { loading ->
-                                        if (!loading) {
-                                            scope.launch(Dispatchers.Main) {
-                                                navController.navigate(Routes.EDIT) {
-                                                    popUpTo(Routes.EDIT) { inclusive = true }
-                                                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = {
+                    val valid = questionViewModel.hasAtLeastOneCorrectAnswer()
+                    if (!valid) {
+                        showError = true
+                    } else {
+                        // Guardar los cambios en el backend y esperar la respuesta antes de volver
+                        questionViewModel.saveChanges(scope, token) { success ->
+                            if (success) {
+                                twistViewModel.loadTwists(token, scope, context = context) { loading ->
+                                    if (!loading) {
+                                        scope.launch(Dispatchers.Main) {
+                                            navController.navigate(Routes.EDIT) {
+                                                popUpTo(Routes.EDIT) { inclusive = true }
                                             }
                                         }
                                     }
-                                } else {
-                                    println("Error saving changes to the questions.")
                                 }
+                            } else {
+                                println("Error saving changes to the questions.")
                             }
                         }
-                    }) {
-                        Text("Save")
                     }
+                }) {
+                    Text("Save")
                 }
             }
-
-            if (showQuestionDialog) {
-                QuestionDialog(
-                    question = selectedQuestion,
-                    onDismiss = {
-                        showQuestionDialog = false
-                        selectedQuestion = null
-                    },
-                    onSave = { questionText, answers ->
-                        if (selectedQuestion == null) {
-                            questionViewModel.createQuestion(scope, questionText, answers)
-                        } else {
-                            questionViewModel.editQuestion(scope, selectedQuestion!!.id, questionText, answers)
-                        }
-                        showQuestionDialog = false
-                        selectedQuestion = null
-                    },
-                    twistId = twist.id,
-                )
-            }
         }
-    )
+
+        // Dialog para crear/editar pregunta
+        if (showQuestionDialog) {
+            QuestionDialog(
+                question = selectedQuestion,
+                onDismiss = {
+                    showQuestionDialog = false
+                    selectedQuestion = null
+                },
+                onSave = { questionText, answers ->
+                    if (selectedQuestion == null) {
+                        questionViewModel.createQuestion(scope, questionText, answers)
+                    } else {
+                        questionViewModel.editQuestion(scope, selectedQuestion!!.id, questionText, answers)
+                    }
+                    showQuestionDialog = false
+                    selectedQuestion = null
+                },
+                twistId = twist.id,
+            )
+        }
+    }
 }
 
 @Composable
@@ -172,10 +191,14 @@ fun QuestionCard(
             question.answers.forEach { answer ->
                 Text(
                     text = if (answer.isCorrect) "✔ ${answer.text}" else answer.text,
-                    color = if (answer.isCorrect) Color.Yellow else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    color = if (answer.isCorrect) Color.Yellow
+                    else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                 )
             }
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 IconButton(onClick = onEdit) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit Question", tint = MaterialTheme.colorScheme.onPrimary)
                 }

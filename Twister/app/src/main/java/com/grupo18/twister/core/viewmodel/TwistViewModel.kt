@@ -10,6 +10,7 @@ import com.google.gson.Gson
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.api.ImageService
+import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.models.UploadResponse
 import com.grupo18.twister.core.screens.authentication.MyApp
@@ -309,6 +310,15 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
                 println("Excepción al descargar la imagen: ${e.message}")
                 onImageUpdated(false)
             }
+        }
+    }
+
+    suspend fun loadQuestionsForTwist(twistId: String, token: String): List<QuestionModel> {
+        val response = apiService.getAllQuestions("Bearer $token", twistId).execute()
+        if (response.isSuccessful) {
+            return response.body() ?: emptyList()
+        } else {
+            throw Exception("Error: ${response.code()} - ${response.message()}")
         }
     }
 }

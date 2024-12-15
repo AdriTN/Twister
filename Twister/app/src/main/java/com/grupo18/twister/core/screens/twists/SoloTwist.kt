@@ -1,95 +1,202 @@
 package com.grupo18.twister.core.screens.twists
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.grupo18.twister.core.components.ContentCard
-import com.grupo18.twister.core.components.OptionsList
-import com.grupo18.twister.core.components.ProgressBar
+import androidx.navigation.NavController
+import com.grupo18.twister.core.models.AnswerModel
+import com.grupo18.twister.core.models.QuestionModel
+import com.grupo18.twister.core.screens.authentication.MyApp
+import com.grupo18.twister.core.viewmodel.TwistViewModel
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SoloTwist(quizData: Question) {
-    val (currentQuestionIndex, setCurrentQuestionIndex) = remember { mutableStateOf(0) }
-    val userAnswers = remember { mutableStateOf(mutableMapOf<Int, String>()) }  // Mapa para almacenar respuestas por índice
+fun SoloTwist(
+    navController: NavController,
+    twistId: String,
+    twistViewModel: TwistViewModel
+) {
+    val context = LocalContext.current
+    val myApp = context.applicationContext as MyApp
+    val token = myApp.currentUser.value?.token ?: ""
 
-    SoloTwistContent(
-        quizData = quizData,
-        currentQuestionIndex = currentQuestionIndex,
-        onNavigateToQuestion = setCurrentQuestionIndex,
-        userAnswers = userAnswers
-    )
+    val isLoading = remember { mutableStateOf(true) }
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+    val questionsState = remember { mutableStateOf<List<QuestionModel>>(emptyList()) }
+
+    // Cargar preguntas
+    LaunchedEffect(twistId) {
+        isLoading.value = true
+        errorMessage.value = null
+        try {
+            val questions = twistViewModel.loadQuestionsForTwist(twistId, token)  // Implementar en TwistViewModel
+            questionsState.value = questions
+        } catch (e: Exception) {
+            errorMessage.value = e.localizedMessage
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Jugar en solitario") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                isLoading.value -> {
+                    CircularProgressIndicator()
+                }
+                !errorMessage.value.isNullOrEmpty() -> {
+                    Text(text = "Error: ${errorMessage.value}", color = Color.Red)
+                }
+                questionsState.value.isEmpty() -> {
+                    Text(text = "No hay preguntas para este Twist.")
+                }
+                else -> {
+                    // Muestra la UI de preguntas con feedback
+                    SoloTwistContent(questionsState.value)
+                }
+            }
+        }
+    }
 }
 
 @Composable
-fun SoloTwistContent(
-    quizData: Question,
-    currentQuestionIndex: Int,
-    onNavigateToQuestion: (Int) -> Unit,
-    userAnswers: MutableState<MutableMap<Int, String>>  // Ahora pasamos userAnswers como un estado mutable
-) {
-    val currentQuestion = quizData.questions[currentQuestionIndex]
-    val totalQuestions = quizData.questions.size
+fun SoloTwistContent(questions: List<QuestionModel>) {
+    var currentQuestionIndex by remember { mutableStateOf(0) }
+    val userSelectedAnswers = remember { mutableStateMapOf<Int, Int>() }
+
+    val totalQuestions = questions.size
+    val currentQuestion = questions[currentQuestionIndex]
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.Center,
+            .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Barra de progreso
-        ProgressBar(progress = (currentQuestionIndex + 1) / totalQuestions.toFloat())
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Tarjeta de contenido mostrando la descripción y la imagen de la pregunta actual
-        ContentCard(
-            description = currentQuestion.description,
-            image = currentQuestion.image
+        Text(
+            text = "Pregunta ${currentQuestionIndex + 1} / $totalQuestions",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Lista de opciones para la pregunta actual
-        OptionsList(
-            options = currentQuestion.options,
-            selected = userAnswers.value[currentQuestionIndex],
-            onOptionSelected = { selectedOption ->
-                userAnswers.value[currentQuestionIndex] = selectedOption
-                println("Opción seleccionada: $selectedOption")
-                println("Mapa actualizado: ${userAnswers.value}")
-            }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Botones de navegación para avanzar y retroceder entre preguntas
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+        Card(
+            elevation = CardDefaults.cardElevation(8.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier.padding(8.dp)
         ) {
-            // Botón "Anterior"
-            Button(
-                onClick = { onNavigateToQuestion(currentQuestionIndex - 1) },
-                enabled = currentQuestionIndex > 0 // Deshabilitar si es la primera pregunta
-            ) {
-                Text("Anterior")
-            }
+            Text(
+                text = currentQuestion.question,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(16.dp),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
 
-            // Botón "Siguiente"
-            Button(
-                onClick = { onNavigateToQuestion(currentQuestionIndex + 1) },
-                enabled = currentQuestionIndex < totalQuestions - 1 // Deshabilitar si es la última pregunta
-            ) {
-                Text("Siguiente")
+        // Opciones con feedback
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            currentQuestion.answers.forEachIndexed { answerIndex, answer ->
+                AnswerOption(
+                    questionIndex = currentQuestionIndex,
+                    answerIndex = answerIndex,
+                    answer = answer,
+                    userSelectedAnswers = userSelectedAnswers
+                )
             }
         }
+
+        // Flechas de navegación
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(
+                onClick = { if (currentQuestionIndex > 0) currentQuestionIndex-- },
+                enabled = currentQuestionIndex > 0
+            ) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Anterior")
+            }
+
+            IconButton(
+                onClick = { if (currentQuestionIndex < totalQuestions - 1) currentQuestionIndex++ },
+                enabled = currentQuestionIndex < totalQuestions - 1
+            ) {
+                Icon(Icons.Default.ArrowForward, contentDescription = "Siguiente")
+            }
+        }
+    }
+}
+
+@Composable
+fun AnswerOption(
+    questionIndex: Int,
+    answerIndex: Int,
+    answer: AnswerModel,
+    userSelectedAnswers: MutableMap<Int, Int>
+) {
+    val userChoice = userSelectedAnswers[questionIndex]
+    val isUserChoice = (userChoice == answerIndex)
+    val backgroundColor: Color
+    val textColor: Color
+
+    if (userChoice != null) {
+        // Usuario seleccionó algo
+        backgroundColor = when {
+            isUserChoice && answer.isCorrect -> Color(0xFFB2FFB2)
+            isUserChoice && !answer.isCorrect -> Color(0xFFFFB2B2)
+            !isUserChoice && answer.isCorrect -> Color(0xFFE2FFD9)
+            else -> MaterialTheme.colorScheme.surface
+        }
+        textColor = MaterialTheme.colorScheme.onSurface
+    } else {
+        // Aún no ha seleccionado
+        backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+        textColor = MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Button(
+        onClick = {
+            userSelectedAnswers[questionIndex] = answerIndex
+        },
+        modifier = Modifier
+            .fillMaxWidth(0.9f)
+            .height(50.dp)
+            .clip(RoundedCornerShape(8.dp)),
+        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor)
+    ) {
+        Text(answer.text, color = textColor)
     }
 }

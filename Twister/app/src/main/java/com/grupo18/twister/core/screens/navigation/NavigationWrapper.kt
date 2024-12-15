@@ -16,14 +16,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.gson.Gson
-
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.core.models.TwistModel
-import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.authentication.AuthScreen
+import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
 import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.edit.ManageQuestionsScreen
@@ -33,7 +32,8 @@ import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.LiveTwist
-import com.grupo18.twister.core.screens.twists.TempTwist
+import com.grupo18.twister.core.screens.twists.TwistDetailScreen
+import com.grupo18.twister.core.screens.twists.SoloTwist
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 
 @Composable
@@ -93,7 +93,6 @@ fun NavigationWrapper(
             )
         }
 
-
         composable(Routes.PROFILE) {
             ProfileScreen(navController)
         }
@@ -103,7 +102,6 @@ fun NavigationWrapper(
         }
 
         composable(Routes.EDIT) {
-            // Pasar twistViewModel al EditScreen
             EditScreen(navController = navController, twistViewModel = twistViewModel)
         }
 
@@ -164,6 +162,26 @@ fun NavigationWrapper(
                     scope = androidx.compose.runtime.rememberCoroutineScope()
                 )
             }
+        }
+
+        // Pantalla de detalle (intermedia)
+        composable("twistDetail/{twistId}") { backStackEntry ->
+            val twistId = backStackEntry.arguments?.getString("twistId")
+            TwistDetailScreen(
+                navController = navController,
+                twistId = twistId,
+                twistViewModel = twistViewModel
+            )
+        }
+
+        // Pantalla de jugar en solitario
+        composable("soloTwist/{twistId}") { backStackEntry ->
+            val twistId = backStackEntry.arguments?.getString("twistId") ?: ""
+            SoloTwist(
+                navController = navController,
+                twistId = twistId,
+                twistViewModel = twistViewModel
+            )
         }
     }
 }
