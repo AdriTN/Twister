@@ -11,5 +11,7 @@ object Routes {
     const val QR_SCANNER = "qr_scanner"
     const val LIVE_TWIST = "liveTwist/{pin}"
     const val ADD_QUESTION = "addQuestion/{twistId}"
-    const val MANAGE_QUESTIONS = "manageQuestions"
+    const val MANAGE_QUESTIONS = "manageQuestions/{twist}"
+    const val TWIST_DETAIL = "twistDetail/{twist}"
+    const val SOLO_TWIST = "soloTwist/{twist}"
 }

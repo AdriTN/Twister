@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.google.gson.Gson
 import com.grupo18.twister.R
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.viewmodel.TwistViewModel
@@ -30,11 +31,11 @@ import java.io.File
 @Composable
 fun TwistDetailScreen(
     navController: NavController,
-    twistId: String?,
+    twist: TwistModel?,
     twistViewModel: TwistViewModel
 ) {
     val twists by twistViewModel.twists.collectAsState()
-    val twist = twists.find { it.id == twistId }
+    val twist = twists.find { it.id == twist?.id }
 
     if (twist == null) {
         Scaffold(
@@ -88,7 +89,8 @@ fun TwistDetailScreen(
                 TwistDetailContent(
                     twist = twist,
                     onPlaySolo = {
-                        navController.navigate("soloTwist/${twist.id}")
+                        val twistJson = Gson().toJson(twist)
+                        navController.navigate("soloTwist/${twistJson}")
                     }
                 )
             }

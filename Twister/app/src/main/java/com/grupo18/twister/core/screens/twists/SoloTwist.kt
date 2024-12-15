@@ -17,15 +17,15 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.grupo18.twister.core.models.AnswerModel
 import com.grupo18.twister.core.models.QuestionModel
+import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SoloTwist(
     navController: NavController,
-    twistId: String,
+    twist: TwistModel?,
     twistViewModel: TwistViewModel
 ) {
     val context = LocalContext.current
@@ -36,13 +36,14 @@ fun SoloTwist(
     val errorMessage = remember { mutableStateOf<String?>(null) }
     val questionsState = remember { mutableStateOf<List<QuestionModel>>(emptyList()) }
 
-    // Cargar preguntas
-    LaunchedEffect(twistId) {
+    LaunchedEffect(twist) {
         isLoading.value = true
         errorMessage.value = null
         try {
-            val questions = twistViewModel.loadQuestionsForTwist(twistId, token)  // Implementar en TwistViewModel
-            questionsState.value = questions
+            val questions = twist?.twistQuestions
+            if (questions != null) {
+                questionsState.value = questions
+            }
         } catch (e: Exception) {
             errorMessage.value = e.localizedMessage
         } finally {

@@ -2,10 +2,8 @@ package com.grupo18.twister.core.viewmodel
 
 import android.content.ContentResolver
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
@@ -310,15 +308,6 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
                 println("Excepción al descargar la imagen: ${e.message}")
                 onImageUpdated(false)
             }
-        }
-    }
-
-    suspend fun loadQuestionsForTwist(twistId: String, token: String): List<QuestionModel> {
-        val response = apiService.getAllQuestions("Bearer $token", twistId).execute()
-        if (response.isSuccessful) {
-            return response.body() ?: emptyList()
-        } else {
-            throw Exception("Error: ${response.code()} - ${response.message()}")
         }
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.gson.Gson
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.models.UserModel
@@ -104,7 +105,8 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                             TwistCard(
                                 twist = twist,
                                 onClick = {
-                                    navController.navigate("twistDetail/${twist.id}")
+                                    val twistJson = Gson().toJson(twist)
+                                    navController.navigate("twistDetail/${twistJson}")
                                 }
                             )
                         }

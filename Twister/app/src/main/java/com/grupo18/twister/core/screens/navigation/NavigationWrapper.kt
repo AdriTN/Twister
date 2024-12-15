@@ -165,21 +165,23 @@ fun NavigationWrapper(
         }
 
         // Pantalla de detalle (intermedia)
-        composable("twistDetail/{twistId}") { backStackEntry ->
-            val twistId = backStackEntry.arguments?.getString("twistId")
+        composable(Routes.TWIST_DETAIL) { backStackEntry ->
+            val twistJson = backStackEntry.arguments?.getString("twist")
+            val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
             TwistDetailScreen(
                 navController = navController,
-                twistId = twistId,
+                twist = twist,
                 twistViewModel = twistViewModel
             )
         }
 
         // Pantalla de jugar en solitario
-        composable("soloTwist/{twistId}") { backStackEntry ->
-            val twistId = backStackEntry.arguments?.getString("twistId") ?: ""
+        composable(Routes.SOLO_TWIST) { backStackEntry ->
+            val twistJson = backStackEntry.arguments?.getString("twist")
+            val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
             SoloTwist(
                 navController = navController,
-                twistId = twistId,
+                twist = twist,
                 twistViewModel = twistViewModel
             )
         }
