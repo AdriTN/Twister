@@ -34,8 +34,6 @@ import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.LiveTwist
 import com.grupo18.twister.core.screens.twists.TempTwist
-import com.grupo18.twister.core.viewmodel.QuestionViewModel
-import com.grupo18.twister.core.viewmodel.QuestionViewModelFactory
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 
 @Composable
@@ -136,10 +134,6 @@ fun NavigationWrapper(
                 paddingValues = PaddingValues(),
                 onQRCodeScanned = { pin -> navController.navigate("liveTwist/$pin") }
             )
-        }
-
-        composable(Routes.TEMP_TWIST) {
-            TempTwist { pin -> navController.navigate("liveTwist/$pin") }
         }
 
         composable(Routes.LIVE_TWIST) { backStackEntry ->

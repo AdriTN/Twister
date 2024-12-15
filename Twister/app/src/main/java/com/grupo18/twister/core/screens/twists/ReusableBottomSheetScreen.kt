@@ -1,8 +1,10 @@
 package com.grupo18.twister.core.screens.twists
 
+import android.R.attr.onClick
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,6 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import com.grupo18.twister.R
 import com.journeyapps.barcodescanner.CaptureActivity
@@ -58,29 +65,24 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
         }
     }
 
+    // Column para la interfaz
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()  // Mantener el ancho completo
+            .wrapContentHeight()  // Ajustar la altura al contenido
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         // Título
         Text(
-            text = "Join a Game",
-            style = MaterialTheme.typography.headlineMedium,
+            text = "Join a Twist Session",
+            style = MaterialTheme.typography.headlineSmall,
             color = Color.Black,
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        // Imagen del logo (opcional)
-        Image(
-            painter = painterResource(id = R.drawable.ico), // Asegúrate de tener un logo
-            contentDescription = "Twister Logo",
-            modifier = Modifier
-                .size(120.dp)
-                .padding(bottom = 32.dp)
-        )
+        Spacer(modifier = Modifier.height(60.dp))
 
         // Campo de texto para agregar el PIN
         TextField(
@@ -88,29 +90,37 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
             onValueChange = { pinText.value = it },
             label = { Text("Enter Game PIN") },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .width(260.dp)
+                .padding(bottom = 16.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent, // Fondo transparente cuando está enfocado
+                unfocusedContainerColor = Color.Transparent // Fondo transparente cuando no está enfocado
+            )
         )
 
-        // Botón para unirse con el PIN
-        ModeButton(
-            label = "Join with PIN",
-            iconRes = R.drawable.qr,  // Puedes poner un icono adecuado para el PIN
-            onClick = { joinGame(pinText.value) }
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // Botón para escanear el código QR
-        ModeButton(
-            label = "Scan QR Code",
-            iconRes = R.drawable.qr,  // Asegúrate de tener el recurso QR adecuado
-            onClick = {
-                // Acción para iniciar el escaneo de código QR
-                val intent = Intent(context, CaptureActivity::class.java)
-                launcher.launch(intent)  // Usa el launcher para manejar el resultado
-            }
-        )
+        Box(
+            modifier = Modifier
+                .size(190.dp) // Ajusta el tamaño según tus necesidades
+                .clip(RoundedCornerShape(18.dp)) // Recorta las esquinas de la caja
+                .clickable {
+                    // Acción para iniciar el escaneo de código QR
+                    val intent = Intent(context, CaptureActivity::class.java)
+                    launcher.launch(intent)  // Usa el launcher para manejar el resultado
+                }
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.qr),
+                contentDescription = "Scan QR Code",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+
+        Spacer(modifier = Modifier.height(30.dp))
     }
 }
 
@@ -152,3 +162,4 @@ fun ModeButton(
         }
     }
 }
+
