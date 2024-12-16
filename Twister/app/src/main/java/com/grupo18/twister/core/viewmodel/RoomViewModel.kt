@@ -4,11 +4,11 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grupo18.twister.core.api.ApiClient
+import com.grupo18.twister.core.api.RealTimeClient
 import com.grupo18.twister.core.interfaces.RealTimeApi
 import com.grupo18.twister.core.models.Event
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.twists.Question
-import com.grupo18.twister.core.screens.twists.RealTimeClient
 import io.socket.client.Socket
 import kotlinx.coroutines.launch
 

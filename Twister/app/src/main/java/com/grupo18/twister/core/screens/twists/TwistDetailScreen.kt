@@ -1,5 +1,6 @@
 package com.grupo18.twister.core.screens.twists
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,11 +20,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.gson.Gson
 import com.grupo18.twister.R
 import com.grupo18.twister.core.models.TwistModel
+import com.grupo18.twister.core.screens.navigation.Routes
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import java.io.File
 
@@ -91,7 +94,8 @@ fun TwistDetailScreen(
                     onPlaySolo = {
                         val twistJson = Gson().toJson(twist)
                         navController.navigate("soloTwist/${twistJson}")
-                    }
+                    },
+                    navController
                 )
             }
         }
@@ -101,7 +105,8 @@ fun TwistDetailScreen(
 @Composable
 fun TwistDetailContent(
     twist: TwistModel,
-    onPlaySolo: () -> Unit
+    onPlaySolo: () -> Unit,
+    navController: NavController,
 ) {
     val context = LocalContext.current
     val localFilePath = "${context.filesDir}/images/${twist.imageUri}"
@@ -200,13 +205,16 @@ fun TwistDetailContent(
         // Botones al final
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(modifier = Modifier.height(16.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Button(
-                    onClick = { /* Podrías presentar en vivo si tu lógica lo permite */ },
+                    onClick = {
+                        val pin = ""
+                        val twistJson = Uri.encode(Gson().toJson(twist))
+                        navController.navigate("${Routes.GAME_SCREEN}/$twistJson/$pin")
+                    },
                     shape = RoundedCornerShape(50)
                 ) {
                     Text("Present")

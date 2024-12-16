@@ -19,7 +19,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.grupo18.twister.R
 import com.grupo18.twister.core.screens.navigation.Routes
 import com.grupo18.twister.core.screens.twists.TempTwist
-import kotlinx.coroutines.launch
 
 sealed class BottomNavItem(val route: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: String) {
     object Home : BottomNavItem(Routes.HOME, Icons.Default.Home, "Home")

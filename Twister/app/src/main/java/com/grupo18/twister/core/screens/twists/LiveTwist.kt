@@ -14,37 +14,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.grupo18.twister.core.api.ApiClient
+import com.grupo18.twister.core.api.RealTimeClient
 import com.grupo18.twister.core.components.ColorBlock
 import com.grupo18.twister.core.models.Event
+import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.viewmodel.RoomViewModel
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
 
-// Clase para gestionar eventos en tiempo real
-class RealTimeClient(private val socket: Socket) {
-
-    // Función para escuchar eventos
-    fun listenForEvents(roomId: String? = null, onEventReceived: (Event) -> Unit) {
-        // Escuchar el evento "newEvent" (esto depende del evento que envíes desde el servidor)
-        socket.on("newEvent", Emitter.Listener { args ->
-            if (args.isNotEmpty() && args[0] is Map<*, *>) {
-                val eventData = args[0] as Map<*, *>
-                val message = eventData["message"] as String
-                val event = Event(message) // Asumiendo que Event tiene un constructor que toma un mensaje
-                onEventReceived(event)
-            }
-        })
-    }
-
-    // Enviar un evento al servidor
-    fun sendEvent(event: Event) {
-        // Aquí deberías usar el método adecuado para enviar el evento por el socket
-        socket.emit("sendEvent", event) // "sendEvent" es un ejemplo; debe coincidir con el evento que tu servidor espera
-    }
-}
-
 @Composable
-fun LiveTwist(roomId: String) {
+fun LiveTwist(twist: TwistModel?, roomId: String, token: String) {
     // Estado para almacenar los eventos recibidos
     val events = remember { mutableStateListOf<Event>() }
     val roomViewModel = remember { RoomViewModel() }

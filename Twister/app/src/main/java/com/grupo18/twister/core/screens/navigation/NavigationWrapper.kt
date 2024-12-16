@@ -12,9 +12,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.gson.Gson
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
@@ -31,9 +33,9 @@ import com.grupo18.twister.core.screens.home.ProfileScreen
 import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.AddQuestionScreen
-import com.grupo18.twister.core.screens.twists.LiveTwist
 import com.grupo18.twister.core.screens.twists.TwistDetailScreen
 import com.grupo18.twister.core.screens.twists.SoloTwist
+import com.grupo18.twister.core.screens.twists.liveTwist.GameScreen
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 
 @Composable
@@ -59,7 +61,6 @@ fun NavigationWrapper(
 
     val twistViewModelFactory = TwistViewModelFactory(myApp)
     val twistViewModel: TwistViewModel = viewModel(factory = twistViewModelFactory)
-    val apiService: ApiService = ApiClient.retrofit.create(ApiService::class.java)
 
     NavHost(
         navController = navController,
@@ -134,13 +135,6 @@ fun NavigationWrapper(
             )
         }
 
-        composable(Routes.LIVE_TWIST) { backStackEntry ->
-            val pin = backStackEntry.arguments?.getString("pin") ?: ""
-            if (pin.isNotEmpty()) {
-                LiveTwist(pin)
-            }
-        }
-
         composable(Routes.ADD_QUESTION) { backStackEntry ->
             val twistId = backStackEntry.arguments?.getString("twistId")
             twistId?.let {
@@ -185,5 +179,21 @@ fun NavigationWrapper(
                 twistViewModel = twistViewModel
             )
         }
+
+        composable(
+            route = "${Routes.GAME_SCREEN}/{twist}/{pin}",
+            arguments = listOf(
+                navArgument("twist") { type = NavType.StringType },
+                navArgument("pin") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val twistJson = backStackEntry.arguments?.getString("twist")
+            val pin = backStackEntry.arguments?.getString("pin") ?: ""
+            val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
+
+            GameScreen(twist, currentUser)
+        }
+
     }
+
 }
