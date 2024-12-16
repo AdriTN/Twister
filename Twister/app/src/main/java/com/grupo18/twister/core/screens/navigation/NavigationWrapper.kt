@@ -179,11 +179,12 @@ fun NavigationWrapper(
         composable(Routes.SOLO_TWIST) { backStackEntry ->
             val twistJson = backStackEntry.arguments?.getString("twist")
             val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
-            SoloTwist(
-                navController = navController,
-                twist = twist,
-                twistViewModel = twistViewModel
-            )
+            if (twist != null) {
+                SoloTwist(
+                    navController = navController,
+                    twist = twist
+                )
+            }
         }
     }
 }

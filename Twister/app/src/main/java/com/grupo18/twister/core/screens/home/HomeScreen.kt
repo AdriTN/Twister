@@ -178,7 +178,7 @@ fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
                     modifier = Modifier
                         .size(100.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -251,7 +251,7 @@ fun HeaderWithProfileOrLogin(currentUser: UserModel?, navController: NavControll
                 modifier = Modifier
                     .size(40.dp)
                     .clickable { navController.navigate("profile") },
-                tint = MaterialTheme.colorScheme.onPrimary
+                tint = Color.Gray
             )
         }
     }

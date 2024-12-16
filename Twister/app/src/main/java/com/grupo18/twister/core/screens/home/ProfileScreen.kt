@@ -51,7 +51,7 @@ fun ProfileScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Perfil de Usuario") },
+                title = { Text("User Profile") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -75,7 +75,7 @@ fun ProfileScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // Logros y Estadísticas
-            SectionTitle("Logros")
+            SectionTitle("Achievements")
             currentUser?.let { AchievementsSection(it) }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -83,7 +83,7 @@ fun ProfileScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Configuración y Preferencias
-            SectionTitle("Configuración")
+            SectionTitle("Configuration")
             SettingsSection(navController)
         }
     }
@@ -114,7 +114,7 @@ fun ProfileHeader(user: UserModel) {
 
         Column {
             Text(text = user?.username ?: "Usuario Desconocido", fontSize = 24.sp)
-            Text(text = "Bio o Estado aquí", fontSize = 16.sp, color = Color.Gray)
+            Text(text = "Bio here", fontSize = 16.sp, color = Color.Gray)
         }
     }
 }
@@ -146,13 +146,13 @@ fun AchievementBadge(achievement: String) {
 @Composable
 fun SettingsSection(navController: NavController) {
     Column {
-        SettingItem(title = "Cambiar Contraseña") {
+        SettingItem(title = "Change Password") {
             navController.navigate("changePassword")
         }
-        SettingItem(title = "Preferencias de Notificación") {
+        SettingItem(title = "Notification Settings") {
             navController.navigate("notificationSettings")
         }
-        SettingItem(title = "Cerrar Sesión") {
+        SettingItem(title = "Log Out") {
             // Implementa la lógica de cierre de sesión
         }
     }
