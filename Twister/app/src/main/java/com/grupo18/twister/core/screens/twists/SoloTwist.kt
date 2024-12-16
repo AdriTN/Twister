@@ -36,6 +36,8 @@ fun SoloTwist(
     val errorMessage = remember { mutableStateOf<String?>(null) }
     val questionsState = remember { mutableStateOf<List<QuestionModel>>(emptyList()) }
 
+    val showExitDialog = remember { mutableStateOf(false) }
+
     LaunchedEffect(twist) {
         isLoading.value = true
         errorMessage.value = null
@@ -54,9 +56,13 @@ fun SoloTwist(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Jugar en solitario") },
+                title = {
+                    if (twist != null) {
+                        Text("Playing Solo: ${twist.title}")
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { showExitDialog.value = true }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -86,17 +92,54 @@ fun SoloTwist(
             }
         }
     }
+
+    // Diálogo para confirmar si el usuario desea salir
+    if (showExitDialog.value) {
+        ExitDialog(
+            onConfirm = {
+                navController.popBackStack()
+            },
+            onDismiss = {
+                showExitDialog.value = false
+            }
+        )
+    }
+}
+
+@Composable
+fun ExitDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Are you sure you want to exit the quiz?") },
+        text = { Text("Answers will not be saved.") },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Yes")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("No")
+            }
+        }
+    )
 }
 
 @Composable
 fun SoloTwistContent(questions: List<QuestionModel>, navController: NavController) {
     var currentQuestionIndex by remember { mutableStateOf(0) }
-    val userSelectedAnswers = remember { mutableStateMapOf<Int, Int>() }
-
     val totalQuestions = questions.size
-    val currentQuestion = questions[currentQuestionIndex]
+
+    // userAnswers: lista donde cada elemento es un estado con el set de índices seleccionados para esa pregunta.
+    val userAnswers = remember(questions) {
+        List(questions.size) { mutableStateOf(setOf<Int>()) }
+    }
 
     var showFinishDialog by remember { mutableStateOf(false) }
+    var showScoreDialog by remember { mutableStateOf(false) }
+    var score by remember { mutableStateOf(0f) }  // Lo usaremos como Float para permitir parciales
+
+    val currentQuestion = questions[currentQuestionIndex]
 
     Column(
         modifier = Modifier
@@ -161,7 +204,7 @@ fun SoloTwistContent(questions: List<QuestionModel>, navController: NavControlle
                     questionIndex = currentQuestionIndex,
                     answerIndex = answerIndex,
                     answer = answer,
-                    userSelectedAnswers = userSelectedAnswers
+                    userAnswers = userAnswers
                 )
             }
         }
@@ -192,8 +235,7 @@ fun SoloTwistContent(questions: List<QuestionModel>, navController: NavControlle
             } else {
                 Button(
                     onClick = { showFinishDialog = true },
-                    modifier = Modifier
-                        .padding(start = 8.dp)
+                    modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Text("Finish")
                 }
@@ -204,11 +246,27 @@ fun SoloTwistContent(questions: List<QuestionModel>, navController: NavControlle
         if (showFinishDialog) {
             FinishDialog(
                 onConfirm = {
-                    // Lógica para ir al Home (o cualquier otra pantalla que quieras)
-                    navController.navigate(Routes.HOME) // Esto lleva al usuario a la pantalla anterior (Home)
+                    // Calcular la puntuación con parcial
+                    score = calculatePartialScore(userAnswers, questions)
+                    showFinishDialog = false
+                    showScoreDialog = true
                 },
                 onDismiss = {
                     showFinishDialog = false
+                }
+            )
+        }
+
+        // Diálogo con la puntuación final (ahora Float con parciales)
+        if (showScoreDialog) {
+            ScoreDialog(
+                score = score,
+                totalQuestions = totalQuestions.toFloat(),  // Convertimos a Float para mostrar con decimales
+                onConfirm = {
+                    navController.navigate(Routes.HOME) // Volver al Home
+                },
+                onDismiss = {
+                    showScoreDialog = false
                 }
             )
         }
@@ -216,11 +274,119 @@ fun SoloTwistContent(questions: List<QuestionModel>, navController: NavControlle
 }
 
 @Composable
+fun AnswerOption(
+    questionIndex: Int,
+    answerIndex: Int,
+    answer: AnswerModel,
+    userAnswers: List<MutableState<Set<Int>>>
+) {
+    val selectedAnswers = userAnswers[questionIndex].value
+    val isSelected = answerIndex in selectedAnswers
+
+    val backgroundColor = if (isSelected) Color(0xFFADD8E6) else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = MaterialTheme.colorScheme.onSurface
+
+    Button(
+        onClick = {
+            val newSet = selectedAnswers.toMutableSet()
+            if (isSelected) {
+                newSet.remove(answerIndex)
+            } else {
+                newSet.add(answerIndex)
+            }
+            userAnswers[questionIndex].value = newSet
+        },
+        modifier = Modifier
+            .fillMaxWidth(0.9f)
+            .height(50.dp)
+            .clip(RoundedCornerShape(8.dp)),
+        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor)
+    ) {
+        Text(answer.text, color = textColor)
+    }
+}
+
+/**
+ * Calcula la puntuación parcial. Si una pregunta tiene múltiples respuestas correctas e
+ * incorrectas, se asigna una puntuación entre 0 y 1 según cuántas correctas se eligieron
+ * y cuántas incorrectas. Finalmente, se suman las puntuaciones de todas las preguntas.
+ */
+fun calculatePartialScore(
+    userAnswers: List<MutableState<Set<Int>>>,
+    questions: List<QuestionModel>
+): Float {
+    var totalScore = 0f
+
+    questions.forEachIndexed { qIndex, question ->
+        val selectedSet = userAnswers[qIndex].value
+
+        val correctIndices = question.answers.mapIndexedNotNull { aIndex, ans ->
+            if (ans.isCorrect) aIndex else null
+        }
+        val incorrectIndices = question.answers.mapIndexedNotNull { aIndex, ans ->
+            if (!ans.isCorrect) aIndex else null
+        }
+
+        val totalCorrect = correctIndices.size
+        val totalIncorrect = incorrectIndices.size
+
+        // Cuántas correctas seleccionó el usuario
+        val correctSelected = correctIndices.count { it in selectedSet }
+        // Cuántas incorrectas seleccionó el usuario
+        val incorrectSelected = incorrectIndices.count { it in selectedSet }
+
+        if (totalCorrect == 0) {
+            // Si no hay correctas (caso raro), le damos 0. O manejarlo según tu lógica.
+            return@forEachIndexed
+        }
+
+        // Fracción de correctas e incorrectas seleccionadas
+        val fractionCorrect = correctSelected.toFloat() / totalCorrect.toFloat()
+        val fractionIncorrect = if (totalIncorrect > 0) {
+            incorrectSelected.toFloat() / totalIncorrect.toFloat()
+        } else 0f
+
+        // Puntuación parcial de la pregunta
+        var partial = fractionCorrect - fractionIncorrect
+        if (partial < 0f) partial = 0f
+        if (partial > 1f) partial = 1f
+
+        totalScore += partial
+    }
+
+    // totalScore es la suma de los parciales de cada pregunta.
+    // Esto puede dar un valor entre 0 y el número de preguntas.
+    return totalScore
+}
+
+@Composable
+fun ScoreDialog(
+    score: Float,
+    totalQuestions: Float,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Quiz Completed") },
+        text = {
+            // Mostramos la puntuación parcial, ej: "3.5 / 5.0"
+            Text("Your score: %.2f / %.0f".format(score, totalQuestions))
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Go to Home")
+            }
+        }
+    )
+}
+
+@Composable
 fun FinishDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Are you sure you want to finish?") },
-        text = { Text("We recommend reviewing your answers before finishing the twist.") },
+        text = { Text("Make sure you've selected all the answers you want.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("Yes")
@@ -234,46 +400,3 @@ fun FinishDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
-@Composable
-fun AnswerOption(
-    questionIndex: Int,
-    answerIndex: Int,
-    answer: AnswerModel,
-    userSelectedAnswers: MutableMap<Int, Int>
-) {
-    val userChoice = userSelectedAnswers[questionIndex]
-    val isUserChoice = (userChoice == answerIndex)
-    val backgroundColor: Color
-    val textColor: Color
-
-    if (userChoice != null) {
-        // Colorear según la selección del usuario
-        backgroundColor = when {
-            isUserChoice && answer.isCorrect -> Color(0xFFB2FFB2) // Verde si es correcto
-            isUserChoice && !answer.isCorrect -> Color(0xFFFFB2B2) // Rojo si es incorrecto
-            !isUserChoice && answer.isCorrect -> Color(0xFFE2FFD9) // Verde claro para correctas no seleccionadas
-            else -> MaterialTheme.colorScheme.surface
-        }
-        textColor = MaterialTheme.colorScheme.onSurface
-    } else {
-        // Estado inicial sin seleccionar
-        backgroundColor = MaterialTheme.colorScheme.surfaceVariant
-        textColor = MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Button(
-        onClick = {
-            if (userChoice == null) { // Solo se permite seleccionar si no se ha hecho una selección
-                userSelectedAnswers[questionIndex] = answerIndex
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth(0.9f)
-            .height(50.dp)
-            .clip(RoundedCornerShape(8.dp)),
-        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor),
-        enabled = userChoice == null // Solo habilitado si no se ha seleccionado una respuesta
-    ) {
-        Text(answer.text, color = textColor)
-    }
-}
