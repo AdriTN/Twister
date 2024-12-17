@@ -112,15 +112,21 @@ fun PlayerItem(player: PlayerModel, context: Context) {
 
 
 @Composable
-fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (roomId: String) -> Unit) {
-    val players = remember { mutableStateListOf<PlayerModel>() } // List of players
+fun WaitingRoom(
+    token: String,
+    userIsAdmin: Boolean,
+    pin: String,
+    playerName: String, // Nuevo parámetro para el nombre del jugador
+    onStartGame: (roomId: String) -> Unit
+) {
+    val players = remember { mutableStateListOf<PlayerModel>() }
     val socket = ApiClient.getSocket()
     val realTimeClient = remember { RealTimeClient(socket) }
-    var isLoading by remember { mutableStateOf(true) } // Loading state
-    var pinProvided by remember { mutableStateOf(false) } // Flag to check if PIN is provided
-    var pinRoom by remember { mutableStateOf("") } // Store the PIN provided
-    var isInRoom by remember { mutableStateOf(false) } // Store the PIN provided
-    var roomId by remember { mutableStateOf("0000") } // Store the PIN provided
+    var isLoading by remember { mutableStateOf(true) }
+    var pinProvided by remember { mutableStateOf(false) }
+    var pinRoom by remember { mutableStateOf("") }
+    var isInRoom by remember { mutableStateOf(false) }
+    var roomId by remember { mutableStateOf("0000") }
     var isAdmin by remember { mutableStateOf(userIsAdmin) }
     val context = LocalContext.current
     val app = context.applicationContext as MyApp
@@ -138,7 +144,7 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
         }
     }
 
-    // Animation for the dots
+    // Animación para los puntos
     val dots = listOf("", ".", "..", "...")
     val infiniteTransition = rememberInfiniteTransition(label = "")
     val currentIndex by infiniteTransition.animateFloat(
@@ -151,7 +157,7 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
     )
     val currentDots = dots[(currentIndex.toInt()) % dots.size]
 
-    // Connect the socket and listen for events when the screen loads
+    // Conectar el socket y escuchar eventos cuando la pantalla carga
     LaunchedEffect(roomId) {
         println("SE REINICIO POR ROOMID")
         if (isInRoom) return@LaunchedEffect
@@ -163,7 +169,10 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                     println("El event.message es ${event.message}")
                     val jsonString = event.message.removePrefix("PLAYER_JOINED: ")
                     val joinResponse = Gson().fromJson(jsonString, JoinResponse::class.java)
-                    players.add(PlayerModel(id = joinResponse.playerId, imageId = joinResponse.imageId.toString()))
+
+                    val displayName = joinResponse.playerName // Ahora, playerName siempre está presente
+
+                    players.add(PlayerModel(id = displayName, imageId = joinResponse.imageId.toString()))
                     isLoading = false
                     isInRoom = true
                 }
@@ -182,11 +191,11 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                 event.message.startsWith("playerJoined: ") -> {
                     val jsonString = event.message.removePrefix("playerJoined: ").trim()
                     val player = Gson().fromJson(jsonString, NewUserResponse::class.java)
-                    players.add(PlayerModel(id = player.playerName, imageId = player.playerId))
+                    players.add(PlayerModel(id = player.playerName, imageId = player.playerId)) // Usar playerName
                 }
             }
+        }
 
-            }
         if (isAdmin && !isInRoom) {
             val dataJson = JSONObject(
                 mapOf(
@@ -204,14 +213,14 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                     "roomId" to pin,
                     "token" to token,
                     "isNew" to false,
-                    "userId" to currentUser?.username,
+                    "userName" to playerName, // Asegúrate de que el campo coincida con el servidor
                     "isAnonymous" to (currentUser?.isAnonymous == true)
                 )
             ).toString()
             println("Se va a solicitar join con $dataJson")
             socket.emit("JOIN_ROOM", dataJson)
         }
-        }
+    }
 
     // UI de la pantalla existente
     Column(
@@ -232,7 +241,7 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp, bottom = 9.dp), color = Color.DarkGray)
                     Text(
-                        text = "Loading",
+                        text = "Loading$currentDots",
                         color = Color.DarkGray,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
@@ -255,10 +264,9 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                     textAlign = TextAlign.Center,
                     modifier = Modifier.offset(y = if (isAdmin) 20.dp else 46.dp) // Menor offset si es admin
                 )
-
             }
 
-            // Display the PIN if it has been provided
+            // Mostrar el PIN si ha sido proporcionado
             if (pinProvided) {
                 Text(
                     text = "PIN: ${pinRoom.substring(0,3)} ${pinRoom.substring(3,pinRoom.length)}",
@@ -269,17 +277,16 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
             }
+
             if (isAdmin) {
                 val configuration = LocalConfiguration.current
                 val screenWidth = configuration.screenWidthDp.dp // Ancho de la pantalla en dp
                 val screenHeight = configuration.screenHeightDp.dp
                 // Define el tamaño del QR en función del ancho de la pantalla
-                val qrSize = if (screenWidth < 600.dp) {
-                    128.dp // Tamaño para pantallas pequeñas
-                } else if (screenWidth < 900.dp) {
-                    256.dp // Tamaño para pantallas medianas
-                } else {
-                    356.dp // Tamaño para pantallas grandes
+                val qrSize = when {
+                    screenWidth < 600.dp -> 128.dp // Tamaño para pantallas pequeñas
+                    screenWidth < 900.dp -> 256.dp // Tamaño para pantallas medianas
+                    else -> 356.dp // Tamaño para pantallas grandes
                 }
 
                 // Generar y mostrar el código QR
@@ -291,10 +298,9 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                         modifier = Modifier.size(qrSize) // Ajusta el tamaño según sea necesario
                     )
                 }
-                }
             }
 
-            // Styled list of connected players
+            // Lista estilizada de jugadores conectados
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -318,17 +324,16 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                             PlayerItem(player = player, context = context)
                         }
                     }
-
                 }
             }
 
             if (isAdmin){
                 Button(
                     onClick = {
-                        realTimeClient.sendEvent(Event("START_GAME")) // Notify players
-                        onStartGame(roomId) // Go to the next screen
+                        realTimeClient.sendEvent(Event("START_GAME")) // Notificar a los jugadores
+                        onStartGame(roomId) // Ir a la siguiente pantalla
                     },
-                    enabled = players.isNotEmpty(),
+                    // enabled = players.isNotEmpty(),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(0.4f)
                 ) {
@@ -340,19 +345,18 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                 }
             } else {
                 Text(
-                    text = "Wait to the admin to start the game",
+                    text = "Wait for the admin to start the game",
                     fontSize = 16.sp,
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 )
             }
-
         }
+    }
 
-    // Disconnect the socket when leaving the composition
+    // Desconectar el socket al salir de la composición
     DisposableEffect(Unit) {
         onDispose {
             socket.disconnect()
         }
     }
 }
-

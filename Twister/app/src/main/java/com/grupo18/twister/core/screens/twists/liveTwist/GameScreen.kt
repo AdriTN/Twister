@@ -13,14 +13,18 @@ fun GameScreen(twist: TwistModel?, currentUser: UserModel?, pin: String? = null,
     var gameStarted by remember { mutableStateOf(false) }
     var currentRoomId by remember { mutableStateOf("") }
     if (!gameStarted) {
-        WaitingRoom(onStartGame = { roomId ->
-            currentRoomId = roomId // Almacena el roomId al iniciar el juego
-            gameStarted = true
-        },
-            userIsAdmin = isAdmin,
-            token = currentUser?.token ?: "",
-            pin = pin.toString()
-        )
+        if (currentUser != null) {
+            WaitingRoom(
+                onStartGame = { roomId ->
+                    currentRoomId = roomId // Almacena el roomId al iniciar el juego
+                    gameStarted = true
+                },
+                userIsAdmin = isAdmin,
+                token = currentUser.token,
+                pin = pin.toString(),
+                playerName = currentUser.username
+            )
+        }
     } else {
         LiveTwist(twist, token = currentUser?.token.toString(), roomId = currentRoomId)
     }
