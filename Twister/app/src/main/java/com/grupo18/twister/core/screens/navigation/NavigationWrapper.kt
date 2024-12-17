@@ -67,7 +67,7 @@ fun NavigationWrapper(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.WELCOME
+        startDestination = if (currentUser != null) Routes.HOME else Routes.WELCOME
     ) {
         composable(Routes.WELCOME) {
 //            GameScreen(TwistModel(title = "", description = ""), UserModel(token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImlhdCI6MTczNDM3NjEyOSwiZXhwIjoxNzM0Mzc5NzI5fQ.afLq2EPPZxfZbKIQRul7ktDBtjQV-GM-oWYYIsU3Zgs", username = "Pepe", email = "p@p.com", password = ""))
