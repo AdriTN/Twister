@@ -108,4 +108,11 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body twistData: TwistModel
     ): Call<ResponseBody>
+
+    @GET("/games/results/{questionId}")
+    fun getResultsForQuestion(
+        @Header("Authorization") token: String,
+        @Path("questionId") questionId: String
+    ): Call<ResultsResponse>
+
 }

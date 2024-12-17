@@ -12,27 +12,28 @@ export const socketHandlers = (io, socket) => {
 
 
   // Evento: Unirse a un juego
-  socket.on("JOIN_ROOM", async (data) => {
-    data = JSON.parse(data);
-    // Desestructurar los datos recibidos
-    const { roomId, isAnonymous, userName } = data;
+socket.on("JOIN_ROOM", async (data) => {
+  data = JSON.parse(data);
+  // Desestructurar los datos recibidos
+  const { roomId, isAnonymous, userName } = data;
 
-    // Asignar el ID del juego y el ID del usuario
-    const currentGameId = roomId; // ID de la sala a la que se une
-    const currentUserId = socket.id; // ID del socket del usuario
-    // Asignar el nombre del usuario o usar "Jugador Anónimo" si es anónimo
-    const currentUserName = isAnonymous ? "Jugador Anónimo" : userName; 
+  // Asignar el ID del juego y el ID del usuario
+  const currentGameId = roomId; // ID de la sala a la que se une
+  const currentUserId = socket.id; // ID del socket del usuario
+  // Asignar el nombre del usuario o usar "Jugador Anónimo" si es anónimo
+  const currentUserName = isAnonymous ? "Jugador Anónimo" : userName; 
 
-    console.log(`Unirse a la sala: ${currentGameId} - ${currentUserName}`);
-    const imageval = await getGameById(currentGameId, currentUserId, socket.id);
-    // Unirse a la sala
-    socket.join(currentGameId);
+  console.log(`Unirse a la sala: ${currentGameId} - ${currentUserName}`);
+  const imageval = await getGameById(currentGameId, currentUserId, socket.id);
+  // Unirse a la sala
+  socket.join(currentGameId);
 
-    // Emitir evento de que un jugador se ha unido
-    io.to(currentGameId).emit("playerJoined", { playerId: currentUserId, playerName: currentUserName });
-    // Emitir evento de que un jugador se ha unido
-    console.log("imageval", imageval);
-    socket.emit("PLAYER_JOINED", { currentGameId, playerId: currentUserId, imageId: imageval });
+  // Emitir evento de que un jugador se ha unido a todos los usuarios en la sala
+  io.to(currentGameId).emit("playerJoined", { playerId: currentUserId, playerName: currentUserName });
+  
+  // Emitir evento de que un jugador se ha unido al propio socket con información completa
+  console.log("imageval", imageval);
+  socket.emit("PLAYER_JOINED", { currentGameId, playerId: currentUserId, imageId: imageval, playerName: currentUserName });
 });
 
   // Evento: Solicitar PIN

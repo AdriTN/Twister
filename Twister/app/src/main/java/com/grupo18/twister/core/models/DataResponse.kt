@@ -51,6 +51,7 @@ data class NewUserResponse(
 data class JoinResponse(
     val currentGameId: String,
     val playerId: String,
+    val playerName: String,
     val imageId: Int? = 1
 )
 
@@ -62,4 +63,8 @@ data class UploadResponse(
 data class TwistRequest(
     val message: String,
     val twists: List<TwistModel>
+)
+
+data class ResultsResponse(
+    val results: Map<String, Int>
 )
