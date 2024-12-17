@@ -196,7 +196,5 @@ fun NavigationWrapper(
             val pin = backStackEntry.arguments?.getString("pin")
             GameScreen(pin = pin, currentUser = currentUser, twist = null)
         }
-
     }
-
 }

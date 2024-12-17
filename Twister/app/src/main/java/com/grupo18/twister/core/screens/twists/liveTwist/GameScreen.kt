@@ -7,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.models.UserModel
-import com.grupo18.twister.core.screens.twists.LiveTwist
 
 @Composable
 fun GameScreen(twist: TwistModel?, currentUser: UserModel?, pin: String? = null, isAdmin: Boolean = false) {

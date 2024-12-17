@@ -115,13 +115,17 @@ fun CustomBottomNavigationBar(navController: NavController) {
         // Modal Bottom Sheet
         if (showBottomSheet) {
             ModalBottomSheet(
-                onDismissRequest = {
-                    showBottomSheet = false
-                },
+                onDismissRequest = { showBottomSheet = false },
                 sheetState = sheetState,
-
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
             ) {
-                TempTwist(onAuthSuccess = { pin -> navController.navigate("liveTwist/$pin") })
+                TempTwist(
+                    onAuthSuccess = { pin ->
+                        navController.navigate("liveTwist/$pin")
+                    }
+                )
             }
         }
     }

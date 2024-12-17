@@ -1,5 +1,6 @@
 package com.grupo18.twister.core.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,17 +15,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.google.gson.Gson
+import com.grupo18.twister.R
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
+import java.io.File
 
 @Composable
 fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
@@ -99,7 +107,7 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
+                            .padding(horizontal = 8.dp)
                     ) {
                         items(twists) { twist ->
                             TwistCard(
@@ -122,7 +130,7 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 8.dp)
             ) {
                 items(8) { index ->
                     TwistCard(
@@ -144,14 +152,35 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
 
 @Composable
 fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
+    val context = LocalContext.current
+
+    // Determinamos la fuente de la imagen:
+    // 1) Archivo local si existe,
+    // 2) URI remota si no hay archivo local y la cadena no está vacía,
+    // 3) Imagen por defecto en caso contrario.
+    val localFilePath = "${context.filesDir}/images/${twist.imageUri}"
+    val localFile = File(localFilePath)
+
+    val painter = when {
+        localFile.exists() -> {
+            rememberAsyncImagePainter(model = localFile)
+        }
+        else -> {
+            // Siempre un painter de la imagen por defecto,
+            // así nos aseguramos de que se vea si no existe o la URI está vacía.
+            rememberAsyncImagePainter(R.drawable.default_twist)
+        }
+    }
+
     Card(
         modifier = Modifier
             .width(200.dp)
-            .height(250.dp)
+            .height(270.dp)
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
+        // VerticalArrangement.SpaceBetween: empuja la imagen y el texto a extremos
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -159,54 +188,50 @@ fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            if (twist.imageUri != null) {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                ) {
-                    Text(
-                        text = twist.title.firstOrNull()?.toString() ?: "?",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = twist.title.firstOrNull()?.toString() ?: "?",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+            // ---------- Ajuste para bajar la imagen ----------
+            Spacer(modifier = Modifier.height(6.dp))
+            // ↑ Aquí puedes modificar la altura para mover la imagen más abajo o arriba.
+
+            // Imagen circular más grande
+            Box(
+                modifier = Modifier
+                    .size(136.dp)
+                    .clip(CircleShape)
+            ) {
+                Image(
+                    painter = painter,
+                    contentDescription = "Twist Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
 
-            Text(
-                text = twist.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = twist.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-            Text(
-                text = twist.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = twist.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun HeaderWithProfileOrLogin(currentUser: UserModel?, navController: NavController) {

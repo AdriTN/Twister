@@ -30,34 +30,32 @@ import com.grupo18.twister.R
 import com.journeyapps.barcodescanner.CaptureActivity
 
 @Composable
-fun TempTwist(onAuthSuccess: (String) -> Unit) {
+fun TempTwist(
+    modifier: Modifier = Modifier,
+    onAuthSuccess: (String) -> Unit
+) {
     val context = LocalContext.current
     val pinText = remember { mutableStateOf("") }
 
     fun joinGame(pin: String) {
-        // Verificar que el PIN contenga solo dígitos y tenga exactamente 5 caracteres
         if (pin.length != 6 || !pin.all { it.isDigit() }) {
-            //Toast.makeText(context, "Invalid PIN: It must be 8 digits long and contain only numbers. The provided is $pin", Toast.LENGTH_SHORT).show()
             Toast.makeText(context, "Invalid PIN: $pin", Toast.LENGTH_SHORT).show()
             return
         }
 
         Toast.makeText(context, "Attempting to join game with PIN: $pin", Toast.LENGTH_SHORT).show()
-        // Llama a la función de éxito de autenticación
         onAuthSuccess(pin)
     }
 
-    // Llamada al launcher para escanear el QR
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             val data = result.data
             data?.let {
-                // Suponiendo que el QR escaneado devuelve un string con el PIN
-                val scannedPin = it.getStringExtra("SCAN_RESULT") // Ajusta esto según la implementación de tu escáner
+                val scannedPin = it.getStringExtra("SCAN_RESULT")
                 scannedPin?.let { pin ->
-                    pinText.value = pin // Asigna el PIN escaneado al TextField
+                    pinText.value = pin
                     joinGame(pin)
                 } ?: run {
                     Toast.makeText(context, "No se encontró el PIN en el QR", Toast.LENGTH_SHORT).show()
@@ -66,33 +64,28 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
         }
     }
 
-    // Column para la interfaz
     Column(
-        modifier = Modifier
-            .fillMaxWidth()  // Mantener el ancho completo
-            .wrapContentHeight()  // Ajustar la altura al contenido
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight() // Ajusta la altura al contenido
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Título
         Text(
             text = "Join a Twist Session",
             style = MaterialTheme.typography.headlineSmall,
             color = Color.Black,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = 16.dp) // Reducido de 32.dp
         )
 
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(24.dp)) // Reducido de 60.dp
 
-        // Campo de texto para agregar el PIN
         TextField(
             value = pinText.value,
             onValueChange = { newValue ->
-                // Permitir solo números
                 if (newValue.all { it.isDigit() } && newValue.length <= 6) {
                     pinText.value = newValue
-                    // Cuando alcanza 6 caracteres, enviar la request automáticamente
                     if (newValue.length == 6) {
                         joinGame(newValue)
                     }
@@ -100,25 +93,24 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
             },
             label = { Text("Enter Game PIN") },
             modifier = Modifier
-                .width(260.dp)
-                .padding(bottom = 16.dp),
+                .fillMaxWidth(0.7f) // Ajuste para adaptarse mejor
+                .padding(bottom = 8.dp), // Reducido de 16.dp
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent, // Fondo transparente cuando está enfocado
-                unfocusedContainerColor = Color.Transparent // Fondo transparente cuando no está enfocado
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent
             ),
-            singleLine = true // Evita salto de línea
+            singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(16.dp)) // Reducido de 40.dp
 
         Box(
             modifier = Modifier
-                .size(190.dp) // Ajusta el tamaño según tus necesidades
-                .clip(RoundedCornerShape(18.dp)) // Recorta las esquinas de la caja
+                .size(150.dp) // Ajustado para mejor adaptabilidad
+                .clip(RoundedCornerShape(12.dp)) // Ajustado para un aspecto más compacto
                 .clickable {
-                    // Acción para iniciar el escaneo de código QR
                     val intent = Intent(context, CaptureActivity::class.java)
-                    launcher.launch(intent)  // Usa el launcher para manejar el resultado
+                    launcher.launch(intent)
                 }
         ) {
             Image(
@@ -129,9 +121,6 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
             )
         }
 
-
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(16.dp)) // Reducido de 30.dp
     }
 }
-
-

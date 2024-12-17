@@ -1,4 +1,4 @@
-package com.grupo18.twister.core.screens.twists
+package com.grupo18.twister.core.screens.twists.liveTwist
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,8 +19,6 @@ import com.grupo18.twister.core.components.ColorBlock
 import com.grupo18.twister.core.models.Event
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.viewmodel.RoomViewModel
-import io.socket.client.Socket
-import io.socket.emitter.Emitter
 
 @Composable
 fun LiveTwist(twist: TwistModel?, roomId: String, token: String) {
