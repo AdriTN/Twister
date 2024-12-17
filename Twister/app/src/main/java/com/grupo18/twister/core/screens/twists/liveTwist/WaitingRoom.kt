@@ -109,8 +109,6 @@ fun PlayerItem(player: PlayerModel, context: Context) {
     }
 }
 
-
-
 @Composable
 fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (roomId: String) -> Unit) {
     val players = remember { mutableStateListOf<PlayerModel>() } // List of players
@@ -328,7 +326,7 @@ fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (
                         realTimeClient.sendEvent(Event("START_GAME")) // Notify players
                         onStartGame(roomId) // Go to the next screen
                     },
-                    enabled = players.isNotEmpty(),
+                    // enabled = players.isNotEmpty(),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(0.4f)
                 ) {

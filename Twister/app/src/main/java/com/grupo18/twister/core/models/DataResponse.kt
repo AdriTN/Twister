@@ -63,3 +63,7 @@ data class TwistRequest(
     val message: String,
     val twists: List<TwistModel>
 )
+
+data class ResultsResponse(
+    val results: Map<String, Int>
+)

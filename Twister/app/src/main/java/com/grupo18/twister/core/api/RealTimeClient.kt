@@ -6,11 +6,7 @@ import com.grupo18.twister.core.models.NewUserResponse
 import com.grupo18.twister.core.models.RoomResponse
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-
-@Serializable
-data class PinProvidedEvent(val pin: String)
 
 // Clase para gestionar eventos en tiempo real
 class RealTimeClient(private val socket: Socket) {
