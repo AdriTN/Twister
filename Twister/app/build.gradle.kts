@@ -99,3 +99,17 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+
+tasks.register("reverseDevicePorts") {
+    doLast {
+        exec {
+            commandLine("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "../reverse_device_ports.ps1")
+        }
+    }
+}
+
+tasks.whenTaskAdded {
+    if (name == "compileDebugKotlin") {
+        dependsOn("reverseDevicePorts")
+    }
+}

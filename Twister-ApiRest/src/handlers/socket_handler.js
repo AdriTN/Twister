@@ -7,27 +7,44 @@ export const socketHandlers = (io, socket) => {
   // Almacena el ID del juego y el usuario al unirse
   let currentGameId = null;
   let currentUserId = null;
+  let currentUserName = null;
+  let isAnonymous = false;
+
 
   // Evento: Unirse a un juego
-  socket.on("joinGame", async (data) => {
-    console.log(`Jugador ${socket.id} se unió a la sala:`, data.roomId);
-    currentGameId = data.roomId; // Guardar el ID del juego actual
-    currentUserId = socket.id; // Guardar el ID del usuario
+  socket.on("JOIN_ROOM", async (data) => {
+    data = JSON.parse(data);
+    // Desestructurar los datos recibidos
+    const { roomId, isAnonymous, userName } = data;
 
-    // Lógica para unirse a la sala
-    socket.join(data.roomId);
-    io.to(data.roomId).emit("playerJoined", { playerId: socket.id });
-  });
+    // Asignar el ID del juego y el ID del usuario
+    const currentGameId = roomId; // ID de la sala a la que se une
+    const currentUserId = socket.id; // ID del socket del usuario
+    // Asignar el nombre del usuario o usar "Jugador Anónimo" si es anónimo
+    const currentUserName = isAnonymous ? "Jugador Anónimo" : userName; 
+
+    console.log(`Unirse a la sala: ${currentGameId} - ${currentUserName}`);
+    const imageval = await getGameById(currentGameId, currentUserId, socket.id);
+    // Unirse a la sala
+    socket.join(currentGameId);
+
+    // Emitir evento de que un jugador se ha unido
+    io.to(currentGameId).emit("playerJoined", { playerId: currentUserId, playerName: currentUserName });
+    // Emitir evento de que un jugador se ha unido
+    console.log("imageval", imageval);
+    socket.emit("PLAYER_JOINED", { currentGameId, playerId: currentUserId, imageId: imageval });
+});
 
   // Evento: Solicitar PIN
   socket.on("REQUEST_PIN", async (data) => {
     try {
+      console.log("Solicitud de PIN recibida:", data);
       data = JSON.parse(data);
       if (!data || !data.token) {
         socket.emit("ERROR", { message: "Datos de solicitud incorrectos" });
         return;
       }
-      const userId = getUserWithTokenSocket(data.token); // Obtener el ID de usuario desde el token
+      const userId = await getUserWithTokenSocket(data.token); // Obtener el ID de usuario desde el token
       currentUserId = userId; // Actualizar el ID del usuario
 
       if (data.isNew) {
@@ -54,15 +71,15 @@ export const socketHandlers = (io, socket) => {
   });
 
   // Evento: Desconexión del cliente
-socket.on("disconnect", async () => {
+  socket.on("disconnect", async () => {
     console.log("Cliente desconectado:", socket.id);
     deleteUserById(socket.id);
     
     // Notificar a otros jugadores
-    io.to(currentGameId).emit("playerLeft", { playerId: socket.id });
-      }
-  );
-  
+    if (currentGameId) {
+      io.to(currentGameId).emit("playerLeft", { playerId: socket.id, playerName: currentUserName });
+    }
+  });
 
   // Otros eventos personalizados
   socket.on("customEvent", (data) => {

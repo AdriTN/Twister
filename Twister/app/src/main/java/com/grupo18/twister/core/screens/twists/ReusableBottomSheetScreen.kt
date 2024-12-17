@@ -36,8 +36,9 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
 
     fun joinGame(pin: String) {
         // Verificar que el PIN contenga solo dígitos y tenga exactamente 5 caracteres
-        if (pin.length != 5 || !pin.all { it.isDigit() }) {
-            Toast.makeText(context, "Invalid PIN: It must be 5 digits long and contain only numbers.", Toast.LENGTH_SHORT).show()
+        if (pin.length != 6 || !pin.all { it.isDigit() }) {
+            //Toast.makeText(context, "Invalid PIN: It must be 8 digits long and contain only numbers. The provided is $pin", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Invalid PIN: $pin", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -87,7 +88,16 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
         // Campo de texto para agregar el PIN
         TextField(
             value = pinText.value,
-            onValueChange = { pinText.value = it },
+            onValueChange = { newValue ->
+                // Permitir solo números
+                if (newValue.all { it.isDigit() } && newValue.length <= 6) {
+                    pinText.value = newValue
+                    // Cuando alcanza 6 caracteres, enviar la request automáticamente
+                    if (newValue.length == 6) {
+                        joinGame(newValue)
+                    }
+                }
+            },
             label = { Text("Enter Game PIN") },
             modifier = Modifier
                 .width(260.dp)
@@ -95,9 +105,9 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent, // Fondo transparente cuando está enfocado
                 unfocusedContainerColor = Color.Transparent // Fondo transparente cuando no está enfocado
-            )
+            ),
+            singleLine = true // Evita salto de línea
         )
-
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -124,42 +134,4 @@ fun TempTwist(onAuthSuccess: (String) -> Unit) {
     }
 }
 
-@Composable
-fun ModeButton(
-    label: String,
-    iconRes: Int,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF6200EE), // Color llamativo para el botón
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(12.dp), // Bordes redondeados para un estilo más moderno
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Imagen en el botón
-            Image(
-                painter = painterResource(id = iconRes),
-                contentDescription = "QR Code Icon",
-                modifier = Modifier
-                    .size(24.dp)
-                    .padding(end = 8.dp)
-            )
-            // Texto en el botón
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-}
 

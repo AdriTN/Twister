@@ -1,5 +1,6 @@
 package com.grupo18.twister.core.screens.twists.liveTwist
 
+import android.content.Context
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -28,15 +29,21 @@ import androidx.compose.ui.platform.LocalContext
 import com.grupo18.twister.core.api.RealTimeClient
 import org.json.JSONObject
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalConfiguration
 import com.google.gson.Gson
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.WriterException
 import com.google.zxing.common.BitMatrix
-import com.grupo18.twister.core.models.GameResponse
+import com.grupo18.twister.core.models.JoinResponse
+import com.grupo18.twister.core.models.NewUserResponse
+import com.grupo18.twister.core.models.PlayerModel
 import com.grupo18.twister.core.models.RoomResponse
+import com.grupo18.twister.core.screens.authentication.MyApp
+import java.io.IOException
 
 fun generateQRCode(text: String, size: Int = 512): Bitmap? {
     return try {
@@ -61,22 +68,66 @@ fun generateQRCode(text: String, size: Int = 512): Bitmap? {
     }
 }
 
+fun displayPlayerImage(imageId: String, context: Context): Bitmap? {
+    println("El imageId es $imageId")
+    if (imageId.isEmpty()) return null
+    val imageIde = 1
+    val imagePath = "player_avatars/ico ($imageIde).png" // Construir la ruta de la imagen en assets
+    println(imagePath)
+    val assetManager = context.assets
+    return try {
+        // Abrir el archivo de imagen desde assets
+        val inputStream = assetManager.open(imagePath)
+        // Decodificar el inputStream en un Bitmap
+        BitmapFactory.decodeStream(inputStream)
+    } catch (e: IOException) {
+        e.printStackTrace() // Manejar la excepción si la imagen no se encuentra
+        null
+    }
+}
 
 @Composable
-fun WaitingRoom(token: String, onStartGame: (roomId: String) -> Unit) {
-    val players = remember { mutableStateListOf<String>() } // List of players
+fun PlayerItem(player: PlayerModel, context: Context) {
+    val bitmap = remember(player.imageId) { displayPlayerImage(player.imageId, context) }
+    println("Se va a cargar la imagen del jugador ${player.id}")
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(8.dp))
+            .border(1.dp, Color.Gray, shape = RoundedCornerShape(8.dp))
+            .padding(8.dp)
+    ) {
+        bitmap?.let {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = "Avatar de ${player.id}",
+                modifier = Modifier.size(64.dp)
+            )
+        }
+    }
+}
+
+
+
+@Composable
+fun WaitingRoom(token: String, userIsAdmin: Boolean, pin: String, onStartGame: (roomId: String) -> Unit) {
+    val players = remember { mutableStateListOf<PlayerModel>() } // List of players
     val socket = ApiClient.getSocket()
     val realTimeClient = remember { RealTimeClient(socket) }
     var isLoading by remember { mutableStateOf(true) } // Loading state
     var pinProvided by remember { mutableStateOf(false) } // Flag to check if PIN is provided
     var pinRoom by remember { mutableStateOf("") } // Store the PIN provided
-    var roomId by remember { mutableStateOf("") } // Store the PIN provided
-    var isAdmin by remember { mutableStateOf(false) }
-
-    // **Forzar orientación si es admin**
+    var isInRoom by remember { mutableStateOf(false) } // Store the PIN provided
+    var roomId by remember { mutableStateOf("0000") } // Store the PIN provided
+    var isAdmin by remember { mutableStateOf(userIsAdmin) }
     val context = LocalContext.current
+    val app = context.applicationContext as MyApp
+    val currentUser by app.getUser().collectAsState()
 
     LaunchedEffect(isAdmin) {
+        println("SE REINICIO POR ISADMIN")
         if (isAdmin) {
             (context as? androidx.activity.ComponentActivity)?.requestedOrientation =
                 ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -102,36 +153,65 @@ fun WaitingRoom(token: String, onStartGame: (roomId: String) -> Unit) {
 
     // Connect the socket and listen for events when the screen loads
     LaunchedEffect(roomId) {
+        println("SE REINICIO POR ROOMID")
+        if (isInRoom) return@LaunchedEffect
         println("Connecting to socket for room $roomId")
         socket.connect()
         realTimeClient.listenForEvents(roomId) { event ->
             when {
                 event.message.startsWith("PLAYER_JOINED: ") -> {
-                    val playerName = event.message.removePrefix("PLAYER_JOINED: ")
-                    players.add(playerName)
+                    println("El event.message es ${event.message}")
+                    val jsonString = event.message.removePrefix("PLAYER_JOINED: ")
+                    val joinResponse = Gson().fromJson(jsonString, JoinResponse::class.java)
+                    players.add(PlayerModel(id = joinResponse.playerId, imageId = joinResponse.imageId.toString()))
+                    isLoading = false
+                    isInRoom = true
                 }
+
                 event.message.startsWith("PIN_PROVIDED: ") -> {
                     val jsonString = event.message.removePrefix("PIN_PROVIDED: ")
-                    println("PIN_PROVIDED: $jsonString") // Debug print
+                    println("PIN_PROVIDED: $jsonString")
                     val game = Gson().fromJson(jsonString, RoomResponse::class.java)
-                    println("Game: $game") // Debug print")
+                    println("Game: $game")
                     pinProvided = true
                     isLoading = false
-                    isAdmin = true
-                    pinRoom = game.pin
-                    println(pinRoom)
+                    pinRoom = game.pin.toString()
+                    isInRoom = true
+                }
+
+                event.message.startsWith("playerJoined: ") -> {
+                    val jsonString = event.message.removePrefix("playerJoined: ").trim()
+                    val player = Gson().fromJson(jsonString, NewUserResponse::class.java)
+                    players.add(PlayerModel(id = player.playerName, imageId = player.playerId))
                 }
             }
+
+            }
+        if (isAdmin && !isInRoom) {
+            val dataJson = JSONObject(
+                mapOf(
+                    "roomId" to roomId,
+                    "token" to token,
+                    "isNew" to true
+                )
+            ).toString()
+            println("Se va a solicitar el pin con $dataJson")
+            socket.emit("REQUEST_PIN", dataJson)
         }
-
-        val dataJson = JSONObject(mapOf(
-            "roomId" to roomId,
-            "token" to token,
-            "isNew" to true
-        )).toString()
-
-        socket.emit("REQUEST_PIN", dataJson)
-    }
+        else if(!isInRoom){
+            val dataJson = JSONObject(
+                mapOf(
+                    "roomId" to pin,
+                    "token" to token,
+                    "isNew" to false,
+                    "userId" to currentUser?.username,
+                    "isAnonymous" to (currentUser?.isAnonymous == true)
+                )
+            ).toString()
+            println("Se va a solicitar join con $dataJson")
+            socket.emit("JOIN_ROOM", dataJson)
+        }
+        }
 
     // UI de la pantalla existente
     Column(
@@ -181,7 +261,7 @@ fun WaitingRoom(token: String, onStartGame: (roomId: String) -> Unit) {
             // Display the PIN if it has been provided
             if (pinProvided) {
                 Text(
-                    text = "PIN: ${pinRoom.substring(0,4)} ${pinRoom.substring(4,pinRoom.length)}",
+                    text = "PIN: ${pinRoom.substring(0,3)} ${pinRoom.substring(3,pinRoom.length)}",
                     color = Color.Gray,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
@@ -189,15 +269,28 @@ fun WaitingRoom(token: String, onStartGame: (roomId: String) -> Unit) {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
             }
+            if (isAdmin) {
+                val configuration = LocalConfiguration.current
+                val screenWidth = configuration.screenWidthDp.dp // Ancho de la pantalla en dp
+                val screenHeight = configuration.screenHeightDp.dp
+                // Define el tamaño del QR en función del ancho de la pantalla
+                val qrSize = if (screenWidth < 600.dp) {
+                    128.dp // Tamaño para pantallas pequeñas
+                } else if (screenWidth < 900.dp) {
+                    256.dp // Tamaño para pantallas medianas
+                } else {
+                    356.dp // Tamaño para pantallas grandes
+                }
 
                 // Generar y mostrar el código QR
-                val qrBitmap = generateQRCode(roomId)
+                val qrBitmap = generateQRCode(pinRoom)
                 qrBitmap?.let {
                     Image(
                         bitmap = it.asImageBitmap(),
                         contentDescription = "Código QR",
-                        modifier = Modifier.size(128.dp) // Ajusta el tamaño según sea necesario
+                        modifier = Modifier.size(qrSize) // Ajusta el tamaño según sea necesario
                     )
+                }
                 }
             }
 
@@ -217,23 +310,15 @@ fun WaitingRoom(token: String, onStartGame: (roomId: String) -> Unit) {
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
-                    players.forEach { player ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp)
-                                .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(8.dp))
-                                .border(1.dp, Color.Gray, shape = RoundedCornerShape(8.dp))
-                                .padding(8.dp)
-                        ) {
-                            Text(
-                                text = player,
-                                color = Color.Black,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                    // En la sección de jugadores
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        players.forEach { player ->
+                            PlayerItem(player = player, context = context)
                         }
                     }
+
                 }
             }
 

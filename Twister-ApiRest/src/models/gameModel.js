@@ -14,12 +14,27 @@ class Game {
   }
 }
 
+async function ensureRedisClient() {
+  if (!redisClient.isOpen) {
+    try {
+      await redisClient.connect(); // Intenta conectar si no está conectado
+      console.log("Conexión a Redis establecida.");
+    } catch (error) {
+      console.error("Error al conectar a Redis:", error);
+      throw new Error("Could not connect to Redis");
+    }
+  }
+}
+
 // Función para crear un nuevo juego
 export async function createGame(adminId, socket) {
-  const pin = Math.floor(1000 + Math.random() * 90000000).toString(); // Genera un PIN aleatorio
+  ensureRedisClient();
+  const pin = Math.floor(100000 + Math.random() * 900000).toString();
+  console.log(`Creando juego con PIN: ${pin} y el administrador: ${adminId}`);
   const game = new Game(pin, adminId, socket);
 
   try {
+    // Inicializar la sesion de redis
     await redisClient.set(pin, JSON.stringify(game));
     // Almacenar el juego activo en la memoria
     activeGames[pin] = game; 
@@ -32,6 +47,7 @@ export async function createGame(adminId, socket) {
 
 // Función para obtener un juego por ID y añadir un usuario si no está presente
 export async function getGameById(pin, userId, socketId) {
+  ensureRedisClient();
   try {
     const gameData = await redisClient.get(pin);
     
@@ -45,11 +61,12 @@ export async function getGameById(pin, userId, socketId) {
     if (!game.players) {
       game.players = [];
     }
-
+    var ImageId = null;
     // Verificar si el usuario ya está en el juego
     const playerExists = game.players.find(player => player.id === userId);
     if (!playerExists) {
-      game.players.push({ id: userId, socketId: socketId }); // Añadir el usuario si no está ya
+      ImageId = Math.floor(Math.random() * 24) + 1;
+      game.players.push({ id: userId, socketId: socketId, imageId: ImageId}); // Añadir el usuario si no está ya
     } else {
       // Actualizar el socketId si el jugador ya está en la lista
       playerExists.socketId = socketId;
@@ -61,7 +78,7 @@ export async function getGameById(pin, userId, socketId) {
     // Actualizar el juego en la memoria
     activeGames[pin] = game;
 
-    return game; // Retornar el juego actualizado
+    return ImageId;
   } catch (error) {
     console.error("Error getting game:", error);
     throw new Error("Could not retrieve game");
@@ -70,6 +87,8 @@ export async function getGameById(pin, userId, socketId) {
 
 // Función para añadir un jugador a un juego
 export async function addPlayerToGame(pin, playerId, socketId) {
+  ensureRedisClient();
+
   const game = await getGameById(pin, playerId, socketId);
   if (!game) {
     throw new Error("Game not found");
@@ -80,7 +99,7 @@ export async function addPlayerToGame(pin, playerId, socketId) {
     throw new Error("Player already in game");
   }
 
-  game.players.push({ id: playerId, socketId: socketId });
+  game.players.push({ id: playerId, socketId: socketId, imageId: Math.floor(Math.random() * 24) + 1});
 
   try {
     await redisClient.set(pin, JSON.stringify(game));
@@ -95,6 +114,8 @@ export async function addPlayerToGame(pin, playerId, socketId) {
 
 // Función para eliminar un jugador por su socketId
 export async function deleteUserById(socketId) {
+  ensureRedisClient();
+
   // Buscar el juego activo donde el socketId está presente
   for (const pin in activeGames) {
     const game = activeGames[pin];

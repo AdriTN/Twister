@@ -23,6 +23,7 @@ import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.core.models.TwistModel
+import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
@@ -30,6 +31,8 @@ import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.edit.ManageQuestionsScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
 import com.grupo18.twister.core.screens.home.ProfileScreen
+import com.grupo18.twister.core.screens.navigation.Routes.GAME_SCREEN
+import com.grupo18.twister.core.screens.navigation.Routes.LIVE_TWIST_SCREEN
 import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.AddQuestionScreen
@@ -67,6 +70,7 @@ fun NavigationWrapper(
         startDestination = Routes.WELCOME
     ) {
         composable(Routes.WELCOME) {
+//            GameScreen(TwistModel(title = "", description = ""), UserModel(token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImlhdCI6MTczNDM3NjEyOSwiZXhwIjoxNzM0Mzc5NzI5fQ.afLq2EPPZxfZbKIQRul7ktDBtjQV-GM-oWYYIsU3Zgs", username = "Pepe", email = "p@p.com", password = ""))
             WelcomeScreen(
                 onNavigateToAuth = {
                     navController.navigate(Routes.AUTH)
@@ -181,18 +185,16 @@ fun NavigationWrapper(
             }
         }
 
-        composable(
-            route = "${Routes.GAME_SCREEN}/{twist}/{pin}",
-            arguments = listOf(
-                navArgument("twist") { type = NavType.StringType },
-                navArgument("pin") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
+        composable(GAME_SCREEN) { backStackEntry ->
             val twistJson = backStackEntry.arguments?.getString("twist")
-            val pin = backStackEntry.arguments?.getString("pin") ?: ""
             val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
 
-            GameScreen(twist, currentUser)
+            GameScreen(twist, currentUser, isAdmin = true)
+        }
+
+        composable(LIVE_TWIST_SCREEN) { backStackEntry ->
+            val pin = backStackEntry.arguments?.getString("pin")
+            GameScreen(pin = pin, currentUser = currentUser, twist = null)
         }
 
     }

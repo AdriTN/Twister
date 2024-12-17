@@ -1,6 +1,8 @@
 package com.grupo18.twister.core.api
 
 import com.grupo18.twister.core.models.Event
+import com.grupo18.twister.core.models.JoinResponse
+import com.grupo18.twister.core.models.NewUserResponse
 import com.grupo18.twister.core.models.RoomResponse
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
@@ -16,16 +18,13 @@ class RealTimeClient(private val socket: Socket) {
     fun listenForEvents(roomId: String? = null, onEventReceived: (Event) -> Unit) {
         // Escuchar eventos comunes
         socket.on("PLAYER_JOINED", Emitter.Listener { args ->
-            if (args.isNotEmpty() && args[0] is Map<*, *>) {
-                val eventData = args[0] as Map<*, *>
-                val message = eventData["playerName"] as? String // Asumiendo que el nombre del jugador se envía aquí
-                if (message != null) {
-                    println("Jugador unido: $message")
-                    // Puedes crear un evento específico si es necesario
-                    onEventReceived(Event("PLAYER_JOINED: $message"))
-                } else {
-                    println("Error: 'playerName' no encontrado en los datos del evento.")
-                }
+            println("PLAYER_JOINED: ${args.joinToString()}")
+            if (args.isNotEmpty()) {
+                val firstArg = args[0].toString()
+                val roomResponse = Json.decodeFromString<JoinResponse>(firstArg)
+                println("Jugador unido: $roomResponse")
+                // Puedes crear un evento específico si es necesario
+                onEventReceived(Event(message = "PLAYER_JOINED: $firstArg", type = "PLAYER_JOINED", id = ""))
             }
         })
 
@@ -37,7 +36,7 @@ class RealTimeClient(private val socket: Socket) {
                 try {
                     // Asegúrate de que el primer argumento sea el JSON esperado
                     println("Argumento recibido: $firstArg")
-                    val roomResponse = Json.decodeFromString<RoomResponse>(firstArg) // Deserializa RoomResponse
+                    val roomResponse = Json.decodeFromString<RoomResponse>(firstArg)
                     val pin = roomResponse.pin
                     println("PIN recibido: $pin")
                     onEventReceived(Event(message = "PIN_PROVIDED: $firstArg", type = "PIN_PROVIDED", id = ""))
@@ -48,6 +47,25 @@ class RealTimeClient(private val socket: Socket) {
                 println("Formato de argumento inesperado: ${args.toString()}")
             }
         })
+
+        socket.on("playerJoined", Emitter.Listener { args ->
+            if (args.isNotEmpty()) {
+                val firstArg = args[0].toString()
+                try {
+                    // Intenta deserializar el primer argumento a NewUserResponse
+                    val roomResponse = Json.decodeFromString<NewUserResponse>(firstArg)
+                    // Notifica que se recibió un nuevo evento de jugador
+                    onEventReceived(Event(message = roomResponse.toString(), type = "newPlayer", id = ""))
+                } catch (e: Exception) {
+                    // Manejo de errores más descriptivo
+                    println("Error al deserializar el JSON: ${e.localizedMessage}")
+                }
+            } else {
+                // Mensaje de error mejorado si no hay argumentos
+                println("Error: Se recibió un argumento vacío o inesperado: ${args.joinToString()}")
+            }
+        })
+
 
 
 

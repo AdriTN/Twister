@@ -12,7 +12,8 @@ import { initDB } from "./utils/database.js";
 import { socketHandlers } from "./handlers/socket_handler.js";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
+const SOCKET_PORT = 3001;
 
 // Crear servidor HTTP y WebSocket
 const httpServer = createServer(app);
@@ -63,8 +64,12 @@ io.on("connection", (socket) => {
 });
 
 // Iniciar el servidor HTTP (que incluye sockets) en todas las interfaces
-httpServer.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server listening on http://0.0.0.0:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
+
+httpServer.listen(SOCKET_PORT, () => {
+  console.log(`Server listening on http://http://localhost:${SOCKET_PORT}`);
 });
 
 // Exportar para AWS Lambda o entornos serverless

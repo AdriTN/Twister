@@ -75,7 +75,6 @@ export async function getUserWithTokenSocket(token) {
 
   if (!token || token.length < 10) {
       console.log("No token provided or token is too short");
-      socket.emit("ERROR", { message: "No token provided or token is too short" });
       return null; // O puedes lanzar un error según tu lógica
   }
 
@@ -84,7 +83,6 @@ export async function getUserWithTokenSocket(token) {
 
       // Verificar si el usuario es anónimo
       if (typeof user === "string" && user.includes("anon-")) {
-          socket.emit("ERROR", { message: "User is anonymous" });
           return null;
       }
 
@@ -96,7 +94,6 @@ export async function getUserWithTokenSocket(token) {
       return user;
   } catch (error) {
       console.error("Token verification failed:", error.message);
-      socket.emit("ERROR", { message: "Invalid or expired token" });
       return null; // O puedes lanzar un error según tu lógica
   }
 }
