@@ -51,6 +51,7 @@ data class NewUserResponse(
 data class JoinResponse(
     val currentGameId: String,
     val playerId: String,
+    val playerName: String,
     val imageId: Int? = 1
 )
 
