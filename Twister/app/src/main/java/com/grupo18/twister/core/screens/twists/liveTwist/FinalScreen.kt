@@ -9,9 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.grupo18.twister.core.screens.navigation.Routes
 
 @Composable
-fun FinalScreen() {
+fun FinalScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -25,7 +27,7 @@ fun FinalScreen() {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
         )
-        Button(onClick = { /* Implementar navegación o lógica de reinicio */ }) {
+        Button(onClick = { navController.navigate(Routes.HOME) }) {
             Text(text = "Volver al Inicio", fontSize = 18.sp)
         }
     }

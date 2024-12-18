@@ -70,7 +70,6 @@ fun NavigationWrapper(
         startDestination = if (currentUser != null) Routes.HOME else Routes.WELCOME
     ) {
         composable(Routes.WELCOME) {
-//            GameScreen(TwistModel(title = "", description = ""), UserModel(token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImlhdCI6MTczNDM3NjEyOSwiZXhwIjoxNzM0Mzc5NzI5fQ.afLq2EPPZxfZbKIQRul7ktDBtjQV-GM-oWYYIsU3Zgs", username = "Pepe", email = "p@p.com", password = ""))
             WelcomeScreen(
                 onNavigateToAuth = {
                     navController.navigate(Routes.AUTH)
@@ -189,12 +188,12 @@ fun NavigationWrapper(
             val twistJson = backStackEntry.arguments?.getString("twist")
             val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
 
-            GameScreen(twist, currentUser, isAdmin = true)
+            GameScreen(twist, currentUser, isAdmin = true, navController = navController)
         }
 
         composable(LIVE_TWIST_SCREEN) { backStackEntry ->
             val pin = backStackEntry.arguments?.getString("pin")
-            GameScreen(pin = pin, currentUser = currentUser, twist = null)
+            GameScreen(pin = pin, currentUser = currentUser, twist = null, navController = navController)
         }
     }
 }

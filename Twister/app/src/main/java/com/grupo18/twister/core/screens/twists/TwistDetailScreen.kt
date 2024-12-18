@@ -212,7 +212,7 @@ fun TwistDetailContent(
                 Button(
                     onClick = {
                         val twistJson = Uri.encode(Gson().toJson(twist))
-                        navController.navigate("gameScreen/$twistJson")
+                        navController.navigate(Routes.GAME_SCREEN.replace("{twist}", twistJson))
                     },
                     shape = RoundedCornerShape(50)
                 ) {

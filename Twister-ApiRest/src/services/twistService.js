@@ -1,5 +1,5 @@
 import { redisClient } from '../app.js';
-import { createTwist, updateTwist, deleteTwist, getTwistsByUserId } from '../models/twistModel.js';
+import { createTwist, updateTwist, deleteTwist, getTwistsByUserId, getGameById, getTwistById } from '../models/twistModel.js';
 
 // Función para crear un nuevo twist
 export async function handleCreateTwist(req, res) {
@@ -51,6 +51,24 @@ export async function handleGetTwist(req, res) {
     } catch (error) {
         console.error("Error fetching twist:", error.message);
         res.status(500).json({ error: error.message });
+    }
+}
+
+export async function handleGetTwistSocket(newtwistId) {
+    try {
+        const twist = await getGameById(newtwistId);
+        if (!twist) {
+            return -1
+        }
+        console.log("Twist fetched:", twist);
+        const adminId = twist.adminId;
+        const twistId1 = twist.twistId;
+        console.log("Twist ID:", twistId1);
+        const questions = getTwistById(twistId1, adminId);
+        return questions;
+
+    } catch (error) {
+        return -1;
     }
 }
 

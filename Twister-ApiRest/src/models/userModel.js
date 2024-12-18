@@ -24,7 +24,7 @@ const generateToken = (userId) => {
   return jwt.sign(
     { id: userId }, // Datos a incluir en el token
     SECRET_KEY, // Clave secreta
-    { expiresIn: "1h" } // Expiración del token
+    { expiresIn: "2h" } // Expiración del token
   );
 };
 
@@ -35,7 +35,7 @@ export const generateAnonToken = () => {
   return jwt.sign(
     { id: anonId }, // Usamos un ID único para el usuario anónimo
     SECRET_KEY, // Clave secreta
-    { expiresIn: "1h" } // Expiración del token
+    { expiresIn: "2h" } // Expiración del token
   );
 };
 

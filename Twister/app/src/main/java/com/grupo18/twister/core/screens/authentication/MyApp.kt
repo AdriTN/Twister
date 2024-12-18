@@ -21,12 +21,10 @@ class MyApp : Application() {
         super.onCreate()
         sessionManager = SessionManager(applicationContext)
 
-        // Recuperar la sesión si existe
         val savedUser = sessionManager.getSession()
         if (savedUser != null) {
             _currentUser.value = savedUser
         }
-
         createNotificationChannel()
     }
 
