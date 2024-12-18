@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import com.grupo18.twister.core.models.UserModel
+import com.grupo18.twister.core.utils.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -14,8 +15,16 @@ class MyApp : Application() {
     private val _currentUser = MutableStateFlow<UserModel?>(null)
     val currentUser: StateFlow<UserModel?> = _currentUser
 
+    private lateinit var sessionManager: SessionManager
+
     override fun onCreate() {
         super.onCreate()
+        sessionManager = SessionManager(applicationContext)
+
+        val savedUser = sessionManager.getSession()
+        if (savedUser != null) {
+            _currentUser.value = savedUser
+        }
         createNotificationChannel()
     }
 
@@ -44,6 +53,7 @@ class MyApp : Application() {
     // Función para guardar un usuario completo
     fun saveUser(user: UserModel) {
         _currentUser.value = user
+        sessionManager.saveSession(user)
     }
 
     // Función para actualizar datos del usuario
@@ -63,6 +73,7 @@ class MyApp : Application() {
     // Función para borrar el usuario actual (logout)
     fun clearUser() {
         _currentUser.value = null
+        sessionManager.logout()
     }
 
     // Función para cambiar el avatar

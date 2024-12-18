@@ -82,7 +82,7 @@ export async function getAllTwists() {
 }
 
 // Función para obtener un twist por su clave en el formato userId-twistId
-export async function getTwistById(key) {
+export async function getGameById(key) {
     await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
   
     try {
@@ -169,4 +169,27 @@ export async function deleteTwist(userId, twistId) {
   }
 
   return { message: "Twist deleted successfully" }; // Retorna un mensaje de confirmación
+}
+
+// Función para obtener un twist por su ID
+export async function getTwistById(twistId1, userId) {
+  await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
+
+  try {
+    // Obtiene el twist desde Redis por su ID
+    const twist = await redisClient.get(`${userId}-${twistId1}`);
+
+    console.log("Fetching twist with ID:", twistId1, "from Redis:", twist, "for user:", userId);
+
+    // Verifica si se encontró el twist
+    if (!twist) {
+      return null; // Retorna null si no existe el twist
+    }
+
+    // Retorna el twist parseado
+    return JSON.parse(twist);
+  } catch (error) {
+    console.error(`Error al obtener el twist con ID ${twistId1}:`, error.message);
+    throw new Error(`No se pudo obtener el twist con ID ${twistId1}`);
+  }
 }

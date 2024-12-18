@@ -1,7 +1,9 @@
 import { redisClient } from "../app.js";
+import { handleGetTwistSocket } from "../services/twistService.js";
 
 // Almacena información sobre juegos activos y sus jugadores
 const activeGames = {};
+const activeTwists = {};
 
 // Clase para manejar la lógica del juego
 class Game {
@@ -11,6 +13,7 @@ class Game {
     this.createdAt = Date.now();
     this.socket = socket.id;
     this.players = []; // Inicializar un array de jugadores
+    this.twistId = "";
   }
 }
 
@@ -45,45 +48,6 @@ export async function createGame(adminId, socket) {
   }
 }
 
-// export async function getGameById(pin, userId, socketId) {
-//   ensureRedisClient();
-//   try {
-//     const gameData = await redisClient.get(pin);
-    
-//     if (!gameData) {
-//       return null; // Si el juego no existe, retornar null
-//     }
-
-//     const game = JSON.parse(gameData);
-
-//     // Asegurarse de que players esté inicializado
-//     if (!game.players) {
-//       game.players = [];
-//     }
-//     var ImageId = null;
-//     // Verificar si el usuario ya está en el juego
-//     const playerExists = game.players.find(player => player.id === userId);
-//     if (!playerExists) {
-//       ImageId = Math.floor(Math.random() * 24) + 1;
-//       game.players.push({ id: userId, socketId: socketId, imageId: ImageId}); // Añadir el usuario si no está ya
-//     } else {
-//       // Actualizar el socketId si el jugador ya está en la lista
-//       playerExists.socketId = socketId;
-//     }
-
-//     // Guardar el juego actualizado en Redis
-//     await redisClient.set(pin, JSON.stringify(game));
-    
-//     // Actualizar el juego en la memoria
-//     activeGames[pin] = game;
-
-//     return ImageId;
-//   } catch (error) {
-//     console.error("Error getting game:", error);
-//     throw new Error("Could not retrieve game");
-//   }
-// }
-
 export async function getGameById(pin, userId, socketId) {
   ensureRedisClient();
   try {
@@ -105,7 +69,6 @@ export async function getGameById(pin, userId, socketId) {
     if (playerExists) {
       playerExists.socketId = socketId;
     }
-    // Guardar el juego actualizado en Redis
     await redisClient.set(pin, JSON.stringify(game));
     
     // Actualizar el juego en la memoria
@@ -163,6 +126,38 @@ export function getActiveGames() {
   return activeGames
 }
 
+export async function getTwistQuestions(roomId){
+  try {
+    console.log("Obteniendo preguntas de twist para la sala:", roomId);
+    const twistQuestions = await handleGetTwistSocket(roomId);
+    console.log("Preguntas de twist obtenidas:", twistQuestions);
+    return twistQuestions;
+  } catch (error) {
+    console.error("Error getting twist questions:", error);
+    throw new Error("Could not get twist questions");
+  }
+}
+
+export async function saveTwistInRoom(twistId, roomId) {
+  await ensureRedisClient();
+  try {
+    var gameData = await redisClient.get(roomId);
+    if (!gameData) {
+      return false;
+    }
+    gameData = JSON.parse(gameData);
+    gameData.twistId = twistId;
+    console.log("Guardando twist en la sala:", roomId, "con game:", gameData, "y con twistId:", twistId);
+    await redisClient.set(roomId, JSON.stringify(gameData));
+    activeTwists[roomId] = twistId;
+    console.log("Twist guardado en la sala:", roomId, "con activeTwists:", activeTwists);
+    return true;
+  } catch (error) {
+    console.error("Error saving twist in room:", error);
+    throw new Error("Could not save twist in room");
+  }
+}
+
 
 // Función para eliminar un jugador por su socketId
 export async function deleteUserById(socketId) {
@@ -185,6 +180,7 @@ export async function deleteUserById(socketId) {
       if (game.players.length === 0 && game.createdAt < Date.now() - 120000) {
         // Si no quedan jugadores y ha pasado el tiempo, eliminar el juego
         delete activeGames[pin];
+        delete activeTwists[pin];
         await redisClient.del(pin);
         const timePassed = Date.now() - game.createdAt;
         console.log(`Juego ${pin} eliminado por falta de jugadores y tiempo de espera de ${timePassed} ms`);

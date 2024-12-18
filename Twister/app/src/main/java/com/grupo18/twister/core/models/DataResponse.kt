@@ -1,5 +1,7 @@
 package com.grupo18.twister.core.models
 
+import com.grupo18.twister.core.screens.twists.Question
+import com.grupo18.twister.core.screens.twists.SingleQuestion
 import kotlinx.serialization.Serializable
 
 data class UserResponse(
@@ -33,13 +35,14 @@ data class GameResponse(
     val adminId: Int?,
     val createdAt: Long,
     val socket: String,
-    val players: List<PlayerModel>
+    val players: List<PlayerModel>,
+    val twistId: String,
 )
 
 @Serializable
 data class RoomResponse(
     val game: GameResponse,
-    val pin: Int
+    val pin: Int,
 )
 
 @Serializable
@@ -48,7 +51,8 @@ data class JoinPinResponse(
     val playerId: String,
     val game: GameResponse,
     val playerName: String,
-    val imageIndex: String
+    val imageIndex: String,
+    val twistQuestions: String
 )
 
 @Serializable
@@ -72,4 +76,35 @@ data class TwistRequest(
 data class PlayersLeftList(
     val roomId: String,
     val players: List<PlayerModel>
+)
+
+data class ResultsResponse(
+    val results: Map<String, Int>
+)
+
+data class GameStateEvent(val state: String, val data: Any?)
+
+@Serializable
+data class NextQuestionEvent(val questionId: String, val questionText: String)
+
+@Serializable
+data class AnswerProvidedEvent(val playerId: String, val answer: String)
+
+@Serializable
+data class GameOverEvent(val winnerId: String, val finalScores: Map<String, Int>)
+
+@Serializable
+data class QuestionTimeoutEvent(val questionId: String)
+
+@Serializable
+data class UploadSocketGameRequest(val twistId: String, val roomId: String)
+
+@Serializable
+data class TwistQuestionsResponse(
+    val twistQuestions: List<QuestionModel>
+)
+
+@Serializable
+data class StartResponse(
+    val pinRoom: String
 )

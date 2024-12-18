@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.grupo18.twister.core.api.ApiClient
-import com.grupo18.twister.core.models.Event
 import android.content.pm.ActivityInfo
 import androidx.compose.ui.platform.LocalContext
 import com.grupo18.twister.core.api.RealTimeClient
@@ -38,19 +37,16 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.withStyle
 import androidx.navigation.NavController
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.WriterException
@@ -63,6 +59,11 @@ import com.grupo18.twister.core.models.RoomResponse
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.R
 import com.grupo18.twister.core.models.PlayersLeftList
+import com.grupo18.twister.core.models.QuestionModel
+import com.grupo18.twister.core.models.StartResponse
+import com.grupo18.twister.core.models.TwistModel
+import com.grupo18.twister.core.models.TwistQuestionsResponse
+import com.grupo18.twister.core.models.UploadSocketGameRequest
 import kotlinx.coroutines.delay
 import java.io.IOException
 
@@ -183,11 +184,13 @@ fun WaitingRoom(
     token: String,
     userIsAdmin: Boolean,
     pin: String,
-    onStartGame: (roomId: String) -> Unit
+    twist: TwistModel?,
+    onStartGame: (roomId: String, questions: SnapshotStateList<QuestionModel>) -> Unit
 ) {
     var players = remember { mutableStateListOf<PlayerModel>() }
     val socket = ApiClient.getSocket()
     val realTimeClient = remember { RealTimeClient(socket) }
+    val questions: SnapshotStateList<QuestionModel> = remember { mutableStateListOf() }
     var isLoading by remember { mutableStateOf(true) }
     var pinProvided by remember { mutableStateOf(false) }
     var pinRoom by remember { mutableStateOf("") }
@@ -201,6 +204,7 @@ fun WaitingRoom(
     val myApp = context.applicationContext as MyApp
     val currentUser by myApp.currentUser.collectAsState()
     val jockeyFontFamily = FontFamily(Font(R.font.jockeyone))
+    var uploadedTwist = false
 
     LaunchedEffect(isAdmin) {
         if (isAdmin) {
@@ -209,9 +213,12 @@ fun WaitingRoom(
 
             while (true) {
                 delay(1000) // Espera 5 segundos entre cada verificación
-                if (pinRoom == "0000"){
-                    println("pinRoom: $pinRoom")
+                if (pinRoom == "0000" || pinRoom.isEmpty()){
                     continue
+                }
+                if (!uploadedTwist){
+                    twist?.let { realTimeClient.uploadGame(UploadSocketGameRequest(it.id, pinRoom)) }
+                    uploadedTwist = true
                 }
                 // Lógica para verificar si alguien ha salido
                 val checkJson = JSONObject(
@@ -220,7 +227,7 @@ fun WaitingRoom(
                         "token" to token
                     )
                 ).toString()
-                println("Checking for players left with $checkJson")
+                println("Se va a enviar CHECK_PLAYERS_LEFT con $checkJson")
                 socket.emit("CHECK_PLAYERS_LEFT", checkJson) // Enviar evento al servidor para verificar
             }
 
@@ -254,6 +261,13 @@ fun WaitingRoom(
                     println("El event.message es ${event.message}")
                     val jsonString = event.message.removePrefix("PLAYER_JOINED: ")
                     val newPlayer = Gson().fromJson(jsonString, JoinPinResponse::class.java)
+                    println("El newPlayer es $newPlayer")
+                    println("El question list es $newPlayer.twistQuestions")
+                    // Suponiendo que jsonString es el JSON completo que has recibido
+                    val response = Gson().fromJson(newPlayer.twistQuestions, TwistQuestionsResponse::class.java)
+                    val decodedQuestions: List<QuestionModel> = response.twistQuestions
+                    questions.addAll(decodedQuestions)
+                    println("El decodedQuestions es $questions")
 
                     players.add(
                         PlayerModel(
@@ -271,15 +285,18 @@ fun WaitingRoom(
                     pinProvided = true
                     isLoading = false
                     pinRoom = game.pin.toString()
+                    realTimeClient.updateRoomId(pinRoom)
                 }
 
                 event.message.startsWith("PIN_STARTED_PROVIDED: ") -> {
                     val jsonString = event.message.removePrefix("PIN_STARTED_PROVIDED: ")
+                    println("PIN_STARTED_PROVIDED: $jsonString")
                     val joinPinResponse = Gson().fromJson(jsonString, GameResponse::class.java)
                     println("joinPinResponse: $joinPinResponse")
                     pinProvided = true
                     isLoading = false
                     pinRoom = joinPinResponse.id
+                    realTimeClient.updateRoomId(pinRoom)
                     players = mutableStateListOf(*joinPinResponse.players.toTypedArray())
                     showNameDialog = true
                 }
@@ -303,6 +320,7 @@ fun WaitingRoom(
                         println("New player added: ${newPlayer.socketId}")
                     }
                 }
+
                 event.message.startsWith("playerLeft: ") -> {
                     val jsonString = event.message.removePrefix("playerLeft: ").trim()
                     println("Player left: $jsonString")
@@ -326,6 +344,15 @@ fun WaitingRoom(
                     isInRoom = false
                     Toast.makeText(context, "Disconnected", Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
+                }
+                event.message.startsWith("GAME_IS_STARTING") -> {
+                    val jsonString = event.message.removePrefix("GAME_IS_STARTING: ").trim()
+                    val pinReq = Gson().fromJson(jsonString, StartResponse::class.java)
+                    println("Voy a la siguiente pantalla")
+                    println("pinRoom: $pinRoom - pinReq: $pinReq")
+                    if (pinRoom == pinReq.pinRoom) {
+                        onStartGame(pinRoom, questions) // Ir a la siguiente pantalla
+                    }
                 }
 
                 event.message.startsWith("PLAYERS_LEFT_LIST") -> {
@@ -523,8 +550,8 @@ fun WaitingRoom(
 
                 Button(
                     onClick = {
-                        realTimeClient.sendEvent(Event("START_GAME")) // Notificar a los jugadores
-                        onStartGame(roomId) // Ir a la siguiente pantalla
+                        realTimeClient.startGame(pinRoom) // Notificar a los jugadores
+                        onStartGame(pinRoom, questions) // Ir a la siguiente pantalla
                     },
                     enabled = players.isNotEmpty(),
                     shape = RoundedCornerShape(8.dp),
@@ -609,13 +636,6 @@ fun WaitingRoom(
                         )
                     }
                 }
-            }
-        }
-
-        // Desconectar el socket al salir de la composición
-        DisposableEffect(Unit) {
-            onDispose {
-                socket.disconnect()
             }
         }
     }

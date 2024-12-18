@@ -188,9 +188,8 @@ fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // ---------- Ajuste para bajar la imagen ----------
+
             Spacer(modifier = Modifier.height(6.dp))
-            // ↑ Aquí puedes modificar la altura para mover la imagen más abajo o arriba.
 
             // Imagen circular más grande
             Box(

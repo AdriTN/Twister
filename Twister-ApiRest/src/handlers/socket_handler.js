@@ -5,6 +5,8 @@ import {
   deleteUserById,
   joinGameById,
   getActiveGames,
+  saveTwistInRoom,
+  getTwistQuestions,
 } from "../models/gameModel.js";
 
 // Almacena el ID del juego y el usuario al unirse
@@ -47,6 +49,8 @@ export const socketHandlers = (io, socket) => {
       imageIndex,
     });
 
+    const twistQuestions = await getTwistQuestions(roomId);
+
     // Emitir evento de que un jugador se ha unido al propio socket con información completa
     console.log("Player joined susecsfully!");
     socket.emit("PLAYER_JOINED", {
@@ -55,6 +59,7 @@ export const socketHandlers = (io, socket) => {
       game: newgame,
       playerName: currentUserName,
       imageIndex: imageIndex,
+      twistQuestions:  JSON.stringify(twistQuestions),
     });
   });
 
@@ -76,15 +81,17 @@ export const socketHandlers = (io, socket) => {
         const game = await createGame(userId, socket);
         socket.join(game.id);
         console.log("Game id es", game.id);
+        console.log("Solicitud de juego nuevo NUEVASO:", game);
         socket.emit("PIN_PROVIDED", { pin: game.id, game });
       } else {
         console.log("Solicitud de juego existente:", data.roomId);
-        const game = await getGameById(data.roomId, userId, socket.id); // Obtener el juego por PIN
+        var game = await getGameById(data.roomId, userId, socket.id);
         if (!game) {
           socket.emit("ERROR", { message: "Juego no encontrado" });
           return;
         }
-        currentGameId = game.id; // Guardar el ID del juego actual
+        currentGameId = game.id;
+        console.log("Game id es PIN_STARTED_PROVIDED", game);
         socket.emit("PIN_STARTED_PROVIDED", game);
       }
     } catch (err) {
@@ -94,8 +101,27 @@ export const socketHandlers = (io, socket) => {
   });
 
   // Evento: Iniciar el juego
-  socket.on("startGame", (data) => {
-    console.log(`Juego iniciado en la sala: ${data.roomId}`);
+  socket.on("startGame", (pinRoom) => {
+    console.log(`Juego iniciado en la sala: ${pinRoom}`);
+    const activeGames = getActiveGames();
+    for (const pin in activeGames) {
+      const game = activeGames[pin];
+      game.players.forEach(player => {
+        io.to(player.socketId).emit("GAME_STARTED", { pinRoom: pin });
+        console.log(`Juego iniciado en la sala: ${pin} enviado a ${player.socketId}`);
+      });
+    }
+    return activeGames;
+  });
+
+
+  // Evento: Iniciar el juego
+  socket.on("getGame", (data) => {
+    data = JSON.parse(data);
+    const result = saveTwistInRoom(data.twistId, data.roomId);
+    if (!result) {
+      socket.emit("ERROR", { message: "Ya existe el twist" });
+    }
     io.to(data.roomId).emit("gameStarted", { roomId: data.roomId });
   });
 
