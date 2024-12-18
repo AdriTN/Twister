@@ -189,12 +189,12 @@ fun NavigationWrapper(
             val twistJson = backStackEntry.arguments?.getString("twist")
             val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
 
-            GameScreen(twist, currentUser, isAdmin = true)
+            GameScreen(twist, currentUser, isAdmin = true, navController = navController)
         }
 
         composable(LIVE_TWIST_SCREEN) { backStackEntry ->
             val pin = backStackEntry.arguments?.getString("pin")
-            GameScreen(pin = pin, currentUser = currentUser, twist = null)
+            GameScreen(pin = pin, currentUser = currentUser, twist = null, navController = navController)
         }
     }
 }

@@ -29,17 +29,13 @@ fun TempTwist(
 ) {
     val context = LocalContext.current
     val pinText = remember { mutableStateOf("") }
-    var showNameDialog by remember { mutableStateOf(false) } // Estado para controlar la visibilidad del diálogo de nombre
-    val nameText = remember { mutableStateOf("") } // Estado para almacenar el nombre ingresado
 
     fun joinGame(pin: String) {
         if (pin.length != 6 || !pin.all { it.isDigit() }) {
             Toast.makeText(context, "PIN inválido: $pin", Toast.LENGTH_SHORT).show()
             return
         }
-
-        // Mostrar el diálogo para ingresar el nombre
-        showNameDialog = true
+        onAuthSuccess(pinText.value)
     }
 
     val launcher = rememberLauncherForActivityResult(
@@ -57,56 +53,6 @@ fun TempTwist(
                 }
             }
         }
-    }
-
-    // Diálogo para ingresar el nombre
-    if (showNameDialog) {
-        AlertDialog(
-            onDismissRequest = { /* No permitir cerrar el diálogo sin ingresar un nombre */ },
-            title = { Text(text = "Ingresa tu nombre") },
-            text = {
-                TextField(
-                    value = nameText.value,
-                    onValueChange = { newValue ->
-                        // Permitir solo letras y espacios, y limitar la longitud
-                        if (newValue.all { it.isLetter() || it.isWhitespace() } && newValue.length <= 20) {
-                            nameText.value = newValue
-                        }
-                    },
-                    label = { Text("Nombre") },
-                    singleLine = true
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val name = nameText.value.trim()
-                        if (name.isNotEmpty()) {
-                            onAuthSuccess(pinText.value)
-                            // Resetear los estados
-                            showNameDialog = false
-                            nameText.value = ""
-                        } else {
-                            Toast.makeText(context, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                ) {
-                    Text("Aceptar")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = {
-                        // Opcional: Permitir cancelar la acción
-                        showNameDialog = false
-                        pinText.value = ""
-                        nameText.value = ""
-                    }
-                ) {
-                    Text("Cancelar")
-                }
-            }
-        )
     }
 
     Column(

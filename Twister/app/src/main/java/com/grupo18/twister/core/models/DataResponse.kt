@@ -23,7 +23,8 @@ data class DecodedToken(
 @Serializable
 data class PlayerModel(
     val id: String,
-    val imageId: String,
+    val imageIndex: String,
+    val socketId: String? = ""
 )
 
 @Serializable
@@ -42,17 +43,20 @@ data class RoomResponse(
 )
 
 @Serializable
-data class NewUserResponse(
+data class JoinPinResponse(
+    val currentGameId: String,
     val playerId: String,
-    val playerName: String
+    val game: GameResponse,
+    val playerName: String,
+    val imageIndex: String
 )
 
 @Serializable
 data class JoinResponse(
     val currentGameId: String,
     val playerId: String,
-    val playerName: String,
-    val imageId: Int? = 1
+    val playerList: List<PlayerModel>,
+    val game: GameResponse
 )
 
 data class UploadResponse(
@@ -63,4 +67,9 @@ data class UploadResponse(
 data class TwistRequest(
     val message: String,
     val twists: List<TwistModel>
+)
+
+data class PlayersLeftList(
+    val roomId: String,
+    val players: List<PlayerModel>
 )
