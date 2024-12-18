@@ -32,6 +32,7 @@ fun GameScreen(
     val realTimeClient = remember { RealTimeClient(ApiClient.getSocket()) }
 
     if (!gameStarted) {
+        if (currentUser != null) {
         WaitingRoom(
             onStartGame = { roomId ->
                 currentRoomId = roomId
