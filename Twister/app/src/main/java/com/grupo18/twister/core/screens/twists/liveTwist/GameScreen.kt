@@ -33,17 +33,18 @@ fun GameScreen(
 
     if (!gameStarted) {
         if (currentUser != null) {
-        WaitingRoom(
-            onStartGame = { roomId ->
-                currentRoomId = roomId
-                gameStarted = true
-                gameState = GameState.SHOWING_QUESTION
-                currentQuestionIndex = 0
-            },
-            userIsAdmin = isAdmin,
-            token = currentUser?.token ?: "",
-            pin = pin.toString()
-        )
+            WaitingRoom(
+                onStartGame = { roomId ->
+                    currentRoomId = roomId
+                    gameStarted = true
+                    gameState = GameState.SHOWING_QUESTION
+                    currentQuestionIndex = 0
+                },
+                userIsAdmin = isAdmin,
+                token = currentUser.token ?: "",
+                pin = pin.toString(),
+            )
+        }
     } else {
         when (gameState) {
             GameState.SHOWING_QUESTION -> {
@@ -108,7 +109,7 @@ fun GameScreen(
 
 fun fetchResults(questionId: String, onResultReceived: (Map<String, Int>) -> Unit) {
     val apiService = ApiClient.retrofit.create(ApiService::class.java)
-    val token = "Bearer YOUR_AUTH_TOKEN" // Reemplaza con el token real
+    val token = "YOUR_AUTH_TOKEN" // Reemplaza con el token real
 
     apiService.getResultsForQuestion(token, questionId).enqueue(object : Callback<ResultsResponse> {
         override fun onResponse(call: Call<ResultsResponse>, response: Response<ResultsResponse>) {
