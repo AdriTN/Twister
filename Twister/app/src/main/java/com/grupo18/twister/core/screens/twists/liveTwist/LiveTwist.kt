@@ -35,10 +35,11 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
     var gameState by remember { mutableStateOf(GameState.SHOWING_QUESTION) }
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var currentQuestion by remember { mutableStateOf<QuestionModel?>(null) }
-    var timerSeconds by remember { mutableIntStateOf(15) }
-    var responses by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var timerSeconds by remember { mutableIntStateOf(7) }
     var opcionesRespuestas by remember { mutableStateOf(listOf<OpcionRespuesta>()) }
     var respuestasJugador by remember { mutableStateOf(listOf<RespuestaJugador>()) }
+    var respuestaJugador by remember { mutableStateOf("") }
+    var isCorrect by remember { mutableStateOf(false) }
 
     // Inicialización del RealTimeClient
     val realTimeClient = remember { RealTimeClient(ApiClient.getSocket()) }
@@ -67,30 +68,29 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     onTimerTick = { seconds ->
                         timerSeconds = seconds.toInt()
                     },
-                    onTimerFinish = {
+                    onTimerFinish = { respuesta ->
+                        if (!isAdmin){
+                            respuestaJugador = respuesta
+                        }
                         gameState = GameState.SHOWING_RESULTS
-                        // Opcional: Emitir evento de fin de pregunta si es necesario
                     },
-                    onAnswerSelected = {
-                        //TODO
-                    }
                 )
             }
         }
 
         GameState.SHOWING_RESULTS -> {
-            ResultsView(responses = responses, isAdmin = isAdmin)
-            LaunchedEffect(Unit) {
-                delay(3000)
-                if (currentQuestionIndex < (twist?.twistQuestions?.size ?: 0) - 1) {
-                    currentQuestionIndex++
-                    gameState = GameState.SHOWING_QUESTION
-                    timerSeconds = 15
-                    responses = emptyMap() // Reiniciar respuestas para la nueva pregunta
-                } else {
-                    gameState = GameState.FINALIZED
+            ResultsView(responses = respuestasJugador, options = opcionesRespuestas, isAdmin = isAdmin, isCorrect = isCorrect, respuestaJugador = respuestaJugador, onNextQuestionClick = {
+                realTimeClient.nextQuestion(roomId = currentRoomId, questionId = currentQuestionIndex.toString())
+                if (isAdmin){
+                    if (currentQuestionIndex < (twist?.twistQuestions?.size ?: 0) - 1) {
+                        currentQuestionIndex++
+                        gameState = GameState.SHOWING_QUESTION
+                        timerSeconds = 15
+                    } else {
+                        gameState = GameState.FINALIZED
+                    }
                 }
-            }
+            })
         }
 
         GameState.FINALIZED -> {
@@ -112,15 +112,7 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                         // Aquí podrías buscar y actualizar `currentQuestion` si es necesario
                         gameState = GameState.SHOWING_QUESTION
                         timerSeconds = 15
-                        responses = emptyMap()
                         println("Nueva pregunta: $questionText")
-                    })
-                    "ANSWER_PROVIDED" -> handleAnswerProvided(event, onAnswer = { playerId, answer ->
-                        // Actualizar las respuestas recibidas
-                        responses = responses.toMutableMap().apply {
-                            this[playerId] = (this[playerId] ?: 0) + 1
-                        }
-                        println("Respuesta recibida de $playerId: $answer")
                     })
                     "GAME_OVER" -> handleGameOver(event, onGameOver = { winnerId, finalScores ->
                         // Mostrar pantalla final o manejar el estado finalizado
@@ -130,11 +122,9 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     "QUESTION_TIMEOUT" -> handleQuestionTimeout(event, onTimeout = { questionId ->
                         // Manejar el timeout de la pregunta actual
                         gameState = GameState.SHOWING_RESULTS
-                        println("Tiempo expirado para la pregunta: $questionId")
                     })
                     // Manejar evento ANSWERS al expirar tiempo de pregunta
                     "ANSWERS" -> {
-                        gameState = GameState.SHOWING_RESULTS
                             try {
                                 println("Evento ANSWERS recibido: ${event.message}")
                                 val jsonElement = Json.parseToJsonElement(event.message)

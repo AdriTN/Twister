@@ -308,4 +308,13 @@ class RealTimeClient(private val socket: Socket) {
         println("getAnswers: $jsonString")
         socket.emit("getAnswers", jsonString)
     }
+
+    fun nextQuestion(roomId: String, questionId: String){
+        val jsonString = """{
+        "roomId": "$roomId",
+        "questionId": "$questionId"
+    }"""
+        println("getAnswers: $jsonString")
+        socket.emit("getAnswers", jsonString)
+    }
 }
