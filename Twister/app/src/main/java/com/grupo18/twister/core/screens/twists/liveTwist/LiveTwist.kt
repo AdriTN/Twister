@@ -36,7 +36,7 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
     var gameState by remember { mutableStateOf(GameState.SHOWING_QUESTION) }
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var currentQuestion by remember { mutableStateOf<QuestionModel?>(null) }
-    var timerSeconds by remember { mutableIntStateOf(7) }
+    var timerSeconds by remember { mutableIntStateOf(5) }
     var opcionesRespuestas by remember { mutableStateOf(listOf<OpcionRespuesta>()) }
     var respuestasJugador by remember { mutableStateOf(listOf<RespuestaJugador>()) }
     var respuestaJugador by remember { mutableStateOf("") }
@@ -87,7 +87,7 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     if (currentQuestionIndex < (twist?.twistQuestions?.size ?: 0) - 1) {
                         currentQuestionIndex++
                         gameState = GameState.SHOWING_QUESTION
-                        timerSeconds = 15
+                        timerSeconds = 5
                     } else {
                         gameState = GameState.FINALIZED
                     }

@@ -2,28 +2,29 @@ package com.grupo18.twister.core.screens.twists.liveTwist
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Hexagon
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.grupo18.twister.core.api.RealTimeClient
 import com.grupo18.twister.core.components.ColorBlock
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import com.grupo18.twister.core.components.TimeBar
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.screens.twists.liveTwist.components.AnswerText
@@ -77,9 +78,15 @@ fun QuestionView(
     // Hacer el contenido desplazable
     val scrollState = rememberScrollState()
 
-
     if (isAdmin){
-        // Usar Scaffold para manejar el padding y evitar solapamientos
+        // Definir las figuras en orden
+        val figuras: List<ImageVector> = listOf(
+            Icons.Default.ArrowForward, // Flecha
+            Icons.Default.Circle,        // Círculo
+            Icons.Default.Stop,          // Cuadrado (usando Stop como placeholder)
+            Icons.Default.Hexagon        // Hexágono (asegúrate de tener este ícono o usa uno personalizado)
+        )
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
@@ -112,18 +119,46 @@ fun QuestionView(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Lista de respuestas
+                // Lista de respuestas en dos por fila
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                 ) {
-                    question.answers.forEach { answer ->
-                        AnswerText(
-                            answerText = answer.text,
-                            onClick = {  },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    // Agrupar las respuestas de dos en dos
+                    val pairedAnswers = question.answers.chunked(2)
+
+                    pairedAnswers.forEachIndexed { rowIndex, answerPair ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            answerPair.forEachIndexed { columnIndex, answer ->
+                                // Obtener la figura correspondiente
+                                val figura = if (rowIndex * 2 + columnIndex < figuras.size) {
+                                    figuras[rowIndex * 2 + columnIndex]
+                                } else {
+                                    Icons.Default.Circle // Figura por defecto si excede la lista
+                                }
+
+                                // Mostrar la respuesta con su figura
+                                AnswerWithFigure(
+                                    answerText = answer.text,
+                                    figura = figura,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 8.dp),
+                                    onClick = { /* Acción para administrador si es necesario */ }
+                                )
+                            }
+
+                            // Si hay una respuesta impar, agregar un espacio vacío
+                            if (answerPair.size < 2) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
@@ -204,7 +239,7 @@ fun QuestionView(
             }
         }
         else {
-            // ImplementaciÃ³n del mensaje de espera
+            // Implementación del mensaje de espera
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -231,3 +266,35 @@ fun QuestionView(
     }
 }
 
+@Composable
+fun AnswerWithFigure(
+    answerText: String,
+    figura: ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .clickable { onClick() }
+            .background(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = figura,
+            contentDescription = "Figura de $answerText",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(40.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = answerText,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
