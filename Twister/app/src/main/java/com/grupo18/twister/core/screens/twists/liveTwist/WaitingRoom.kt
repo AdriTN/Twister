@@ -553,7 +553,7 @@ fun WaitingRoom(
                         realTimeClient.startGame(pinRoom) // Notificar a los jugadores
                         onStartGame(pinRoom, playerName, questions) // Ir a la siguiente pantalla
                     },
-                    enabled = players.isNotEmpty(),
+                    //enabled = players.isNotEmpty(),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(0.4f)
                 ) {

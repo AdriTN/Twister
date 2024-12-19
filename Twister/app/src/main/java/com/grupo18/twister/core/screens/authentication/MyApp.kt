@@ -46,9 +46,7 @@ class MyApp : Application() {
     }
 
     // Función para obtener el usuario actual como StateFlow
-    fun getUser(): StateFlow<UserModel?> {
-        return currentUser
-    }
+    fun getUser(): StateFlow<UserModel?> = currentUser
 
     // Función para guardar un usuario completo
     fun saveUser(user: UserModel) {
@@ -70,7 +68,6 @@ class MyApp : Application() {
         }
     }
 
-    // Función para borrar el usuario actual (logout)
     fun clearUser() {
         _currentUser.value = null
         sessionManager.logout()

@@ -1,5 +1,7 @@
 package com.grupo18.twister.core.screens.twists.liveTwist
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,11 +10,8 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Hexagon
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -20,17 +19,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.grupo18.twister.core.api.RealTimeClient
 import com.grupo18.twister.core.components.ColorBlock
-import com.grupo18.twister.core.models.OpcionRespuesta
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import com.grupo18.twister.core.components.TimeBar
 import com.grupo18.twister.core.models.QuestionModel
-import com.grupo18.twister.core.models.RespuestaJugador
+import com.grupo18.twister.core.screens.twists.liveTwist.components.AnswerText
+import com.grupo18.twister.core.screens.twists.liveTwist.components.QuestionCard
 import kotlinx.coroutines.delay
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 @Composable
 fun QuestionView(
@@ -41,18 +39,24 @@ fun QuestionView(
     onTimerTick: (seconds: Long) -> Unit,
     realTimeClient: RealTimeClient,
     pinRoom: String,
-    onTimerFinish: () -> Unit
+    onTimerFinish: (String) -> Unit,
 ) {
     val isOver = remember { mutableStateOf(false) }
     val isAnswered = remember { mutableStateOf(false) }
+    var remainingSeconds by remember { mutableIntStateOf(timerSeconds) }
+    var progress by remember { mutableFloatStateOf(0f) }
+    var respuestaJugador by remember { mutableStateOf("") }
+
     // Manejar el temporizador
     LaunchedEffect(key1 = question.id) {
         for (i in timerSeconds downTo 0) {
+            remainingSeconds = i
             onTimerTick(i.toLong())
+            progress = if (timerSeconds > 0) remainingSeconds.toFloat() / timerSeconds else 0f
             delay(1000L)
         }
-        //onTimerFinish()
-        //isOver.value = true
+        onTimerFinish(respuestaJugador)
+        isOver.value = true
     }
 
     LaunchedEffect(isAdmin) {
@@ -63,36 +67,69 @@ fun QuestionView(
             }
         }
     }
+
+    // Estado para animar el progreso de la barra de tiempo
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec, label = ""
+    )
+
+    // Hacer el contenido desplazable
+    val scrollState = rememberScrollState()
+
+
     if (isAdmin){
-        Column(
+        // Usar Scaffold para manejar el padding y evitar solapamientos
+        Scaffold(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = question.question,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            question.answers.forEach { answer ->
-                Button(
-                    onClick = { /* Implementar lógica de respuesta si es necesario */ },
+                .background(MaterialTheme.colorScheme.background)
+                .systemBarsPadding() // Evitar solapamiento con barras del sistema
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(scrollState), // Hacer el contenido desplazable
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Barra de tiempo
+                TimeBar(
+                    progress = animatedProgress,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Tarjeta de pregunta
+                QuestionCard(
+                    questionText = question.question,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Lista de respuestas
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp)
                 ) {
-                    Text(text = answer.text, fontSize = 18.sp)
+                    question.answers.forEach { answer ->
+                        AnswerText(
+                            answerText = answer.text,
+                            onClick = {  },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "Tiempo restante: $timerSeconds segundos",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
         }
     } else {
         if (!isAnswered.value){
@@ -115,6 +152,7 @@ fun QuestionView(
                         icon = Icons.Default.ArrowForward,
                         contentDescription = "Arrow",
                         onClick = {
+                            respuestaJugador = "1"
                             realTimeClient.uploadAnswer(answer = "1", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }
@@ -125,6 +163,7 @@ fun QuestionView(
                         icon = Icons.Default.Circle,
                         contentDescription = "Circle",
                         onClick = {
+                            respuestaJugador = "2"
                             realTimeClient.uploadAnswer(answer = "2", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }
@@ -143,6 +182,7 @@ fun QuestionView(
                         icon = Icons.Default.Stop,
                         contentDescription = "Square",
                         onClick = {
+                            respuestaJugador = "3"
                             realTimeClient.uploadAnswer(answer = "3", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }
@@ -153,6 +193,7 @@ fun QuestionView(
                         icon = Icons.Default.Hexagon,
                         contentDescription = "Hexagon",
                         onClick = {
+                            respuestaJugador = "4"
                             realTimeClient.uploadAnswer(answer = "4", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }
@@ -163,9 +204,30 @@ fun QuestionView(
             }
         }
         else {
-            //TODO: Mostrar respuesta
+            // ImplementaciÃ³n del mensaje de espera
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Esperando a que el administrador termine la pregunta...",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(
+                    color = Color(0xFF6200EE),
+                    strokeWidth = 4.dp,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
         }
-
     }
 }
 

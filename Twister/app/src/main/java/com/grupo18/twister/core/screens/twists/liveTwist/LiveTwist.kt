@@ -70,6 +70,9 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     onTimerFinish = {
                         gameState = GameState.SHOWING_RESULTS
                         // Opcional: Emitir evento de fin de pregunta si es necesario
+                    },
+                    onAnswerSelected = {
+                        //TODO
                     }
                 )
             }

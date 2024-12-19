@@ -50,7 +50,7 @@ fun LoginScreen(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.widthIn(max = 700.dp, min = 600.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -58,7 +58,7 @@ fun LoginScreen(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.widthIn(max = 700.dp, min = 600.dp),
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
@@ -101,7 +101,8 @@ fun LoginScreen(
                     errorMessage = "Please fill all fields"
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .widthIn(max = 250.dp, min = 200.dp)
         ) {
             Text("Login")
         }
