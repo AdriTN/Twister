@@ -6,13 +6,21 @@ import com.grupo18.twister.core.models.GameOverEvent
 import com.grupo18.twister.core.models.GameStateEvent
 import com.grupo18.twister.core.models.JoinPinResponse
 import com.grupo18.twister.core.models.NextQuestionEvent
+import com.grupo18.twister.core.models.OpcionRespuesta
 import com.grupo18.twister.core.models.QuestionTimeoutEvent
+import com.grupo18.twister.core.models.RespuestaJugador
 import com.grupo18.twister.core.models.RoomResponse
 import com.grupo18.twister.core.models.StartResponse
 import com.grupo18.twister.core.models.UploadSocketGameRequest
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 // Clase para gestionar eventos en tiempo real
 class RealTimeClient(private val socket: Socket) {
@@ -219,25 +227,42 @@ class RealTimeClient(private val socket: Socket) {
             }
         })
 
-        // Evento: Tiempo de respuesta expirado para una pregunta
-        socket.on("QUESTION_TIMEOUT", Emitter.Listener { args ->
-            println("QUESTION_TIMEOUT: ${args.joinToString()}")
+//        // Evento: Tiempo de respuesta expirado para una pregunta
+//        socket.on("QUESTION_TIMEOUT", Emitter.Listener { args ->
+//            println("QUESTION_TIMEOUT: ${args.joinToString()}")
+//            if (args.isNotEmpty()) {
+//                val firstArg = args[0].toString()
+//                try {
+//                    val timeout = Json.decodeFromString<QuestionTimeoutEvent>(firstArg)
+//                    onEventReceived(Event(
+//                        message = "QUESTION_TIMEOUT para la pregunta: ${timeout.questionId}",
+//                        type = "QUESTION_TIMEOUT",
+//                        id = timeout.questionId
+//                    ))
+//                } catch (e: Exception) {
+//                    println("Error al deserializar QUESTION_TIMEOUT: ${e.localizedMessage}")
+//                }
+//            }
+//        })
+
+        socket.on("ANSWERS", Emitter.Listener { args ->
             if (args.isNotEmpty()) {
+                println("ANSWERS: ${args.joinToString()}")
+                // El primer argumento recibido como JSON en forma de String
                 val firstArg = args[0].toString()
-                try {
-                    val timeout = Json.decodeFromString<QuestionTimeoutEvent>(firstArg)
-                    onEventReceived(Event(
-                        message = "QUESTION_TIMEOUT para la pregunta: ${timeout.questionId}",
-                        type = "QUESTION_TIMEOUT",
-                        id = timeout.questionId
-                    ))
-                } catch (e: Exception) {
-                    println("Error al deserializar QUESTION_TIMEOUT: ${e.localizedMessage}")
-                }
+
+                // Encapsular el JSON en un objeto Event y enviarlo
+                onEventReceived(
+                    Event(
+                        message = firstArg, // El JSON crudo recibido
+                        type = "ANSWERS",
+                        id = "" // Puedes ajustar este campo si necesitas un identificador
+                    )
+                )
             }
         })
 
-        // Puedes añadir más eventos específicos del juego aquí siguiendo el mismo patrón
+
 
         // Opcional: Filtrar eventos por roomId si es necesario
         if (roomId != null) {
@@ -263,5 +288,24 @@ class RealTimeClient(private val socket: Socket) {
 
         // Emitir la cadena JSON a través del socket
         socket.emit("getGame", jsonString)
+    }
+
+    fun uploadAnswer(answer: String, roomId: String?, playerName: String? = null, questionId: String) {
+        val jsonString = """{
+        "answer": "$answer",
+        "roomId": "$roomId",
+        "questionId": "$questionId",
+        "playerName": "$playerName"
+    }"""
+        socket.emit("sendAnswer", jsonString)
+    }
+
+    fun getAnswers(roomId: String, questionId: String){
+        val jsonString = """{
+        "roomId": "$roomId",
+        "questionId": "$questionId"
+    }"""
+        println("getAnswers: $jsonString")
+        socket.emit("getAnswers", jsonString)
     }
 }

@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 
 @Composable
-fun ResultsView(responses: Map<String, Int>) {
+fun ResultsView(responses: Map<String, Int>, isAdmin: Boolean) {
     val maxValue = responses.values.maxOrNull() ?: 1
     val barWidth = 40.dp
     val spacing = 16.dp

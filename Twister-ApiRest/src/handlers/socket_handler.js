@@ -7,7 +7,11 @@ import {
   getActiveGames,
   saveTwistInRoom,
   getTwistQuestions,
+  initRoomDB,
+  updateRoomDB,
+  getRoomDB,
 } from "../models/gameModel.js";
+import { get } from "../utils/database.js";
 
 // Almacena el ID del juego y el usuario al unirse
 let currentGameId = null;
@@ -50,6 +54,7 @@ export const socketHandlers = (io, socket) => {
     });
 
     const twistQuestions = await getTwistQuestions(roomId);
+    initRoomDB(roomId, twistQuestions);
 
     // Emitir evento de que un jugador se ha unido al propio socket con información completa
     console.log("Player joined susecsfully!");
@@ -81,7 +86,6 @@ export const socketHandlers = (io, socket) => {
         const game = await createGame(userId, socket);
         socket.join(game.id);
         console.log("Game id es", game.id);
-        console.log("Solicitud de juego nuevo NUEVASO:", game);
         socket.emit("PIN_PROVIDED", { pin: game.id, game });
       } else {
         console.log("Solicitud de juego existente:", data.roomId);
@@ -159,7 +163,40 @@ socket.on("CHECK_PLAYERS_LEFT", async (data) => {
   }
 });
 
+  // Evento: Respuestas de los sockets
+  socket.on("sendAnswer", (data) => {
+    data = JSON.parse(data);
+    const { answer, roomId, playerName, questionId } = data;
+    console.log("Respuesta recibida:", answer, "de", playerName, "en", roomId + " con questionId: " + questionId);
+    updateRoomDB(roomId, answer, playerName, questionId);
+  });
 
+// Evento: Respuestas de los sockets
+socket.on("getAnswers", async (data) => {
+  data = JSON.parse(data);
+  const { roomId, questionId } = data;
+
+  // Obtener datos de la sala
+  var room = await getRoomDB(roomId);
+  
+  if (room == null) {
+      console.error("La sala o las preguntas no se encontraron");
+      socket.emit("ANSWERS", { error: "Room or questions not found" });
+      return;
+  }
+  room = JSON.parse(room);
+
+  // Filtrar respuestas por questionId
+  const question = room.twistQuestions.find(q => q.id === questionId);
+  if (!question) {
+      console.log("Pregunta con ID ${questionId} no encontrada en la sala ${roomId}");
+      socket.emit("ANSWERS", { error: "Question not found" });
+      return;
+  }
+
+  console.log("Respuestas recibidas:", question.answers);
+  socket.emit("ANSWERS", question.answers);
+});
 
 
   // Evento: Desconexión del cliente

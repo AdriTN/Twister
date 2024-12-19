@@ -185,7 +185,7 @@ fun WaitingRoom(
     userIsAdmin: Boolean,
     pin: String,
     twist: TwistModel?,
-    onStartGame: (roomId: String, questions: SnapshotStateList<QuestionModel>) -> Unit
+    onStartGame: (roomId: String, playerName: String, questions: SnapshotStateList<QuestionModel>) -> Unit
 ) {
     var players = remember { mutableStateListOf<PlayerModel>() }
     val socket = ApiClient.getSocket()
@@ -351,7 +351,7 @@ fun WaitingRoom(
                     println("Voy a la siguiente pantalla")
                     println("pinRoom: $pinRoom - pinReq: $pinReq")
                     if (pinRoom == pinReq.pinRoom) {
-                        onStartGame(pinRoom, questions) // Ir a la siguiente pantalla
+                        onStartGame(pinRoom, playerName, questions) // Ir a la siguiente pantalla
                     }
                 }
 
@@ -551,7 +551,7 @@ fun WaitingRoom(
                 Button(
                     onClick = {
                         realTimeClient.startGame(pinRoom) // Notificar a los jugadores
-                        onStartGame(pinRoom, questions) // Ir a la siguiente pantalla
+                        onStartGame(pinRoom, playerName, questions) // Ir a la siguiente pantalla
                     },
                     enabled = players.isNotEmpty(),
                     shape = RoundedCornerShape(8.dp),

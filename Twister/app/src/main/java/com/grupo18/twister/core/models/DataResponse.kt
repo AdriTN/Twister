@@ -108,3 +108,19 @@ data class TwistQuestionsResponse(
 data class StartResponse(
     val pinRoom: String
 )
+
+
+@Serializable
+sealed class RespuestaRecibida
+
+@Serializable
+data class OpcionRespuesta(
+    val isCorrect: Boolean,
+    val text: String
+) : RespuestaRecibida()
+
+@Serializable
+data class RespuestaJugador(
+    val playerName: String,
+    val answer: String
+) : RespuestaRecibida()

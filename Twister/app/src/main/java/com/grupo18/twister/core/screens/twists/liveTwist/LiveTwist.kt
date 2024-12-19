@@ -16,29 +16,41 @@ import com.grupo18.twister.core.models.AnswerProvidedEvent
 import com.grupo18.twister.core.models.GameOverEvent
 import com.grupo18.twister.core.models.GameStateEvent
 import com.grupo18.twister.core.models.NextQuestionEvent
+import com.grupo18.twister.core.models.OpcionRespuesta
 import com.grupo18.twister.core.models.QuestionTimeoutEvent
+import com.grupo18.twister.core.models.RespuestaJugador
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.collections.contains
+import kotlin.collections.forEach
 
 @Composable
-fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, navController: NavController, roomQuestions: SnapshotStateList<QuestionModel>) {
+fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playerName: String, navController: NavController, roomQuestions: SnapshotStateList<QuestionModel>) {
     // Estados del juego
     var gameState by remember { mutableStateOf(GameState.SHOWING_QUESTION) }
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var currentQuestion by remember { mutableStateOf<QuestionModel?>(null) }
     var timerSeconds by remember { mutableIntStateOf(15) }
     var responses by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var opcionesRespuestas by remember { mutableStateOf(listOf<OpcionRespuesta>()) }
+    var respuestasJugador by remember { mutableStateOf(listOf<RespuestaJugador>()) }
 
     // Inicialización del RealTimeClient
     val realTimeClient = remember { RealTimeClient(ApiClient.getSocket()) }
-    val socket = ApiClient.getSocket()
 
     // Actualización de la pregunta actual basada en el índice
     LaunchedEffect(currentQuestionIndex, twist) {
-        if (isAdmin){
-            currentQuestion = twist?.twistQuestions?.getOrNull(currentQuestionIndex)
+        currentQuestion = if (isAdmin){
+            twist?.twistQuestions?.getOrNull(currentQuestionIndex)
         } else {
-            currentQuestion = roomQuestions.getOrNull(currentQuestionIndex)
+            roomQuestions.getOrNull(currentQuestionIndex)
         }
+        println("Pregunta actual: $currentQuestion y roomQuestions: $roomQuestions")
     }
 
     // Renderizado basado en el estado del juego
@@ -48,6 +60,10 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, navCo
                 QuestionView(
                     question = question,
                     timerSeconds = timerSeconds,
+                    isAdmin = isAdmin,
+                    realTimeClient = realTimeClient,
+                    playerName = playerName,
+                    pinRoom = currentRoomId,
                     onTimerTick = { seconds ->
                         timerSeconds = seconds.toInt()
                     },
@@ -60,7 +76,7 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, navCo
         }
 
         GameState.SHOWING_RESULTS -> {
-            ResultsView(responses = responses)
+            ResultsView(responses = responses, isAdmin = isAdmin)
             LaunchedEffect(Unit) {
                 delay(3000)
                 if (currentQuestionIndex < (twist?.twistQuestions?.size ?: 0) - 1) {
@@ -113,6 +129,67 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, navCo
                         gameState = GameState.SHOWING_RESULTS
                         println("Tiempo expirado para la pregunta: $questionId")
                     })
+                    // Manejar evento ANSWERS al expirar tiempo de pregunta
+                    "ANSWERS" -> {
+                        gameState = GameState.SHOWING_RESULTS
+                            try {
+                                println("Evento ANSWERS recibido: ${event.message}")
+                                val jsonElement = Json.parseToJsonElement(event.message)
+                                if (jsonElement is JsonArray) {
+                                    val nuevasOpcionesRespuestas = mutableListOf<OpcionRespuesta>()
+                                    val nuevasRespuestasJugador = mutableListOf<RespuestaJugador>()
+
+                                    jsonElement.forEach { element ->
+                                        val jsonObject = element.jsonObject
+                                        when {
+                                            "isCorrect" in jsonObject -> {
+                                                val isCorrect =
+                                                    jsonObject["isCorrect"]?.jsonPrimitive?.booleanOrNull == true
+                                                val text =
+                                                    jsonObject["text"]?.jsonPrimitive?.contentOrNull
+                                                        ?: ""
+                                                nuevasOpcionesRespuestas.add(
+                                                    OpcionRespuesta(
+                                                        isCorrect,
+                                                        text
+                                                    )
+                                                )
+                                            }
+
+                                            "playerName" in jsonObject -> {
+                                                val playerName =
+                                                    jsonObject["playerName"]?.jsonPrimitive?.contentOrNull
+                                                        ?: ""
+                                                val answer =
+                                                    jsonObject["answer"]?.jsonPrimitive?.contentOrNull
+                                                        ?: ""
+                                                nuevasRespuestasJugador.add(
+                                                    RespuestaJugador(
+                                                        playerName,
+                                                        answer
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                    // Actualizar los estados reactivos
+                                    opcionesRespuestas = nuevasOpcionesRespuestas
+                                    respuestasJugador = nuevasRespuestasJugador
+
+                                    // Imprimir los resultados para verificar
+                                    println("Opciones Respuestas:")
+                                    opcionesRespuestas.forEach { println(it) }
+
+                                    println("Respuestas Jugador:")
+                                    respuestasJugador.forEach { println(it) }
+                                } else {
+                                    println("El mensaje recibido no es un array JSON válido")
+                                }
+                            } catch (e: SerializationException) {
+                                println("Error al procesar el mensaje ANSWERS: ${e.localizedMessage}")
+                            }
+                            println("Tiempo expirado para la pregunta")
+                    }
                     else -> {
                         println("Evento desconocido: ${event.type}")
                     }

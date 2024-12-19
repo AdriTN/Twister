@@ -38,6 +38,7 @@ export async function createGame(adminId, socket) {
 
   try {
     // Inicializar la sesion de redis
+    console.log("Creando juego en Redis:", game);
     await redisClient.set(pin, JSON.stringify(game));
     // Almacenar el juego activo en la memoria
     activeGames[pin] = game; 
@@ -198,3 +199,75 @@ export async function deleteUserById(socketId) {
   return -1; // Fallo: el socket ID no se encontró en ninguna sala
 }
 
+export async function initRoomDB(roomId, twistQuestions) {
+  await ensureRedisClient();
+  try {
+    console.log("Inicializando con sala de juego:", roomId, "con preguntas de twist:", twistQuestions);
+    if (getRoomDB(roomId) !== null){
+      console.log("Sala de juego ya inicializada:", roomId);
+    }
+    console.log("Inicializando sala de juego:", roomId, "con preguntas de twist:", twistQuestions);
+    await redisClient.set(`questions-${roomId}`, JSON.stringify(twistQuestions));
+    console.log("Sala de juego inicializada:", twistQuestions);
+    return true;
+
+  }
+  catch (error) {
+    console.error("Error initializing room:", error);
+    throw new Error("Could not initialize room");
+  }
+}
+
+export async function updateRoomDB(roomId, answer, playerName, questionId) {
+  await ensureRedisClient();
+  try {
+    const roomDataString = await getRoomDB(roomId);
+    if (roomDataString == null){
+      console.log("No se ha encontrado la sala:", roomId);
+      return false
+    }
+    console.log("Sala de juego encontrada:", roomDataString);
+    const roomData = JSON.parse(roomDataString);
+    console.log("Sala de juego actual:", roomData);
+    // Buscar la pregunta correspondiente
+    const question = roomData.twistQuestions.find(q => q.id === questionId);
+    if (!question) {
+      console.error("Question with ID ${questionId} not found in room ${roomId}");
+      return false;
+    }
+
+    // Agregar la respuesta del jugador
+    if (!question.answers) {
+      question.answers = [];
+    }
+
+    question.answers.push({
+      playerName,
+      answer,
+    });
+
+    // Actualizar el timestamp de la sala
+    roomData.updatedAt = Date.now();
+
+    // Guardar los datos actualizados en Redis
+    await redisClient.set(`questions-${roomId}`, JSON.stringify(roomData));
+
+    console.log("Sala actualizada con éxito:", roomData);
+    return true;
+  } catch (error) {
+    console.error("Error updating room:", error);
+    throw new Error("Could not update room");
+  }
+}
+
+export async function getRoomDB(roomId) {
+  await ensureRedisClient();
+  try {
+    const roomData = await redisClient.get(`questions-${roomId}`);
+    return roomData;
+  }
+  catch (error) {
+    console.error("Error getting room:", error);
+    throw new Error("Could not get room");
+  }
+}
