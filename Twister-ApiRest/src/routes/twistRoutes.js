@@ -61,7 +61,6 @@ router.delete("/delete/:id", async (req, res) => {
         if (!userId || userId === -1) {
             return res.status(401).json({ message: "Unauthorized" }); // Respuesta para usuario no autenticado
         }
-
         const twistId = req.params.id; // Obtener el ID del twist desde los parámetros de la solicitud
         const deleted = await handleDeleteTwist(userId, twistId); // Llamar a la función que maneja la eliminación
 

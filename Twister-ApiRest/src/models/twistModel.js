@@ -150,7 +150,7 @@ export async function updateTwist(userId, twistData) {
 // Función para eliminar un twist
 export async function deleteTwist(userId, twistId) {
   await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
-  const twist = await getTwistById(`${userId}-${twistId}`); // Obtén el twist
+  const twist = await getTwistById(twistId, userId); // Obtén el twist
   if (!twist) {
       throw new Error("Twist not found"); // Si no se encuentra, lanza un error
   }
@@ -172,14 +172,14 @@ export async function deleteTwist(userId, twistId) {
 }
 
 // Función para obtener un twist por su ID
-export async function getTwistById(twistId1, userId) {
+export async function getTwistById(twistId, userId) {
   await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
 
   try {
     // Obtiene el twist desde Redis por su ID
-    const twist = await redisClient.get(`${userId}-${twistId1}`);
+    const twist = await redisClient.get(`${userId}-${twistId}`);
 
-    console.log("Fetching twist with ID:", twistId1, "from Redis:", twist, "for user:", userId);
+    console.log("Fetching twist with ID:", twistId, "from Redis:", twist, "for user:", userId);
 
     // Verifica si se encontró el twist
     if (!twist) {
@@ -189,7 +189,7 @@ export async function getTwistById(twistId1, userId) {
     // Retorna el twist parseado
     return JSON.parse(twist);
   } catch (error) {
-    console.error(`Error al obtener el twist con ID ${twistId1}:`, error.message);
-    throw new Error(`No se pudo obtener el twist con ID ${twistId1}`);
+    console.error(`Error al obtener el twist con ID ${twistId}:`, error.message);
+    throw new Error(`No se pudo obtener el twist con ID ${twistId}`);
   }
 }
