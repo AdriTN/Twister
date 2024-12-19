@@ -101,8 +101,8 @@ fun WelcomeScreen(onNavigateToAuth: () -> Unit, navController: NavController) {
             Button(
                 onClick = onNavigateToAuth,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp, bottom = 10.dp),
+                    .widthIn(max = 600.dp, min = 400.dp) // Establece un ancho máximo de 300dp
+                    .padding(horizontal = 16.dp, vertical = 24.dp), // Ajusta el padding según sea necesario
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE)) // Color personalizado
             ) {
