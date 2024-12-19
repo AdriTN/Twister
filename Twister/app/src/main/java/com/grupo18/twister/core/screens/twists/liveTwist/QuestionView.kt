@@ -152,7 +152,7 @@ fun QuestionView(
                         icon = Icons.Default.ArrowForward,
                         contentDescription = "Arrow",
                         onClick = {
-                            respuestaJugador = "1"
+                            respuestaJugador = question.answers[0].text
                             realTimeClient.uploadAnswer(answer = "1", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }
@@ -163,7 +163,7 @@ fun QuestionView(
                         icon = Icons.Default.Circle,
                         contentDescription = "Circle",
                         onClick = {
-                            respuestaJugador = "2"
+                            respuestaJugador = question.answers[1].text
                             realTimeClient.uploadAnswer(answer = "2", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }
@@ -182,7 +182,7 @@ fun QuestionView(
                         icon = Icons.Default.Stop,
                         contentDescription = "Square",
                         onClick = {
-                            respuestaJugador = "3"
+                            respuestaJugador = question.answers[2].text
                             realTimeClient.uploadAnswer(answer = "3", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }
@@ -193,7 +193,7 @@ fun QuestionView(
                         icon = Icons.Default.Hexagon,
                         contentDescription = "Hexagon",
                         onClick = {
-                            respuestaJugador = "4"
+                            respuestaJugador = question.answers[3].text
                             realTimeClient.uploadAnswer(answer = "4", roomId = pinRoom, playerName = playerName, question.id)
                             isAnswered.value = true
                         }

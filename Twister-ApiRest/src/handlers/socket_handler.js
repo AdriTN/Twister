@@ -108,12 +108,16 @@ export const socketHandlers = (io, socket) => {
   socket.on("startGame", (pinRoom) => {
     console.log(`Juego iniciado en la sala: ${pinRoom}`);
     const activeGames = getActiveGames();
+    console.log("Sigo vivo con activeGames", activeGames);
     for (const pin in activeGames) {
-      const game = activeGames[pin];
-      game.players.forEach(player => {
-        io.to(player.socketId).emit("GAME_STARTED", { pinRoom: pin });
-        console.log(`Juego iniciado en la sala: ${pin} enviado a ${player.socketId}`);
-      });
+      console.log("Se va a comparar ", pin, " con ", pinRoom);
+      if (pin === pinRoom) {
+        const game = activeGames[pin];
+        game.players.forEach(player => {
+          io.to(player.socketId).emit("GAME_STARTED", { pinRoom: pin });
+          console.log(`Juego iniciado en la sala: ${pin} enviado a ${player.socketId}`);
+        });
+      }
     }
     return activeGames;
   });
@@ -196,6 +200,72 @@ socket.on("getAnswers", async (data) => {
 
   console.log("Respuestas recibidas:", question.answers);
   socket.emit("ANSWERS", question.answers);
+});
+
+// Evento: Respuestas de los sockets
+socket.on("nextQuestion", async (data) => {
+  console.log("Next question event received");
+  data = JSON.parse(data);
+  const { roomId } = data;
+
+  // Obtener datos de la sala
+  var room = await getRoomDB(roomId);
+  
+  if (room == null) {
+      console.error("La sala o las preguntas no se encontraron");
+      socket.emit("ANSWERS", { error: "Room or questions not found" });
+      return;
+  }
+
+    const activeGames = getActiveGames();
+    console.log("Active games", activeGames);
+    for (const pin in activeGames) {
+      if (pin === roomId) {
+        const game = activeGames[pin];
+        game.players.forEach(player => {
+          io.to(player.socketId).emit("NEXT_QUESTION", { roomId: pin });
+        });
+    }
+    }
+    return activeGames;
+});
+
+// Evento: Respuestas de los sockets
+socket.on("getCorrectAnswer", async (data) => {
+  data = JSON.parse(data);
+  console.log("dattrasa", data);
+  const { roomId, questionId } = data;
+
+  console.log("Se ha pedido una answer");
+
+  // Obtener datos de la sala
+  var room = await getRoomDB(roomId);
+
+  if (room == null) {
+      console.error("La sala o las preguntas no se encontraron");
+      socket.emit("ANSWERS", { error: "Room or questions not found" });
+      return;
+  }
+  room = JSON.parse(room);
+
+  console.log("Este es le Room", room, "con questionId", questionId);
+  const question = room.twistQuestions.find(q => q.id === questionId);
+  if (!question) {
+      console.log("Pregunta con ID ${questionId} no encontrada en la sala ${roomId}");
+      socket.emit("ANSWERS", { error: "Question not found" });
+      return;
+  }
+
+  //Filtra la respuesta correcta
+  const correctAnswer = question.answers.find(a => a.isCorrect === true);
+  if (!correctAnswer) {
+      console.log("Respuesta correcta no encontrada en la pregunta ${questionId}");
+      socket.emit("ANSWERS", { error: "Correct answer not found" });
+      return;
+  }
+
+  console.log("Respuestas recibidas:", question.answers);
+  socket.emit("CORRECT_ANSWER", correctAnswer);
 });
 
 

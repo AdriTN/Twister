@@ -179,11 +179,10 @@ class RealTimeClient(private val socket: Socket) {
             if (args.isNotEmpty()) {
                 val firstArg = args[0].toString()
                 try {
-                    val nextQuestion = Json.decodeFromString<NextQuestionEvent>(firstArg)
                     onEventReceived(Event(
-                        message = "NEXT_QUESTION: ${nextQuestion.questionText}",
+                        message = "NEXT_QUESTION",
                         type = "NEXT_QUESTION",
-                        id = nextQuestion.questionId
+                        id = ""
                     ))
                 } catch (e: Exception) {
                     println("Error al deserializar NEXT_QUESTION: ${e.localizedMessage}")
@@ -262,6 +261,23 @@ class RealTimeClient(private val socket: Socket) {
             }
         })
 
+        socket.on("CORRECT_ANSWER", Emitter.Listener { args ->
+            if (args.isNotEmpty()) {
+                println("CORRECT_ANSWER: ${args.joinToString()}")
+                // El primer argumento recibido como JSON en forma de String
+                val firstArg = args[0].toString()
+
+                // Encapsular el JSON en un objeto Event y enviarlo
+                onEventReceived(
+                    Event(
+                        message = firstArg, // El JSON crudo recibido
+                        type = "CORRECT_ANSWER",
+                        id = "" // Puedes ajustar este campo si necesitas un identificador
+                    )
+                )
+            }
+        })
+
 
 
         // Opcional: Filtrar eventos por roomId si es necesario
@@ -314,7 +330,16 @@ class RealTimeClient(private val socket: Socket) {
         "roomId": "$roomId",
         "questionId": "$questionId"
     }"""
-        println("getAnswers: $jsonString")
-        socket.emit("getAnswers", jsonString)
+        println("nextQuestion: $jsonString")
+        socket.emit("nextQuestion", jsonString)
+    }
+
+    fun getCorrectAnswer(roomId: String, questionId: String){
+        val jsonString = """{
+        "roomId": "$roomId",
+        "questionId": "$questionId"
+    }"""
+        println("getCorrectAnswer: $jsonString")
+        socket.emit("getCorrectAnswer", jsonString)
     }
 }

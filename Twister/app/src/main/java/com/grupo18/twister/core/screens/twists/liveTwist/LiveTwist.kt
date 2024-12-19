@@ -10,6 +10,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.navigation.NavController
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.RealTimeClient
+import com.grupo18.twister.core.models.AnswerModel
 import com.grupo18.twister.core.models.Event
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.AnswerProvidedEvent
@@ -71,6 +72,7 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     onTimerFinish = { respuesta ->
                         if (!isAdmin){
                             respuestaJugador = respuesta
+                            realTimeClient.getCorrectAnswer(roomId = currentRoomId, questionId = question.id)
                         }
                         gameState = GameState.SHOWING_RESULTS
                     },
@@ -106,14 +108,14 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     "GAME_STATE" -> handleGameState(event, onGameStateChange = { newState ->
                         gameState = newState
                     })
-                    "NEXT_QUESTION" -> handleNextQuestion(event, onNextQuestion = { newQuestionId, questionText ->
+                    "NEXT_QUESTION" -> {
                         // Actualizar la pregunta actual
                         currentQuestionIndex++
                         // Aquí podrías buscar y actualizar `currentQuestion` si es necesario
                         gameState = GameState.SHOWING_QUESTION
                         timerSeconds = 15
-                        println("Nueva pregunta: $questionText")
-                    })
+                        println("Nueva pregunta")
+                    }
                     "GAME_OVER" -> handleGameOver(event, onGameOver = { winnerId, finalScores ->
                         // Mostrar pantalla final o manejar el estado finalizado
                         gameState = GameState.FINALIZED
@@ -123,6 +125,12 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                         // Manejar el timeout de la pregunta actual
                         gameState = GameState.SHOWING_RESULTS
                     })
+                    "CORRECT_ANSWER" -> {
+                        // Manejar el timeout de la pregunta actual
+                        val answerEvent = Json.decodeFromString<AnswerModel>(event.message)
+                        isCorrect = answerEvent.text == respuestaJugador
+                        println("Respuesta correcta: $isCorrect con $respuestaJugador y answervalor: ${answerEvent.text}")
+                    }
                     // Manejar evento ANSWERS al expirar tiempo de pregunta
                     "ANSWERS" -> {
                             try {
