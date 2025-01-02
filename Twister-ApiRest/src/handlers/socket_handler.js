@@ -10,6 +10,7 @@ import {
   initRoomDB,
   updateRoomDB,
   getRoomDB,
+  deleteGameFromRedis,
 } from "../models/gameModel.js";
 import { get } from "../utils/database.js";
 
@@ -307,6 +308,7 @@ export const socketHandlers = (io, socket) => {
         });
       }
     }
+    deleteGameFromRedis(roomId)
     return activeGames;
   });
 

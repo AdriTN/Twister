@@ -285,3 +285,16 @@ export async function getRoomDB(roomId) {
     throw new Error("Could not get room");
   }
 }
+
+export async function deleteGameFromRedis(pin) {
+  await ensureRedisClient();
+  try {
+    console.log("Eliminando juego de Redis:", pin);
+    await redisClient.del(pin);
+    await redisClient.del(`questions-${pin}`);
+    return true;
+  } catch (error) {
+    console.error("Error deleting game from Redis:", error);
+    throw new Error("Could not delete game from Redis");
+  }
+}
