@@ -279,7 +279,6 @@ class RealTimeClient(private val socket: Socket) {
         })
 
 
-
         // Opcional: Filtrar eventos por roomId si es necesario
         if (roomId != null) {
             socket.emit("joinGameRoom", roomId)
@@ -341,5 +340,13 @@ class RealTimeClient(private val socket: Socket) {
     }"""
         println("getCorrectAnswer: $jsonString")
         socket.emit("getCorrectAnswer", jsonString)
+    }
+
+    fun gameOverEvent(roomId: String){
+        val jsonString = """{
+        "roomId": "$roomId"
+    }"""
+        println("gameOverEvent: $jsonString")
+        socket.emit("gameOverEvent", jsonString)
     }
 }

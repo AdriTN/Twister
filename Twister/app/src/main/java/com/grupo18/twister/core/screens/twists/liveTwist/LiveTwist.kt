@@ -69,6 +69,7 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     onTimerTick = { seconds ->
                         timerSeconds = seconds.toInt()
                     },
+                    currentQuestion = currentQuestion,
                     onTimerFinish = { respuesta ->
                         if (!isAdmin){
                             respuestaJugador = respuesta
@@ -96,6 +97,9 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
         }
 
         GameState.FINALIZED -> {
+            if (isAdmin) {
+                realTimeClient.gameOverEvent(roomId = currentRoomId)
+            }
             FinalScreen(navController = navController)
         }
     }
@@ -116,17 +120,23 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                         timerSeconds = 15
                         println("Nueva pregunta")
                     }
-                    "GAME_OVER" -> handleGameOver(event, onGameOver = { winnerId, finalScores ->
-                        // Mostrar pantalla final o manejar el estado finalizado
+//                    "GAME_OVER" -> handleGameOver(event, onGameOver = { winnerId, finalScores ->
+//                        // Mostrar pantalla final o manejar el estado finalizado
+//                        gameState = GameState.FINALIZED
+//                        println("Juego finalizado. Ganador: $winnerId")
+//                    })
+
+                    "GAME_OVER" -> {
                         gameState = GameState.FINALIZED
-                        println("Juego finalizado. Ganador: $winnerId")
-                    })
+                        println("Juego finalizado.")
+                    }
                     "QUESTION_TIMEOUT" -> handleQuestionTimeout(event, onTimeout = { questionId ->
                         // Manejar el timeout de la pregunta actual
                         gameState = GameState.SHOWING_RESULTS
                     })
                     "CORRECT_ANSWER" -> {
                         // Manejar el timeout de la pregunta actual
+                        //TODO ACEPTAR MAS DE UNA RESPUESTA CORRECTA
                         val answerEvent = Json.decodeFromString<AnswerModel>(event.message)
                         isCorrect = answerEvent.text == respuestaJugador
                         println("Respuesta correcta: $isCorrect con $respuestaJugador y answervalor: ${answerEvent.text}")
@@ -241,7 +251,7 @@ private fun handleGameOver(event: Event, onGameOver: (String, Map<String, Int>) 
     // Parsear el evento GAME_OVER
     try {
         val gameOverEvent = Json.decodeFromString<GameOverEvent>(event.message.removePrefix("GAME_OVER: "))
-        onGameOver(gameOverEvent.winnerId, gameOverEvent.finalScores)
+        //TODO onGameOver(gameOverEvent.winnerId, gameOverEvent.roomId)
     } catch (e: Exception) {
         println("Error al manejar GAME_OVER: ${e.localizedMessage}")
     }

@@ -64,7 +64,7 @@ export const socketHandlers = (io, socket) => {
       game: newgame,
       playerName: currentUserName,
       imageIndex: imageIndex,
-      twistQuestions:  JSON.stringify(twistQuestions),
+      twistQuestions: JSON.stringify(twistQuestions),
     });
   });
 
@@ -113,15 +113,16 @@ export const socketHandlers = (io, socket) => {
       console.log("Se va a comparar ", pin, " con ", pinRoom);
       if (pin === pinRoom) {
         const game = activeGames[pin];
-        game.players.forEach(player => {
+        game.players.forEach((player) => {
           io.to(player.socketId).emit("GAME_STARTED", { pinRoom: pin });
-          console.log(`Juego iniciado en la sala: ${pin} enviado a ${player.socketId}`);
+          console.log(
+            `Juego iniciado en la sala: ${pin} enviado a ${player.socketId}`
+          );
         });
       }
     }
     return activeGames;
   });
-
 
   // Evento: Iniciar el juego
   socket.on("getGame", (data) => {
@@ -133,141 +134,181 @@ export const socketHandlers = (io, socket) => {
     io.to(data.roomId).emit("gameStarted", { roomId: data.roomId });
   });
 
-
   // Evento: Comprobar jugadores restantes
-// Evento: Comprobar jugadores restantes (solo para el administrador)
-socket.on("CHECK_PLAYERS_LEFT", async (data) => {
-  try {
-    // Parsear los datos recibidos
-    data = JSON.parse(data);
-    console.log(`Comprobando jugadores en la sala: ${data.roomId}`);
+  // Evento: Comprobar jugadores restantes (solo para el administrador)
+  socket.on("CHECK_PLAYERS_LEFT", async (data) => {
+    try {
+      // Parsear los datos recibidos
+      data = JSON.parse(data);
+      console.log(`Comprobando jugadores en la sala: ${data.roomId}`);
 
-    // Obtener los juegos activos
-    const activeGames = getActiveGames();
+      // Obtener los juegos activos
+      const activeGames = getActiveGames();
 
-    // Verificar si el juego existe en activeGames
-    const game = activeGames[data.roomId];
+      // Verificar si el juego existe en activeGames
+      const game = activeGames[data.roomId];
 
-    if (game) {
-      // Emitir la lista de jugadores solo al administrador
-      socket.emit("PLAYERS_LEFT_LIST", {
-        roomId: data.roomId,
-        players: game.players || [] // Asegurar que players siempre sea un array
-      });
-      console.log(`Jugadores en la sala ${data.roomId}:`, game.players);
-    } else {
-      console.log(`No se encontró ningún juego con roomId: ${data.roomId}`);
-      socket.emit("PLAYERS_LEFT_LIST", {
-        roomId: data.roomId,
-        players: [] // Sala no encontrada, devolver lista vacía
-      });
+      if (game) {
+        // Emitir la lista de jugadores solo al administrador
+        socket.emit("PLAYERS_LEFT_LIST", {
+          roomId: data.roomId,
+          players: game.players || [], // Asegurar que players siempre sea un array
+        });
+        console.log(`Jugadores en la sala ${data.roomId}:`, game.players);
+      } else {
+        console.log(`No se encontró ningún juego con roomId: ${data.roomId}`);
+        socket.emit("PLAYERS_LEFT_LIST", {
+          roomId: data.roomId,
+          players: [], // Sala no encontrada, devolver lista vacía
+        });
+      }
+    } catch (error) {
+      console.error("Error al procesar CHECK_PLAYERS_LEFT:", error);
     }
-  } catch (error) {
-    console.error("Error al procesar CHECK_PLAYERS_LEFT:", error);
-  }
-});
+  });
 
   // Evento: Respuestas de los sockets
   socket.on("sendAnswer", (data) => {
     data = JSON.parse(data);
     const { answer, roomId, playerName, questionId } = data;
-    console.log("Respuesta recibida:", answer, "de", playerName, "en", roomId + " con questionId: " + questionId);
+    console.log(
+      "Respuesta recibida:",
+      answer,
+      "de",
+      playerName,
+      "en",
+      roomId + " con questionId: " + questionId
+    );
     updateRoomDB(roomId, answer, playerName, questionId);
   });
 
-// Evento: Respuestas de los sockets
-socket.on("getAnswers", async (data) => {
-  data = JSON.parse(data);
-  const { roomId, questionId } = data;
+  // Evento: Respuestas de los sockets
+  socket.on("getAnswers", async (data) => {
+    data = JSON.parse(data);
+    const { roomId, questionId } = data;
 
-  // Obtener datos de la sala
-  var room = await getRoomDB(roomId);
-  
-  if (room == null) {
+    console.log("Respuestas solicitadas para la sala", roomId, "y la pregunta", questionId);
+
+    // Obtener datos de la sala
+    var room = await getRoomDB(roomId);
+
+    if (room == null) {
       console.error("La sala o las preguntas no se encontraron");
       socket.emit("ANSWERS", { error: "Room or questions not found" });
       return;
-  }
-  room = JSON.parse(room);
+    }
+    room = JSON.parse(room);
 
-  // Filtrar respuestas por questionId
-  const question = room.twistQuestions.find(q => q.id === questionId);
-  if (!question) {
-      console.log("Pregunta con ID ${questionId} no encontrada en la sala ${roomId}");
+    // Filtrar respuestas por questionId
+    const question = room.twistQuestions.find((q) => q.id === questionId);
+    if (!question) {
+      console.log(
+        "Pregunta con ID ${questionId} no encontrada en la sala ${roomId}"
+      );
       socket.emit("ANSWERS", { error: "Question not found" });
       return;
-  }
+    }
 
-  console.log("Respuestas recibidas:", question.answers);
-  socket.emit("ANSWERS", question.answers);
-});
+    console.log("Respuestas recibidas:", question.answers);
+    socket.emit("ANSWERS", question.answers);
+  });
 
-// Evento: Respuestas de los sockets
-socket.on("nextQuestion", async (data) => {
-  console.log("Next question event received");
-  data = JSON.parse(data);
-  const { roomId } = data;
+  // Evento: Respuestas de los sockets
+  socket.on("nextQuestion", async (data) => {
+    console.log("Next question event received");
+    data = JSON.parse(data);
+    const { roomId } = data;
 
-  // Obtener datos de la sala
-  var room = await getRoomDB(roomId);
-  
-  if (room == null) {
+    // Obtener datos de la sala
+    var room = await getRoomDB(roomId);
+
+    if (room == null) {
       console.error("La sala o las preguntas no se encontraron");
       socket.emit("ANSWERS", { error: "Room or questions not found" });
       return;
-  }
+    }
 
     const activeGames = getActiveGames();
     console.log("Active games", activeGames);
     for (const pin in activeGames) {
       if (pin === roomId) {
         const game = activeGames[pin];
-        game.players.forEach(player => {
+        game.players.forEach((player) => {
           io.to(player.socketId).emit("NEXT_QUESTION", { roomId: pin });
         });
-    }
+      }
     }
     return activeGames;
-});
+  });
 
-// Evento: Respuestas de los sockets
-socket.on("getCorrectAnswer", async (data) => {
-  data = JSON.parse(data);
-  console.log("dattrasa", data);
-  const { roomId, questionId } = data;
+  // Evento: Respuestas de los sockets
+  socket.on("getCorrectAnswer", async (data) => {
+    data = JSON.parse(data);
+    console.log("dattrasa", data);
+    const { roomId, questionId } = data;
 
-  console.log("Se ha pedido una answer");
+    console.log("Se ha pedido una answer");
 
-  // Obtener datos de la sala
-  var room = await getRoomDB(roomId);
+    // Obtener datos de la sala
+    var room = await getRoomDB(roomId);
 
-  if (room == null) {
+    if (room == null) {
       console.error("La sala o las preguntas no se encontraron");
       socket.emit("ANSWERS", { error: "Room or questions not found" });
       return;
-  }
-  room = JSON.parse(room);
+    }
+    room = JSON.parse(room);
 
-  console.log("Este es le Room", room, "con questionId", questionId);
-  const question = room.twistQuestions.find(q => q.id === questionId);
-  if (!question) {
-      console.log("Pregunta con ID ${questionId} no encontrada en la sala ${roomId}");
+    console.log("Este es le Room", room, "con questionId", questionId);
+    const question = room.twistQuestions.find((q) => q.id === questionId);
+    if (!question) {
+      console.log(
+        "Pregunta con ID ${questionId} no encontrada en la sala ${roomId}"
+      );
       socket.emit("ANSWERS", { error: "Question not found" });
       return;
-  }
+    }
 
-  //Filtra la respuesta correcta
-  const correctAnswer = question.answers.find(a => a.isCorrect === true);
-  if (!correctAnswer) {
-      console.log("Respuesta correcta no encontrada en la pregunta ${questionId}");
+    //Filtra la respuesta correcta
+    const correctAnswer = question.answers.find((a) => a.isCorrect === true);
+    if (!correctAnswer) {
+      console.log(
+        "Respuesta correcta no encontrada en la pregunta ${questionId}"
+      );
       socket.emit("ANSWERS", { error: "Correct answer not found" });
       return;
-  }
+    }
 
-  console.log("Respuestas recibidas:", question.answers);
-  socket.emit("CORRECT_ANSWER", correctAnswer);
-});
+    console.log("Respuestas recibidas:", question.answers);
+    socket.emit("CORRECT_ANSWER", correctAnswer);
+  });
 
+  socket.on("gameOverEvent", async (data) => {
+    data = JSON.parse(data);
+    const { roomId } = data;
+    console.log("Game over event received");
+    //TODO ENVIAR A TODOS LOS JUGADORES el ranking final
+    // Obtener datos de la sala
+    var room = await getRoomDB(roomId);
+
+    if (room == null) {
+      console.error("La sala o las preguntas no se encontraron");
+      socket.emit("GAME_OVER", { error: "Room or questions not found" });
+      return;
+    }
+
+    const activeGames = getActiveGames();
+    console.log("Active games", activeGames);
+    for (const pin in activeGames) {
+      if (pin === roomId) {
+        const game = activeGames[pin];
+        game.players.forEach((player) => {
+          io.to(player.socketId).emit("GAME_OVER", { roomId: pin, winnerId: "1" });
+        });
+      }
+    }
+    return activeGames;
+  });
 
   // Evento: Desconexión del cliente
   socket.on("disconnect", async () => {
@@ -277,40 +318,43 @@ socket.on("getCorrectAnswer", async (data) => {
       "en la sala",
       currentGameId
     );
-  
+
     const result = await deleteUserById(socket.id);
-  
+
     // Verificamos si la conexión a Redis está abierta
     if (result === -1) {
-      console.log("Falló la eliminación del jugador o el juego ha sido eliminado.");
+      console.log(
+        "Falló la eliminación del jugador o el juego ha sido eliminado."
+      );
       return; // Salimos si hubo un fallo
     } else if (typeof result === "string") {
       console.log("El administrador ha abandonado la sala");
       socket.emit("roomDeleted", {
-      message: "La sala ha sido eliminada porque solo quedaba el administrador.",
+        message:
+          "La sala ha sido eliminada porque solo quedaba el administrador.",
       });
     }
-  
+
     // Notificar a otros jugadores en la sala
     if (currentGameId) {
       const isInRoom = socket.rooms.has(currentGameId);
-  
+
       if (isInRoom) {
         const room = io.sockets.adapter.rooms[currentGameId];
         console.log("Sala actual:", room);
-  
+
         // Verificar si hay sockets en la sala
         const socketsInRoom = room.sockets;
-  
+
         if (socketsInRoom && Object.keys(socketsInRoom).length > 0) {
           console.log("Sockets en la sala:", Object.keys(socketsInRoom));
-  
+
           // Emitir el evento de jugador que se ha ido
           io.to(currentGameId).emit("playerLeft", {
             playerId: socket.id,
             playerName: currentUserName,
           });
-  
+
           // Si solo queda el administrador
           if (result === socket.id) {
             socket.emit("roomDeleted", {
