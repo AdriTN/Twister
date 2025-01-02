@@ -206,7 +206,7 @@ fun AdminResultsView(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Next Question",
+                    text = "Next",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
