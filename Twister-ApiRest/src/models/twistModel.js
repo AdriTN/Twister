@@ -191,7 +191,7 @@ export async function getTwistById(twistId, userId) {
 
     console.log(
       "Fetching twist with ID:",
-      twistId1,
+      twistId,
       "from Redis:",
       twist,
       "for user:",
@@ -207,10 +207,10 @@ export async function getTwistById(twistId, userId) {
     return JSON.parse(twist);
   } catch (error) {
     console.error(
-      `Error al obtener el twist con ID ${twistId1}:`,
+      `Error al obtener el twist con ID ${twistId}:`,
       error.message
     );
-    throw new Error(`No se pudo obtener el twist con ID ${twistId1}`);
+    throw new Error(`No se pudo obtener el twist con ID ${twistId}`);
   }
 }
 

@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -22,9 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.google.gson.Gson
 import com.grupo18.twister.R
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
@@ -41,6 +41,7 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
 
     val currentUser by app.getUser().collectAsState()
     val twists by twistViewModel.twists.collectAsState()
+
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -50,7 +51,6 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
         if (currentUser?.isAnonymous == false) {
             isLoading = true
             errorMessage = null
-
             try {
                 twistViewModel.clearTwists()
                 twistViewModel.loadTwists(
@@ -71,14 +71,18 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
     Scaffold(
         bottomBar = { CustomBottomNavigationBar(navController) }
     ) { padding ->
+        // Envolvemos todo el contenido en un Column scrolleable
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // IMPORTANTE: activamos el scroll vertical
+                .verticalScroll(rememberScrollState())
                 .padding(padding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+            // Cabecera con nombre de usuario o botón de login
             HeaderWithProfileOrLogin(currentUser, navController)
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -88,14 +92,17 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (isLoading) {
+                    // Indicador de carga
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else if (!errorMessage.isNullOrEmpty()) {
+                    // Mensaje de error
                     Text(
                         text = errorMessage ?: "Unknown error",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else if (twists.isEmpty()) {
+                    // Sin twists
                     Text(
                         text = "You have no twists yet. Create one now!",
                         color = MaterialTheme.colorScheme.onBackground,
@@ -103,6 +110,7 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
+                    // Sección horizontal (twists del usuario)
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
@@ -124,6 +132,7 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
+            // Otra sección horizontal ("Most Played")
             SectionTitle("Most Played")
             Spacer(modifier = Modifier.height(16.dp))
             LazyRow(
@@ -146,18 +155,20 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                     )
                 }
             }
+
+            // ¡Listo! Todo el contenido se puede desplazar verticalmente
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
+
+// Mantenemos el resto de composables tal y como estaban...
 
 @Composable
 fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
     val context = LocalContext.current
 
     // Determinamos la fuente de la imagen:
-    // 1) Archivo local si existe,
-    // 2) URI remota si no hay archivo local y la cadena no está vacía,
-    // 3) Imagen por defecto en caso contrario.
     val localFilePath = "${context.filesDir}/images/${twist.imageUri}"
     val localFile = File(localFilePath)
 
@@ -166,8 +177,7 @@ fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
             rememberAsyncImagePainter(model = localFile)
         }
         else -> {
-            // Siempre un painter de la imagen por defecto,
-            // así nos aseguramos de que se vea si no existe o la URI está vacía.
+            // Siempre un painter de la imagen por defecto
             rememberAsyncImagePainter(R.drawable.default_twist)
         }
     }
@@ -180,7 +190,6 @@ fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
-        // VerticalArrangement.SpaceBetween: empuja la imagen y el texto a extremos
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -191,7 +200,7 @@ fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Imagen circular más grande
+            // Imagen circular
             Box(
                 modifier = Modifier
                     .size(136.dp)
@@ -230,7 +239,6 @@ fun TwistCard(twist: TwistModel, onClick: () -> Unit) {
         }
     }
 }
-
 
 @Composable
 fun HeaderWithProfileOrLogin(currentUser: UserModel?, navController: NavController) {
