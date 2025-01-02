@@ -94,7 +94,7 @@ router.head("/check/:imageUri", async (req, res) => {
 });
 
 
-router.delete("/delete", async (req, res) => {
+router.post("/delete", async (req, res) => {
   try {
     console.log("Received DELETE request"); // Agregar este log para verificar que la solicitud se está recibiendo
 
@@ -111,7 +111,7 @@ router.delete("/delete", async (req, res) => {
     console.log("Deleting image:", imageId);
 
     // Aquí deberías tener la lógica para eliminar la imagen de Redis, pero ahora la omites
-    // const result = await deleteImageFromRedis(imageId); // Si decides usar esto, asegúrate de logear el resultado
+    const result = await deleteImageFromRedis(imageId); // Si decides usar esto, asegúrate de logear el resultado
 
     const twistData = {
       ...twist,

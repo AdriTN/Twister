@@ -43,13 +43,15 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
             try {
                 val response = apiService.editTwist(token, twist).execute()
                 if (response.isSuccessful) {
-                    _twists.value = _twists.value.filter { it.id != twist.id }
+                    _twists.value = _twists.value.map {
+                        if (it.id == twist.id) twist else it
+                    }
+                    println("El Twist se ha actualizado correctamente con ID: ${twist.id}")
                 } else {
                     println("Error: ${response.code()} - ${response.message()}")
-                    Toast.makeText(context, "Error al eliminar el Twist", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Error al actualizar el Twist", Toast.LENGTH_SHORT).show()
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }

@@ -1,6 +1,7 @@
 package com.grupo18.twister.core.screens.edit
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,6 +39,7 @@ import com.grupo18.twister.core.api.ImageService
 import com.grupo18.twister.core.components.CustomBottomNavigationBar
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.screens.authentication.MyApp
+import com.grupo18.twister.core.screens.navigation.Routes
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import java.io.File
 
@@ -169,6 +171,9 @@ fun EditScreen(
                                     val twistJson = Gson().toJson(updatedTwist)
                                     navController.navigate("manageQuestions/${twistJson}")
                                 }
+                            }
+                            navController.navigate(Routes.EDIT) {
+                                popUpTo(Routes.EDIT) { inclusive = true }
                             }
                         }
                     )

@@ -103,7 +103,7 @@ interface ApiService {
         @Header("If-Modified-Since") lastModified: Long
     ): Call<Void>
 
-    @DELETE("/images/delete")
+    @POST("/images/delete")
     fun deleteImage(
         @Header("Authorization") token: String,
         @Body twistData: TwistModel
