@@ -13,7 +13,6 @@ fun TimeBar(
     progress: Float,
     modifier: Modifier = Modifier
 ) {
-    println("TimeBar Progress: $progress")
     LinearProgressIndicator(
         progress = progress,
         modifier = modifier

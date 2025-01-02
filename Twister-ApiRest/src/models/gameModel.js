@@ -218,23 +218,36 @@ export async function initRoomDB(roomId, twistQuestions) {
   }
 }
 
-export async function updateRoomDB(roomId, answer, playerName, questionId) {
+export async function updateRoomDB(roomId, answerIndex, playerName, questionId) {
   await ensureRedisClient();
   try {
+    // Obtener los datos de la sala de Redis
     const roomDataString = await getRoomDB(roomId);
-    if (roomDataString == null){
+    if (roomDataString == null) {
       console.log("No se ha encontrado la sala:", roomId);
-      return false
+      return false;
     }
     console.log("Sala de juego encontrada:", roomDataString);
+
     const roomData = JSON.parse(roomDataString);
-    console.log("Sala de juego actual:", roomData);
+
     // Buscar la pregunta correspondiente
     const question = roomData.twistQuestions.find(q => q.id === questionId);
     if (!question) {
-      console.error("Question with ID ${questionId} not found in room ${roomId}");
+      console.error(`Pregunta con ID ${questionId} no encontrada en la sala ${roomId}`);
       return false;
     }
+
+    // Validar el índice de la respuesta
+    if (answerIndex < 1 || answerIndex > question.answers.length) {
+      console.error(`Índice de respuesta inválido: ${answerIndex}. Debe estar entre 1 y ${question.answers.length}.`);
+      return false;
+    }
+
+    // Indexar la respuesta seleccionada
+    const selectedAnswer = question.answers[answerIndex - 1];
+
+    console.log("Respuesta seleccionada:", selectedAnswer, " de", question.answers);
 
     // Agregar la respuesta del jugador
     if (!question.answers) {
@@ -243,7 +256,7 @@ export async function updateRoomDB(roomId, answer, playerName, questionId) {
 
     question.answers.push({
       playerName,
-      answer,
+      answer: selectedAnswer.text,
     });
 
     // Actualizar el timestamp de la sala
@@ -255,10 +268,11 @@ export async function updateRoomDB(roomId, answer, playerName, questionId) {
     console.log("Sala actualizada con éxito:", roomData);
     return true;
   } catch (error) {
-    console.error("Error updating room:", error);
-    throw new Error("Could not update room");
+    console.error("Error al actualizar la sala:", error);
+    throw new Error("No se pudo actualizar la sala");
   }
 }
+
 
 export async function getRoomDB(roomId) {
   await ensureRedisClient();
@@ -269,5 +283,18 @@ export async function getRoomDB(roomId) {
   catch (error) {
     console.error("Error getting room:", error);
     throw new Error("Could not get room");
+  }
+}
+
+export async function deleteGameFromRedis(pin) {
+  await ensureRedisClient();
+  try {
+    console.log("Eliminando juego de Redis:", pin);
+    await redisClient.del(pin);
+    await redisClient.del(`questions-${pin}`);
+    return true;
+  } catch (error) {
+    console.error("Error deleting game from Redis:", error);
+    throw new Error("Could not delete game from Redis");
   }
 }

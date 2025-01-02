@@ -91,7 +91,7 @@ data class NextQuestionEvent(val questionId: String, val questionText: String)
 data class AnswerProvidedEvent(val playerId: String, val answer: String)
 
 @Serializable
-data class GameOverEvent(val winnerId: String, val finalScores: Map<String, Int>)
+data class GameOverEvent(val winnerId: String, val finalScores: Map<String, Int>? = null, val roomId: String)
 
 @Serializable
 data class QuestionTimeoutEvent(val questionId: String)
@@ -116,7 +116,8 @@ sealed class RespuestaRecibida
 @Serializable
 data class OpcionRespuesta(
     val isCorrect: Boolean,
-    val text: String
+    val text: String,
+    val id: Int? = null,
 ) : RespuestaRecibida()
 
 @Serializable

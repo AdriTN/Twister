@@ -40,6 +40,7 @@ fun QuestionView(
     realTimeClient: RealTimeClient,
     pinRoom: String,
     onTimerFinish: (String) -> Unit,
+    currentQuestion: QuestionModel?
 ) {
     val isOver = remember { mutableStateOf(false) }
     val isAnswered = remember { mutableStateOf(false) }
@@ -59,14 +60,20 @@ fun QuestionView(
         isOver.value = true
     }
 
-    LaunchedEffect(isAdmin) {
+    LaunchedEffect(key1 = question.id) {
         if (isAdmin) {
             while (!isOver.value) {
                 delay(200)
-                realTimeClient.getAnswers(roomId = pinRoom, questionId = question.id)
+                println("Obteniendo respuestas para ${question.id} - ${question.question}")
+                if (question.id == currentQuestion?.id) {
+                    realTimeClient.getAnswers(roomId = pinRoom, questionId = question.id)
+                } else {
+                    println("Pregunta actual no coincide con la recibida")
+                }
             }
         }
     }
+
 
     // Estado para animar el progreso de la barra de tiempo
     val animatedProgress by animateFloatAsState(
@@ -112,21 +119,43 @@ fun QuestionView(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Lista de respuestas
+                val answerStyles = listOf(
+                    Triple(Color(0xFF4A90E2), RoundedCornerShape(16.dp), Icons.Default.ArrowForward),
+                    Triple(Color(0xFFE94E3B), RoundedCornerShape(16.dp), Icons.Default.Circle),
+                    Triple(Color(0xFF4CAF50), RoundedCornerShape(16.dp), Icons.Default.Stop),
+                    Triple(Color(0xFFFFD700), RoundedCornerShape(16.dp), Icons.Default.Hexagon)
+                )
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                 ) {
-                    question.answers.forEach { answer ->
+                    question.answers.forEachIndexed { index, answer ->
+                        val (color, shape, icon) = answerStyles[index % answerStyles.size]
                         AnswerText(
                             answerText = answer.text,
-                            onClick = {  },
-                            modifier = Modifier.fillMaxWidth()
+                            color = color,
+                            shape = shape,
+                            icon = icon,
+                            contentDescription = "Answer $index",
+                            onClick = {
+                                respuestaJugador = answer.text
+                                realTimeClient.uploadAnswer(
+                                    answer = "${index + 1}",
+                                    roomId = pinRoom,
+                                    playerName = playerName,
+                                    question.id
+                                )
+                                isAnswered.value = true
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
+
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -204,7 +233,7 @@ fun QuestionView(
             }
         }
         else {
-            // ImplementaciÃ³n del mensaje de espera
+            // Implementacion del mensaje de espera
             Column(
                 modifier = Modifier
                     .fillMaxSize()

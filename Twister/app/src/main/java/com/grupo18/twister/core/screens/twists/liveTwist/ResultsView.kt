@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,26 +40,25 @@ fun ResultsView(
     respuestaJugador: String,
     onNextQuestionClick: () -> Unit,
 ) {
-    // Procesar las respuestas para obtener el conteo por opción
-    val responseCounts: Map<String, Int> = remember(responses, options) {
-        options.associate { option ->
-            option.text to responses.count { it.answer.equals(option.text, ignoreCase = true) }
-        }
-    }
-
-    // Determinar el valor máximo para escalar las barras
-    val maxValue = responseCounts.values.maxOrNull()?.takeIf { it > 0 } ?: 1
-    val barWidth = 40.dp
-    val spacing = 16.dp
-
-    // Animación para las barras
-    val animatedProgress by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(durationMillis = 1000), label = ""
-    )
-
     if (isAdmin) {
-        // Vista para Administradores: Mostrar gráfica de barras y lista de respuestas
+        // Procesar las respuestas para obtener el conteo por opción
+        val responseCounts: Map<String, Int> = remember(responses, options) {
+            options.associate { option ->
+                option.text to responses.count { it.answer.equals(option.text, ignoreCase = true) }
+            }
+        }
+
+        // Determinar el valor máximo para escalar las barras
+        val maxValue = responseCounts.values.maxOrNull()?.takeIf { it > 0 } ?: 1
+        val barWidth = 40.dp
+        val spacing = 16.dp
+
+        // Animación para las barras
+        val animatedProgress by animateFloatAsState(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 1000), label = ""
+        )
+
         AdminResultsView(
             responseCounts = responseCounts,
             options = options,
@@ -97,7 +97,7 @@ fun AdminResultsView(
     ) {
         // Título
         Text(
-            text = "Resultados",
+            text = "Results",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
@@ -168,7 +168,7 @@ fun AdminResultsView(
 
         // Lista de Respuestas con Detalles en Cuadrícula
         Text(
-            text = "Detalle de Respuestas",
+            text = "Response Details",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.align(Alignment.Start)
@@ -206,7 +206,7 @@ fun AdminResultsView(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Next Question",
+                    text = "Next",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
@@ -273,7 +273,7 @@ fun AdminResultsView(
                 Spacer(modifier = Modifier.height(8.dp))
                 // Conteo de Respuestas
                 Text(
-                    text = "Respuestas: $responseCount",
+                    text = "Responses: $responseCount",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -290,23 +290,23 @@ fun PlayerFeedbackView(
 ) {
     // Mensajes de ánimo
     val correctMessages = listOf(
-        "¡Excelente trabajo!",
-        "¡Estás en racha!",
-        "¡Sigue así!",
-        "¡Respuesta asombrosa!",
-        "¡Lo lograste!",
-        "¡Trabajo fantástico!",
-        "¡Bien hecho!"
+        "Great job!",
+        "You're on a roll!",
+        "Keep it up!",
+        "Awesome answer!",
+        "You did it!",
+        "Fantastic job!",
+        "Well done!"
     )
 
     val incorrectMessages = listOf(
-        "No te preocupes, ¡lo lograrás la próxima vez!",
-        "¡Sigue intentando!",
-        "¡Casi lo consigues!",
-        "¡Tú puedes!",
-        "¡Mantén una actitud positiva!",
-        "¡Cada error es una lección!",
-        "¡Inténtalo de nuevo, tú puedes!"
+        "Don't worry, you'll get it next time!",
+        "Keep trying!",
+        "You've almost got it!",
+        "You can do it!",
+        "Stay positive!",
+        "Every mistake is a lesson!",
+        "Try again, you can do it!"
     )
 
     val feedbackMessage = if (isCorrect) {
@@ -328,9 +328,9 @@ fun PlayerFeedbackView(
         // Tarjeta para el contenido central
         Card(
             modifier = Modifier
-                .fillMaxWidth()
+                .wrapContentWidth()
                 .wrapContentHeight()
-                .padding(16.dp),
+                .align(Alignment.Center),
             colors = CardDefaults.cardColors(
                 containerColor = Color.White
             ),
@@ -339,42 +339,32 @@ fun PlayerFeedbackView(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Icono de éxito o error
                 Icon(
                     imageVector = if (isCorrect) Icons.Default.Check else Icons.Default.Close,
-                    contentDescription = if (isCorrect) "Correcto" else "Incorrecto",
+                    contentDescription = if (isCorrect) "Correct" else "Incorrect",
                     tint = if (isCorrect) Color(0xFF4CAF50) else Color(0xFFF44336),
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // Mensaje principal
-                Text(
-                    text = if (isCorrect) "¡Correcto!" else "¡Incorrecto!",
-                    color = if (isCorrect) Color(0xFF4CAF50) else Color(0xFFF44336),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                // Mensaje de ánimo o celebración
+                // Mensaje de feedback
                 Text(
                     text = feedbackMessage,
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // Mostrar la respuesta del jugador
+                // Respuesta del jugador
                 Text(
-                    text = "Tu respuesta: $respuestaJugador",
-                    color = Color.Gray,
+                    text = "Your answer: $respuestaJugador",
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center
                 )
             }
         }

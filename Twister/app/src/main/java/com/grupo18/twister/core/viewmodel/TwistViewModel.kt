@@ -31,9 +31,9 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
 
     private val apiService: ApiService = ApiClient.retrofit.create(ApiService::class.java)
 
-    fun createTwist(title: String, description: String, imageUri: String? = null): TwistModel {
+    fun createTwist(title: String, description: String, imageUri: String? = null, isPublic: Boolean = false): TwistModel {
         val newId = UUID.randomUUID().toString()
-        val newTwist = TwistModel(id = newId, title = title, description = description, imageUri = imageUri)
+        val newTwist = TwistModel(id = newId, title = title, description = description, imageUri = imageUri, isPublic = isPublic)
         _twists.value += newTwist
         return newTwist
     }
