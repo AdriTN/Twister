@@ -150,7 +150,8 @@ export async function updateTwist(userId, twistData) {
 // Función para eliminar un twist
 export async function deleteTwist(userId, twistId) {
   await ensureRedisClient(); // Asegúrate de que el cliente de Redis esté conectado
-  const twist = await getTwistById(`${userId}-${twistId}`); // Obtén el twist
+  console.log(`Deleting ${userId}-${twistId}`)
+  const twist = await getTwistById(twistId, userId); // Obtén el twist
   if (!twist) {
       throw new Error("Twist not found"); // Si no se encuentra, lanza un error
   }

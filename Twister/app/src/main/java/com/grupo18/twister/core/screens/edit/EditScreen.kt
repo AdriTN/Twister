@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,8 +39,6 @@ import com.grupo18.twister.core.components.CustomBottomNavigationBar
 import com.grupo18.twister.core.models.TwistModel
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.io.File
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -59,6 +58,11 @@ fun EditScreen(
 
     var showDialog by remember { mutableStateOf(false) }
     var selectedTwist by remember { mutableStateOf<TwistModel?>(null) }
+
+    var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
+    var twistToDelete by remember { mutableStateOf<TwistModel?>(null) }
+
+
 
     // Popup para usuarios anónimos
     var showAnonymousAlert by remember { mutableStateOf(false) }
@@ -125,12 +129,14 @@ fun EditScreen(
                                         selectedTwist = twist
                                         showDialog = true
                                     },
-                                    onDelete = {
-                                        twistViewModel.deleteTwist(user.token, twist.id, coroutineScope, context)
+                                    onDeleteRequested = {
+                                        twistToDelete = it // Set the twist to be deleted
+                                        showDeleteConfirmationDialog = true // Show the confirmation dialog
                                     }
                                 )
                             }
                         }
+
                     }
                 }
 
@@ -147,7 +153,8 @@ fun EditScreen(
                                 val newTwist = twistViewModel.createTwist(
                                     title = updatedTwist.title,
                                     description = updatedTwist.description,
-                                    imageUri = updatedTwist.imageUri.toString()
+                                    imageUri = updatedTwist.imageUri.toString(),
+                                    isPublic = updatedTwist.isPublic
                                 )
                                 println("El nuevo imageUri es ESTE ${newTwist.imageUri}")
                                 showDialog = false
@@ -192,6 +199,55 @@ fun EditScreen(
                         }
                     )
                 }
+                if (showDeleteConfirmationDialog && twistToDelete != null) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteConfirmationDialog = false },
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete, // Icono de eliminación
+                                    contentDescription = "Delete",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp)) // Espacio entre el icono y el texto
+                                Text("Confirm Deletion", style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold))
+                            }
+                        },
+                        text = {
+                            Column {
+                                Text("Are you sure you want to delete this twist?", style = TextStyle(fontSize = 16.sp))
+                                Spacer(modifier = Modifier.height(8.dp)) // Espacio entre el texto
+                                // Muestra la información del twist
+                                Text("Title: ${twistToDelete?.title}", style = TextStyle(fontSize = 14.sp))
+                                Text("Description: ${twistToDelete?.description}", style = TextStyle(fontSize = 14.sp))
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    twistToDelete?.let { twist ->
+                                        twistViewModel.deleteTwist(user.token, twist.id, coroutineScope, context)
+                                    }
+                                    showDeleteConfirmationDialog = false
+                                    twistToDelete = null
+                                }
+                            ) {
+                                Text("Yes", color = MaterialTheme.colorScheme.primary)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    showDeleteConfirmationDialog = false
+                                    twistToDelete = null
+                                }
+                            ) {
+                                Text("No", color = MaterialTheme.colorScheme.secondary)
+                            }
+                        }
+                    )
+                }
+
             }
         }
     )
@@ -201,7 +257,7 @@ fun EditScreen(
 fun TwistItem(
     twist: TwistModel,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDeleteRequested: (TwistModel) -> Unit
 ) {
     val context = LocalContext.current
     val repository = ImageService(ApiClient.retrofit.create(ApiService::class.java))
@@ -319,7 +375,7 @@ fun TwistItem(
                     Spacer(modifier = Modifier.width(20.dp))
 
                     IconButton(
-                        onClick = onDelete,
+                        onClick = { onDeleteRequested(twist) },
                         modifier = Modifier
                             .size(30.dp)
                             .clip(CircleShape)

@@ -25,6 +25,9 @@ import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.grupo18.twister.core.components.PublicPrivateSwitch
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -46,6 +49,9 @@ fun EditTwistDialog(
 
     var imageUri by remember { mutableStateOf<String?>(initialTwist?.imageUri) }
     var imageToRemove by remember { mutableStateOf(false) }
+
+    // Estado para la privacidad
+    var isPublic by remember { mutableStateOf(initialTwist?.isPublic == true) }
 
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { newUri ->
@@ -130,6 +136,16 @@ fun EditTwistDialog(
                 ) {
                     Text("Select Image")
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                PublicPrivateSwitch(
+                    isPublic = isPublic,
+                    onCheckedChange = { newValue ->
+                        isPublic = newValue
+                    }
+                )
+
             }
         },
         confirmButton = {
@@ -141,7 +157,8 @@ fun EditTwistDialog(
                             val updatedTwist = initialTwist.copy(
                                 title = title,
                                 description = description,
-                                imageUri = imageUri
+                                imageUri = imageUri,
+                                isPublic = isPublic // Añadimos el estado de privacidad
                             )
                             onSave(updatedTwist, true)
                         }
@@ -160,12 +177,14 @@ fun EditTwistDialog(
                                 id = UUID.randomUUID().toString(),
                                 title = title,
                                 description = description,
-                                imageUri = imageUri // Añadimos aquí la imageUri
+                                imageUri = imageUri,
+                                isPublic = isPublic // Añadimos aquí la propiedad de privacidad
                             )
                         } else {
                             initialTwist.copy(
                                 title = title,
                                 description = description,
+                                isPublic = isPublic // Actualizamos el estado de privacidad
                             )
                         }
 
@@ -248,6 +267,7 @@ fun EditTwistDialog(
         }
     )
 }
+
 
 @Composable
 fun ImageWithRemoveButton(uri: String, onRemove: () -> Unit) {
