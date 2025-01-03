@@ -85,6 +85,12 @@ data class ResultsResponse(
 data class GameStateEvent(val state: String, val data: Any?)
 
 @Serializable
+data class CorrectAnswerEvent(val correctAnswer: AnswerModel, val score: Int)
+
+@Serializable
+data class ScoreEvent(val score: Int)
+
+@Serializable
 data class NextQuestionEvent(val questionId: String, val questionText: String)
 
 @Serializable

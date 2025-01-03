@@ -5,22 +5,13 @@ import com.grupo18.twister.core.models.Event
 import com.grupo18.twister.core.models.GameOverEvent
 import com.grupo18.twister.core.models.GameStateEvent
 import com.grupo18.twister.core.models.JoinPinResponse
-import com.grupo18.twister.core.models.NextQuestionEvent
-import com.grupo18.twister.core.models.OpcionRespuesta
-import com.grupo18.twister.core.models.QuestionTimeoutEvent
-import com.grupo18.twister.core.models.RespuestaJugador
 import com.grupo18.twister.core.models.RoomResponse
+import com.grupo18.twister.core.models.ScoreEvent
 import com.grupo18.twister.core.models.StartResponse
 import com.grupo18.twister.core.models.UploadSocketGameRequest
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 // Clase para gestionar eventos en tiempo real
 class RealTimeClient(private val socket: Socket) {
@@ -208,6 +199,23 @@ class RealTimeClient(private val socket: Socket) {
             }
         })
 
+        socket.on("ANSWER_SENT", Emitter.Listener { args ->
+            println("ANSWER_SENT: ${args.joinToString()}")
+            if (args.isNotEmpty()) {
+                val firstArg = args[0].toString()
+                try {
+                    val answer = Json.decodeFromString<ScoreEvent>(firstArg)
+                    onEventReceived(Event(
+                        message = "ANSWER_SENT: ${answer.score}",
+                        type = "ANSWER_SENT",
+                        id = answer.score.toString()
+                    ))
+                } catch (e: Exception) {
+                    println("Error al deserializar ANSWER_PROVIDED: ${e.localizedMessage}")
+                }
+            }
+        })
+
         // Evento: Juego finalizado
         socket.on("GAME_OVER", Emitter.Listener { args ->
             println("GAME_OVER: ${args.joinToString()}")
@@ -305,11 +313,12 @@ class RealTimeClient(private val socket: Socket) {
         socket.emit("getGame", jsonString)
     }
 
-    fun uploadAnswer(answer: String, roomId: String?, playerName: String? = null, questionId: String) {
+    fun uploadAnswer(answer: String, roomId: String?, playerName: String? = null, questionId: String, time: Int) {
         val jsonString = """{
         "answer": "$answer",
         "roomId": "$roomId",
         "questionId": "$questionId",
+        "time": "$time",
         "playerName": "$playerName"
     }"""
         socket.emit("sendAnswer", jsonString)
@@ -333,10 +342,11 @@ class RealTimeClient(private val socket: Socket) {
         socket.emit("nextQuestion", jsonString)
     }
 
-    fun getCorrectAnswer(roomId: String, questionId: String){
+    fun getCorrectAnswer(roomId: String, questionId: String, playerName: String){
         val jsonString = """{
         "roomId": "$roomId",
-        "questionId": "$questionId"
+        "questionId": "$questionId",
+        "playerName": "$playerName"
     }"""
         println("getCorrectAnswer: $jsonString")
         socket.emit("getCorrectAnswer", jsonString)

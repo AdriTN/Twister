@@ -11,8 +11,8 @@ object ApiClient {
     //private const val BASE_URL = "http://192.168.56.1:3000/"
     //private const val SOCKET_BASE_URL = "http://192.168.56.1:3001/"
     //IP Javier
-    private const val BASE_URL = "http://192.168.56.1:3000/"
-    private const val SOCKET_BASE_URL = "http://192.168.56.1:3001/"
+    private const val BASE_URL = "http://192.168.1.29:3000/"
+    private const val SOCKET_BASE_URL = "http://192.168.1.29:3001/"
     private var socket: Socket? = null
 
     // Inicialización de Retrofit

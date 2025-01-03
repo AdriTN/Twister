@@ -69,7 +69,7 @@ app.listen(PORT, () => {
 });
 
 httpServer.listen(SOCKET_PORT, () => {
-  console.log(`Server listening on http://http://localhost:${SOCKET_PORT}`);
+  console.log(`Server listening on http://localhost:${SOCKET_PORT}`);
 });
 
 // Exportar para AWS Lambda o entornos serverless

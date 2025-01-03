@@ -11,6 +11,7 @@ import {
   updateRoomDB,
   getRoomDB,
   deleteGameFromRedis,
+  getScores,
 } from "../models/gameModel.js";
 import { get } from "../utils/database.js";
 
@@ -169,18 +170,21 @@ export const socketHandlers = (io, socket) => {
   });
 
   // Evento: Respuestas de los sockets
-  socket.on("sendAnswer", (data) => {
+  socket.on("sendAnswer", async (data) => {
     data = JSON.parse(data);
-    const { answer, roomId, playerName, questionId } = data;
+    const { answer, roomId, playerName, questionId, time } = data;
     console.log(
       "Respuesta recibida:",
       answer,
+      "en el tiempo de ",
+      time,
       "de",
       playerName,
       "en",
       roomId + " con questionId: " + questionId
     );
-    updateRoomDB(roomId, answer, playerName, questionId);
+    let score = await updateRoomDB(roomId, answer, playerName, questionId, time);
+    socket.emit("ANSWER_SENT", { score: score });
   });
 
   // Evento: Respuestas de los sockets
@@ -245,44 +249,50 @@ export const socketHandlers = (io, socket) => {
   // Evento: Respuestas de los sockets
   socket.on("getCorrectAnswer", async (data) => {
     data = JSON.parse(data);
-    console.log("dattrasa", data);
-    const { roomId, questionId } = data;
-
+    const { roomId, questionId, playerName } = data;
+  
     console.log("Se ha pedido una answer");
-
+  
     // Obtener datos de la sala
     var room = await getRoomDB(roomId);
-
+  
     if (room == null) {
       console.error("La sala o las preguntas no se encontraron");
       socket.emit("ANSWERS", { error: "Room or questions not found" });
       return;
     }
     room = JSON.parse(room);
-
+  
     console.log("Este es le Room", room, "con questionId", questionId);
     const question = room.twistQuestions.find((q) => q.id === questionId);
     if (!question) {
       console.log(
-        "Pregunta con ID ${questionId} no encontrada en la sala ${roomId}"
+        `Pregunta con ID ${questionId} no encontrada en la sala ${roomId}`
       );
       socket.emit("ANSWERS", { error: "Question not found" });
       return;
     }
-
-    //Filtra la respuesta correcta
+  
+    // Filtra la respuesta correcta
     const correctAnswer = question.answers.find((a) => a.isCorrect === true);
     if (!correctAnswer) {
       console.log(
-        "Respuesta correcta no encontrada en la pregunta ${questionId}"
+        `Respuesta correcta no encontrada en la pregunta ${questionId}`
       );
       socket.emit("ANSWERS", { error: "Correct answer not found" });
       return;
     }
-
+  
     console.log("Respuestas recibidas:", question.answers);
-    socket.emit("CORRECT_ANSWER", correctAnswer);
+  
+    const score = await getScores(roomId, playerName);
+    // Sumar valores relevantes (ajusta esto según tus necesidades)
+    console.log("Scores ", score);
+  
+    //console.log(`La suma de los valores de las respuestas es: ${sum}`);
+    socket.emit("CORRECT_ANSWER", { correctAnswer, score });
   });
+  
 
   socket.on("gameOverEvent", async (data) => {
     data = JSON.parse(data);
