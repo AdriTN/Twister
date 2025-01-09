@@ -51,7 +51,7 @@ fun EditTwistDialog(
     var imageToRemove by remember { mutableStateOf(false) }
 
     // Estado para la privacidad
-    var isPublic by remember { mutableStateOf(initialTwist?.isPublic == false) }
+    var isPublic by remember { mutableStateOf(initialTwist?.isPublic ?: false) }
 
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { newUri ->

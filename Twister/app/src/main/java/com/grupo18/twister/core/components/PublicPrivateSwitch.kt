@@ -14,12 +14,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun PublicPrivateSwitch(isPublic: Boolean, onCheckedChange: (Boolean) -> Unit) {
+fun PublicPrivateSwitch(
+    isPublic: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
     ) {
-        // Texto para "Private"
+        // Texto: "Private"
         Text(
             text = "Private",
             style = MaterialTheme.typography.bodyMedium.copy(
@@ -27,13 +30,13 @@ fun PublicPrivateSwitch(isPublic: Boolean, onCheckedChange: (Boolean) -> Unit) {
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground
             ),
-            modifier = Modifier.padding(end = 16.dp) // Espaciado entre el texto y el switch
+            modifier = Modifier.padding(end = 16.dp) // Espaciado entre texto y Switch
         )
 
         // Switch
         Switch(
-            checked = isPublic,
-            onCheckedChange = onCheckedChange, // Llama al callback al cambiar
+            checked = isPublic,              // ON = público, OFF = privado
+            onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.primary,
                 checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
@@ -49,7 +52,7 @@ fun PublicPrivateSwitch(isPublic: Boolean, onCheckedChange: (Boolean) -> Unit) {
             }
         )
 
-        // Texto para "Public"
+        // Texto: "Public"
         Text(
             text = "Public",
             style = MaterialTheme.typography.bodyMedium.copy(
@@ -57,7 +60,7 @@ fun PublicPrivateSwitch(isPublic: Boolean, onCheckedChange: (Boolean) -> Unit) {
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground
             ),
-            modifier = Modifier.padding(start = 16.dp) // Espaciado entre el switch y el texto
+            modifier = Modifier.padding(start = 16.dp) // Espaciado entre Switch y texto
         )
     }
 }
