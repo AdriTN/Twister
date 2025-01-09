@@ -115,15 +115,16 @@ export async function handleDeleteTwist(userId, twistId) {
     }
 }
 
-export async function isTwistPublic(twistId, userId) {
-    // Obtenemos el twist
-    const twist = await getTwistById(twistId, userId);
+export async function getPublicTwists() {
   
-    // Si no existe, regresamos null para indicar que no se encontró
-    if (!twist) {
-      return null;
-    }
-  
-    // Devolvemos el valor booleano de 'isPublic'
-    return !!twist.isPublic; // '!!' para forzar boolean
+    // Obtiene todas las claves del set "public_twists"
+    const keys = await redisClient.sMembers("public_twists");
+    const twists = await Promise.all(
+      keys.map(async (key) => {
+        const twistJson = await redisClient.get(key);
+        return twistJson ? JSON.parse(twistJson) : null;
+      })
+    );
+    return twists.filter(Boolean);
   }
+  

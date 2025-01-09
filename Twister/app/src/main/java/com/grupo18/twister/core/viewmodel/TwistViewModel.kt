@@ -29,6 +29,9 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
     private val _twists = MutableStateFlow<List<TwistModel>>(emptyList())
     val twists: StateFlow<List<TwistModel>> = _twists
 
+    private val _publicTwists = MutableStateFlow<List<TwistModel>>(emptyList())
+    val publicTwists: StateFlow<List<TwistModel>> get() = _publicTwists
+
     private val apiService: ApiService = ApiClient.retrofit.create(ApiService::class.java)
 
     fun createTwist(title: String, description: String, imageUri: String? = null, isPublic: Boolean = false): TwistModel {
@@ -309,6 +312,32 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
                 e.printStackTrace()
                 println("Excepción al descargar la imagen: ${e.message}")
                 onImageUpdated(false)
+            }
+        }
+    }
+
+    fun loadPublicTwists(
+        token: String,
+        scope: CoroutineScope,
+        context: Context,
+        onLoading: (Boolean) -> Unit
+    ) {
+        onLoading(true)
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = apiService.getPublicTwists(token).execute()
+                println("Pene {$response}")
+                if (response.isSuccessful) {
+                    val twistsList = response.body() ?: emptyList()
+                    _publicTwists.value = twistsList
+                    println("Public Twists obtenidos: $twistsList")
+                } else {
+                    println("Error al obtener los Public Twists: ${response.code()} - ${response.message()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                onLoading(false)
             }
         }
     }

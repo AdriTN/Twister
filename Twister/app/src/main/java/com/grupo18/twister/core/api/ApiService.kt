@@ -115,10 +115,8 @@ interface ApiService {
         @Path("questionId") questionId: String
     ): Call<ResultsResponse>
 
-    @GET("/twists/{userId}/{twistId}/isPublic")
-    fun isTwistPublic(
-        @Header("Authorization") token: String,
-        @Path("userId") userId: String,
-        @Path("twistId") twistId: String
-    ): Call<IsPublicResponse>
+    @GET("/twists/public")
+    fun getPublicTwists(
+        @Header("Authorization") token: String
+    ): Call<List<TwistModel>>
 }

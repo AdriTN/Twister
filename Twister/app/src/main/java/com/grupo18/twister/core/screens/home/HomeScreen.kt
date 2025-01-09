@@ -46,6 +46,8 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
+    val publicTwists by twistViewModel.publicTwists.collectAsState()
+
     // Efecto para cargar los twists al iniciar la pantalla
     LaunchedEffect(currentUser) {
         if (currentUser?.isAnonymous == false) {
@@ -65,6 +67,17 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
             } finally {
                 isLoading = false
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        twistViewModel.loadPublicTwists(
+            token = currentUser?.token ?: "",
+            scope = coroutineScope,
+            context = context
+        ) { loading ->
+            isLoading = loading
         }
     }
 
@@ -133,26 +146,36 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
             }
 
             // Otra sección horizontal ("Most Played")
-            SectionTitle("Most Played")
+            // Renombramos la sección
+            SectionTitle("Public Twists")
             Spacer(modifier = Modifier.height(16.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                items(8) { index ->
-                    TwistCard(
-                        twist = TwistModel(
-                            id = "$index",
-                            title = "Popular $index",
-                            description = "Description for Popular $index",
-                            imageUri = null
-                        ),
-                        onClick = {
-                            // Acción al hacer clic en un twist popular
-                        }
-                    )
+
+// Si quieres reciclar la variable `isLoading`, la usas también aquí.
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else if (publicTwists.isEmpty()) {
+                Text(
+                    text = "No public twists found.",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    items(publicTwists) { twist ->
+                        TwistCard(
+                            twist = twist,
+                            onClick = {
+                                val twistJson = Gson().toJson(twist)
+                                navController.navigate("twistDetail/${twistJson}")
+                            }
+                        )
+                    }
                 }
             }
 

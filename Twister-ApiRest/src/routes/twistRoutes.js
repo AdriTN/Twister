@@ -1,5 +1,5 @@
 import express from "express"; 
-import { handleGetUserTwists, handleupdateTwist, handleDeleteTwist } from "../services/twistService.js";
+import { handleGetUserTwists, handleupdateTwist, handleDeleteTwist, getPublicTwists } from "../services/twistService.js";
 import { getUserWithToken } from "../services/authService.js";
 
 const router = express.Router();
@@ -77,26 +77,16 @@ router.delete("/delete/:id", async (req, res) => {
     }
 });
 
-// GET -> /api/twists/:userId/:twistId/isPublic
-router.get('/:userId/:twistId/isPublic', async (req, res) => {
+router.get('/public', async (req, res) => {
     try {
-      const { userId, twistId } = req.params;
-  
-      // Llamamos a la función que valida si un twist es público
-      const isPublic = await isTwistPublic(twistId, userId);
-  
-      // Si no se encontró el twist, regresamos un 404
-      if (isPublic === null) {
-        return res.status(404).json({ error: 'Twist not found' });
-      }
-  
-      return res.json({ isPublic });
+      // getPublicTwists() se encarga de leer el Set "public_twists" en Redis,
+      // y devolver la lista de Twists parseados.
+      const publicTwists = await getPublicTwists();
+      res.json(publicTwists);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
   });
-
-
 
 export default router;
