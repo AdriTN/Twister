@@ -114,3 +114,16 @@ export async function handleDeleteTwist(userId, twistId) {
         return false;
     }
 }
+
+export async function isTwistPublic(twistId, userId) {
+    // Obtenemos el twist
+    const twist = await getTwistById(twistId, userId);
+  
+    // Si no existe, regresamos null para indicar que no se encontró
+    if (!twist) {
+      return null;
+    }
+  
+    // Devolvemos el valor booleano de 'isPublic'
+    return !!twist.isPublic; // '!!' para forzar boolean
+  }

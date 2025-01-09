@@ -77,6 +77,25 @@ router.delete("/delete/:id", async (req, res) => {
     }
 });
 
+// GET -> /api/twists/:userId/:twistId/isPublic
+router.get('/:userId/:twistId/isPublic', async (req, res) => {
+    try {
+      const { userId, twistId } = req.params;
+  
+      // Llamamos a la función que valida si un twist es público
+      const isPublic = await isTwistPublic(twistId, userId);
+  
+      // Si no se encontró el twist, regresamos un 404
+      if (isPublic === null) {
+        return res.status(404).json({ error: 'Twist not found' });
+      }
+  
+      return res.json({ isPublic });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
 
 
 
