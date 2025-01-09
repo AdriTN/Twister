@@ -171,10 +171,11 @@ fun EditScreen(
                                     val twistJson = Gson().toJson(updatedTwist)
                                     navController.navigate("manageQuestions/${twistJson}")
                                 }
+                                navController.navigate(Routes.EDIT) {
+                                    popUpTo(Routes.EDIT) { inclusive = true }
+                                }
                             }
-                            navController.navigate(Routes.EDIT) {
-                                popUpTo(Routes.EDIT) { inclusive = true }
-                            }
+
                         }
                     )
                 }
