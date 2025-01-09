@@ -36,7 +36,7 @@ fun ResultsView(
     responses: List<RespuestaJugador>,
     options: List<OpcionRespuesta>,
     isAdmin: Boolean,
-    isCorrect: Boolean,
+    score: Int,
     respuestaJugador: String,
     onNextQuestionClick: () -> Unit,
 ) {
@@ -71,7 +71,7 @@ fun ResultsView(
     } else {
         PlayerFeedbackView(
             respuestaJugador = respuestaJugador,
-            isCorrect = isCorrect,
+            score = score,
         )
     }
 }
@@ -286,8 +286,9 @@ fun AdminResultsView(
 @Composable
 fun PlayerFeedbackView(
     respuestaJugador: String,
-    isCorrect: Boolean,
+    score: Int,
 ) {
+    val isCorrect = score > 0
     // Mensajes de ánimo
     val correctMessages = listOf(
         "Great job!",
@@ -366,7 +367,17 @@ fun PlayerFeedbackView(
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                // Puntuación del jugador
+                Text(
+                    text = "+: $score",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isCorrect) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
 }
+

@@ -30,33 +30,37 @@ import com.grupo18.twister.core.screens.twists.liveTwist.components.AnswerText
 import com.grupo18.twister.core.screens.twists.liveTwist.components.QuestionCard
 import kotlinx.coroutines.delay
 
+
 @Composable
 fun QuestionView(
     question: QuestionModel,
     timerSeconds: Int,
     isAdmin: Boolean,
     playerName: String,
-    onTimerTick: (seconds: Long) -> Unit,
     realTimeClient: RealTimeClient,
     pinRoom: String,
     onTimerFinish: (String) -> Unit,
     currentQuestion: QuestionModel?
 ) {
+    var timer by remember { mutableStateOf(timerSeconds) }
     val isOver = remember { mutableStateOf(false) }
     val isAnswered = remember { mutableStateOf(false) }
     var remainingSeconds by remember { mutableIntStateOf(timerSeconds) }
     var progress by remember { mutableFloatStateOf(0f) }
     var respuestaJugador by remember { mutableStateOf("") }
+    var tiempoJugador by remember { mutableIntStateOf(0) }
 
     // Manejar el temporizador
     LaunchedEffect(key1 = question.id) {
+        println("El timerSeconds s es: $timerSeconds")
         for (i in timerSeconds downTo 0) {
             remainingSeconds = i
-            onTimerTick(i.toLong())
             progress = if (timerSeconds > 0) remainingSeconds.toFloat() / timerSeconds else 0f
             delay(1000L)
         }
         onTimerFinish(respuestaJugador)
+        respuestaJugador = ""
+        println("el tiempo se ha acabado!")
         isOver.value = true
     }
 
@@ -72,6 +76,20 @@ fun QuestionView(
                 }
             }
         }
+    }
+
+    fun handleAnswer(answerText: String, answerIndex: Int) {
+        respuestaJugador = answerText
+        println("El timerSeconds es: $timer y remainingSeconds es: $remainingSeconds")
+        tiempoJugador = timer - remainingSeconds
+        realTimeClient.uploadAnswer(
+            answer = "${answerIndex + 1}",
+            roomId = pinRoom,
+            playerName = playerName,
+            time = tiempoJugador,
+            questionId = question.id
+        )
+        isAnswered.value = true
     }
 
 
@@ -145,7 +163,8 @@ fun QuestionView(
                                     answer = "${index + 1}",
                                     roomId = pinRoom,
                                     playerName = playerName,
-                                    question.id
+                                    questionId = question.id,
+                                    time = timerSeconds
                                 )
                                 isAnswered.value = true
                             },
@@ -181,9 +200,7 @@ fun QuestionView(
                         icon = Icons.Default.ArrowForward,
                         contentDescription = "Arrow",
                         onClick = {
-                            respuestaJugador = question.answers[0].text
-                            realTimeClient.uploadAnswer(answer = "1", roomId = pinRoom, playerName = playerName, question.id)
-                            isAnswered.value = true
+                            handleAnswer(question.answers[0].text, 0)
                         }
                     )
                     ColorBlock(
@@ -192,9 +209,7 @@ fun QuestionView(
                         icon = Icons.Default.Circle,
                         contentDescription = "Circle",
                         onClick = {
-                            respuestaJugador = question.answers[1].text
-                            realTimeClient.uploadAnswer(answer = "2", roomId = pinRoom, playerName = playerName, question.id)
-                            isAnswered.value = true
+                            handleAnswer(question.answers[1].text, 1)
                         }
                     )
                 }
@@ -211,9 +226,7 @@ fun QuestionView(
                         icon = Icons.Default.Stop,
                         contentDescription = "Square",
                         onClick = {
-                            respuestaJugador = question.answers[2].text
-                            realTimeClient.uploadAnswer(answer = "3", roomId = pinRoom, playerName = playerName, question.id)
-                            isAnswered.value = true
+                            handleAnswer(question.answers[2].text, 2)
                         }
                     )
                     ColorBlock(
@@ -222,9 +235,7 @@ fun QuestionView(
                         icon = Icons.Default.Hexagon,
                         contentDescription = "Hexagon",
                         onClick = {
-                            respuestaJugador = question.answers[3].text
-                            realTimeClient.uploadAnswer(answer = "4", roomId = pinRoom, playerName = playerName, question.id)
-                            isAnswered.value = true
+                            handleAnswer(question.answers[3].text, 3)
                         }
                     )
                 }

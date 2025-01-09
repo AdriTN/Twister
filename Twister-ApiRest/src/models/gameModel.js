@@ -218,60 +218,109 @@ export async function initRoomDB(roomId, twistQuestions) {
   }
 }
 
-export async function updateRoomDB(roomId, answerIndex, playerName, questionId) {
+export async function updateRoomDB(roomId, answerIndex, playerName, questionId, time) {
   await ensureRedisClient();
   try {
-    // Obtener los datos de la sala de Redis
     const roomDataString = await getRoomDB(roomId);
-    if (roomDataString == null) {
+    if (!roomDataString) {
       console.log("No se ha encontrado la sala:", roomId);
       return false;
     }
-    console.log("Sala de juego encontrada:", roomDataString);
 
     const roomData = JSON.parse(roomDataString);
 
-    // Buscar la pregunta correspondiente
     const question = roomData.twistQuestions.find(q => q.id === questionId);
     if (!question) {
       console.error(`Pregunta con ID ${questionId} no encontrada en la sala ${roomId}`);
       return false;
     }
 
-    // Validar el índice de la respuesta
     if (answerIndex < 1 || answerIndex > question.answers.length) {
-      console.error(`Índice de respuesta inválido: ${answerIndex}. Debe estar entre 1 y ${question.answers.length}.`);
+      console.error(`Índice de respuesta inválido: ${answerIndex}.`);
       return false;
     }
 
-    // Indexar la respuesta seleccionada
     const selectedAnswer = question.answers[answerIndex - 1];
+    console.log("Respuesta seleccionada:", selectedAnswer);
 
-    console.log("Respuesta seleccionada:", selectedAnswer, " de", question.answers);
+    if (!roomData.scores) {
+      roomData.scores = {};
+    }
+
+    // Verificar si la respuesta es correcta
+    const isCorrect = selectedAnswer.isCorrect;
+
+    // Calcular puntos basado en el tiempo
+    const maxTime = 5; // Tiempo máximo en segundos
+    let points = 0;
+
+    if (isCorrect) {
+      // Calcular la puntuación en función del tiempo
+      const remainingTime = maxTime - time;
+      // Asegurarse de que el tiempo restante no sea negativo
+      const adjustedTime = Math.max(remainingTime, 0);
+      // Calcular puntos: 10 puntos por respuesta correcta más puntos adicionales por el tiempo restante
+      points = 10 + (adjustedTime * (10 / maxTime)); // 10 puntos por 10 segundos restantes
+    } else {
+      console.log("Respuesta incorrecta:", selectedAnswer);
+      points = 0; // Si la respuesta es incorrecta, no se otorgan puntos
+    }
+
+    // Actualizar el puntaje del jugador
+    if (!roomData.scores[playerName]) {
+      roomData.scores[playerName] = 0;
+    }
+    roomData.scores[playerName] += points;
+
+    console.log(`Puntaje actualizado para ${playerName}: ${roomData.scores[playerName]}`);
 
     // Agregar la respuesta del jugador
     if (!question.answers) {
       question.answers = [];
     }
-
     question.answers.push({
       playerName,
       answer: selectedAnswer.text,
     });
 
-    // Actualizar el timestamp de la sala
     roomData.updatedAt = Date.now();
 
     // Guardar los datos actualizados en Redis
     await redisClient.set(`questions-${roomId}`, JSON.stringify(roomData));
-
     console.log("Sala actualizada con éxito:", roomData);
-    return true;
+    return points;
   } catch (error) {
     console.error("Error al actualizar la sala:", error);
     throw new Error("No se pudo actualizar la sala");
   }
 }
+
+
+export async function getScores(roomId, playerName) {
+  await ensureRedisClient();
+  try {
+    const roomDataString = await getRoomDB(roomId);
+    if (!roomDataString) {
+      console.log("No se ha encontrado la sala:", roomId);
+      return null;
+    }
+
+    const roomData = JSON.parse(roomDataString);
+
+    // Filtrar y devolver el puntaje del jugador específico
+    if (playerName) {
+      return roomData.scores[playerName] || null; // Devuelve null si no hay puntaje
+    }
+
+    return roomData.scores || {}; // Retornar todos los puntajes si no se proporciona playerName
+  } catch (error) {
+    console.error("Error obteniendo los puntajes:", error);
+    throw new Error("No se pudieron obtener los puntajes");
+  }
+}
+
+
+
 
 
 export async function getRoomDB(roomId) {

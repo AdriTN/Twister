@@ -14,12 +14,14 @@ import com.grupo18.twister.core.models.AnswerModel
 import com.grupo18.twister.core.models.Event
 import com.grupo18.twister.core.models.QuestionModel
 import com.grupo18.twister.core.models.AnswerProvidedEvent
+import com.grupo18.twister.core.models.CorrectAnswerEvent
 import com.grupo18.twister.core.models.GameOverEvent
 import com.grupo18.twister.core.models.GameStateEvent
 import com.grupo18.twister.core.models.NextQuestionEvent
 import com.grupo18.twister.core.models.OpcionRespuesta
 import com.grupo18.twister.core.models.QuestionTimeoutEvent
 import com.grupo18.twister.core.models.RespuestaJugador
+import com.grupo18.twister.core.models.ScoreEvent
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -37,6 +39,8 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var currentQuestion by remember { mutableStateOf<QuestionModel?>(null) }
     var timerSeconds by remember { mutableIntStateOf(5) }
+    var score by remember { mutableIntStateOf(0) }
+    var lastScore by remember { mutableIntStateOf(0) }
     var opcionesRespuestas by remember { mutableStateOf(listOf<OpcionRespuesta>()) }
     var respuestasJugador by remember { mutableStateOf(listOf<RespuestaJugador>()) }
     var respuestaJugador by remember { mutableStateOf("") }
@@ -66,14 +70,11 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     realTimeClient = realTimeClient,
                     playerName = playerName,
                     pinRoom = currentRoomId,
-                    onTimerTick = { seconds ->
-                        timerSeconds = seconds.toInt()
-                    },
                     currentQuestion = currentQuestion,
                     onTimerFinish = { respuesta ->
                         if (!isAdmin){
                             respuestaJugador = respuesta
-                            realTimeClient.getCorrectAnswer(roomId = currentRoomId, questionId = question.id)
+                            realTimeClient.getCorrectAnswer(roomId = currentRoomId, questionId = question.id, playerName = playerName)
                         }
                         gameState = GameState.SHOWING_RESULTS
                     },
@@ -82,13 +83,13 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
         }
 
         GameState.SHOWING_RESULTS -> {
-            ResultsView(responses = respuestasJugador, options = opcionesRespuestas, isAdmin = isAdmin, isCorrect = isCorrect, respuestaJugador = respuestaJugador, onNextQuestionClick = {
+            ResultsView(responses = respuestasJugador, options = opcionesRespuestas, isAdmin = isAdmin, score = lastScore, respuestaJugador = respuestaJugador, onNextQuestionClick = {
                 realTimeClient.nextQuestion(roomId = currentRoomId, questionId = currentQuestionIndex.toString())
                 if (isAdmin){
                     if (currentQuestionIndex < (twist?.twistQuestions?.size ?: 0) - 1) {
                         currentQuestionIndex++
-                        gameState = GameState.SHOWING_QUESTION
                         timerSeconds = 5
+                        gameState = GameState.SHOWING_QUESTION
                     } else {
                         gameState = GameState.FINALIZED
                     }
@@ -117,8 +118,6 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                         currentQuestionIndex++
                         // Aquí podrías buscar y actualizar `currentQuestion` si es necesario
                         gameState = GameState.SHOWING_QUESTION
-                        timerSeconds = 15
-                        println("Nueva pregunta")
                     }
 //                    "GAME_OVER" -> handleGameOver(event, onGameOver = { winnerId, finalScores ->
 //                        // Mostrar pantalla final o manejar el estado finalizado
@@ -135,13 +134,15 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                         gameState = GameState.SHOWING_RESULTS
                     })
                     "CORRECT_ANSWER" -> {
-                        // Manejar el timeout de la pregunta actual
-                        //TODO ACEPTAR MAS DE UNA RESPUESTA CORRECTA
-                        val answerEvent = Json.decodeFromString<AnswerModel>(event.message)
-                        isCorrect = answerEvent.text == respuestaJugador
-                        println("Respuesta correcta: $isCorrect con $respuestaJugador y answervalor: ${answerEvent.text}")
+                        val answerEvent = Json.decodeFromString<CorrectAnswerEvent>(event.message)
+                        isCorrect = answerEvent.correctAnswer.text == respuestaJugador
+                        score = answerEvent.score
+                        println("Respuesta correcta: $isCorrect con $respuestaJugador y answervalor: ${answerEvent.correctAnswer.text}")
                     }
-                    // Manejar evento ANSWERS al expirar tiempo de pregunta
+                    "ANSWER_SENT" -> {
+                        val answerEvent = event.id.toInt()
+                        println("El score obtenido es: $answerEvent")
+                        lastScore = answerEvent }
                     "ANSWERS" -> {
                             try {
                                 println("Evento ANSWERS recibido: ${event.message}")
