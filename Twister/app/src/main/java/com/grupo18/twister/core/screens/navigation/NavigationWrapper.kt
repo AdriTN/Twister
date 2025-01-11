@@ -205,18 +205,49 @@ fun NavigationWrapper(
         }
 
         composable(FINAL_SCREEN) { backStackEntry ->
-            val topPlayersString = backStackEntry.arguments?.getString("topPlayers")
-            val parts = topPlayersString?.split(":")?.map { it.trim() }
-            if (parts?.size == 2) {
-                // Convertir a un mapa
-                val topScores = mapOf(parts[0] to parts[1].toInt())
+            val rawTopPlayersString = backStackEntry.arguments?.getString("topPlayers")
+            println("Este es el topPlayersString: $rawTopPlayersString")
 
-                println("Puntajes máximos:")
+            // Procesar la cadena para convertirla en un formato utilizable
+            val topPlayersString = rawTopPlayersString
+                ?.removePrefix("[(") // Eliminar el prefijo "[("
+                ?.removeSuffix(")]") // Eliminar el sufijo ")]"
+                ?.replace("), (", ";") // Reemplazar "), (" por ";"
+            println("Cadena procesada: $topPlayersString")
+
+            // Separar cada entrada por punto y coma y luego dividir en nombre y puntaje
+            val parts = topPlayersString?.split(";")?.map { it.trim() }
+            println("Este es el parts: $parts")
+
+            // Validar y construir una lista de pares (nombre, puntaje)
+            if (!parts.isNullOrEmpty()) {
+                val topScores = parts.mapNotNull { part ->
+                    val entry = part.split(",").map { it.trim() }
+                    if (entry.size == 2) {
+                        try {
+                            entry[0] to entry[1].toInt() // Convertir a Pair<String, Int>
+                        } catch (e: NumberFormatException) {
+                            println("Error al convertir puntaje: ${e.message}")
+                            null
+                        }
+                    } else {
+                        null
+                    }
+                }.take(3) // Tomar solo los 3 primeros elementos, si existen
+
+                println("Este es el topScores: $topScores")
+
+                // Imprimir los ganadores
                 topScores.forEach { (playerName, score) ->
                     println("Jugador: $playerName, Puntaje: $score")
                 }
-                PodiumScreen(topPlayers = topScores.toList())
+
+                // Pasar los ganadores a la pantalla PodiumScreen
+                PodiumScreen(topPlayers = topScores)
+            } else {
+                println("No se encontraron jugadores en topPlayersString.")
             }
         }
+
     }
 }

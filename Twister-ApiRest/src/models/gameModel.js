@@ -307,6 +307,10 @@ export async function getScores(roomId, playerName) {
 
     const roomData = JSON.parse(roomDataString);
 
+    if (!roomData.scores) {
+      console.log("No se han encontrado puntajes en la sala:", roomId);
+      return 0;
+    }
     // Filtrar y devolver el puntaje del jugador específico
     if (playerName) {
       return roomData.scores[playerName] || 0; // Devuelve null si no hay puntaje
