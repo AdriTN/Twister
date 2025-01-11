@@ -36,6 +36,7 @@ import com.grupo18.twister.core.screens.navigation.Routes.LIVE_TWIST_SCREEN
 import com.grupo18.twister.core.screens.search.SearchScreen
 import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.AddQuestionScreen
+import com.grupo18.twister.core.screens.twists.PublicTwistDetailScreen
 import com.grupo18.twister.core.screens.twists.TwistDetailScreen
 import com.grupo18.twister.core.screens.twists.SoloTwist
 import com.grupo18.twister.core.screens.twists.liveTwist.GameScreen
@@ -168,6 +169,16 @@ fun NavigationWrapper(
             TwistDetailScreen(
                 navController = navController,
                 twist = twist,
+                twistViewModel = twistViewModel
+            )
+        }
+
+        // Pantalla de detalle PUBLICO (intermedia)
+        composable(Routes.PUBlIC_TWIST_DETAIL) { backStackEntry ->
+            val twistId = backStackEntry.arguments?.getString("twistId") ?: ""
+            PublicTwistDetailScreen(
+                navController = navController,
+                twistId = twistId,
                 twistViewModel = twistViewModel
             )
         }

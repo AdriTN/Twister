@@ -119,4 +119,9 @@ interface ApiService {
     fun getPublicTwists(
         @Header("Authorization") token: String
     ): Call<List<TwistModel>>
+
+    @GET("/twists/public/{twistId}")
+    fun getPublicTwistById(
+        @Path("twistId") twistId: String
+    ): Call<TwistModel>
 }

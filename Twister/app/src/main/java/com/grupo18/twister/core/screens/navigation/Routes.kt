@@ -12,6 +12,7 @@ object Routes {
     const val ADD_QUESTION = "addQuestion/{twistId}"
     const val MANAGE_QUESTIONS = "manageQuestions/{twist}"
     const val TWIST_DETAIL = "twistDetail/{twist}"
+    const val PUBlIC_TWIST_DETAIL = "publicTwistDetail/{twistId}"
     const val SOLO_TWIST = "soloTwist/{twist}"
     const val GAME_SCREEN = "gameScreen/{twist}"
     const val LIVE_TWIST_SCREEN = "liveTwist/{pin}"

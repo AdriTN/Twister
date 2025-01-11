@@ -127,4 +127,44 @@ export async function getPublicTwists() {
     );
     return twists.filter(Boolean);
   }
+
+// Busca un twist público a partir de su twistId sin requerir userId
+export async function getPublicTwistById(twistId) {
+  
+    // 1. Obtiene todas las claves del Set de públicos
+    const keys = await redisClient.sMembers('public_twists');
+    // keys es un array de strings, p. ej: ["USER123-07567e8f-17d7-4794-9d03-b31c9e7cc427", "4-aaaa-bbbb"]
+  
+    if (!keys || keys.length === 0) {
+      return null;
+    }
+  
+    // 2. Busca la primera clave que termine con `-twistId`
+    //    Por ejemplo, si twistId = "07567e8f-17d7-4794-9d03-b31c9e7cc427",
+    //    la clave podría ser "4-07567e8f-17d7-4794-9d03-b31c9e7cc427"
+    const foundKey = keys.find((key) => key.endsWith(`-${twistId}`));
+    if (!foundKey) {
+      // No existe en el set un twist que termine con ese ID
+      return null;
+    }
+  
+    // 3. Recupera el JSON del twist en Redis
+    const twistJson = await redisClient.get(foundKey);
+    if (!twistJson) {
+      // La clave está en el set, pero no existe en Redis (raro). Devuelve null.
+      return null;
+    }
+  
+    // 4. Parsea el objeto
+    const twist = JSON.parse(twistJson);
+  
+    // 5. Verificamos que isPublic sea verdadero (debería serlo)
+    if (!twist.isPublic) {
+      // Si no es público, forzamos un null
+      return null;
+    }
+  
+    // 6. Regresamos el Twist
+    return twist;
+  }
   

@@ -1,5 +1,5 @@
 import express from "express"; 
-import { handleGetUserTwists, handleupdateTwist, handleDeleteTwist, getPublicTwists } from "../services/twistService.js";
+import { handleGetUserTwists, handleupdateTwist, handleDeleteTwist, getPublicTwists, getPublicTwistById } from "../services/twistService.js";
 import { getUserWithToken } from "../services/authService.js";
 
 const router = express.Router();
@@ -85,6 +85,26 @@ router.get('/public', async (req, res) => {
       res.json(publicTwists);
     } catch (error) {
       console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+// GET /twists/public/:twistId
+router.get('/public/:twistId', async (req, res) => {
+    try {
+      const { twistId } = req.params;
+  
+      const twist = await getPublicTwistById(twistId);
+  
+      if (!twist) {
+        // Si no se encontró un twist público con ese ID
+        return res.status(404).json({ error: 'Public twist not found' });
+      }
+  
+      // Si lo encontró y es público
+      res.json(twist);
+    } catch (error) {
+      console.error('Error fetching public twist by ID:', error);
       res.status(500).json({ error: error.message });
     }
   });

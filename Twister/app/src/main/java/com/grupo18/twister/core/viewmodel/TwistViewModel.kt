@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.grupo18.twister.core.api.ApiClient
 import com.grupo18.twister.core.api.ApiService
@@ -326,7 +327,6 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
         scope.launch(Dispatchers.IO) {
             try {
                 val response = apiService.getPublicTwists(token).execute()
-                println("Pene {$response}")
                 if (response.isSuccessful) {
                     val twistsList = response.body() ?: emptyList()
                     _publicTwists.value = twistsList
@@ -341,4 +341,24 @@ class TwistViewModel(private val myApp: MyApp) : ViewModel() {
             }
         }
     }
+
+    fun loadPublicTwistById(
+        twistId: String,
+        onResult: (TwistModel?) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = apiService.getPublicTwistById(twistId).execute()
+                if (response.isSuccessful) {
+                    onResult(response.body())
+                } else {
+                    onResult(null)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(null)
+            }
+        }
+    }
+
 }
