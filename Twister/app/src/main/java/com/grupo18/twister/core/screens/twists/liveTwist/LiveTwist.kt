@@ -22,6 +22,7 @@ import com.grupo18.twister.core.models.OpcionRespuesta
 import com.grupo18.twister.core.models.QuestionTimeoutEvent
 import com.grupo18.twister.core.models.RespuestaJugador
 import com.grupo18.twister.core.models.ScoreEvent
+import com.grupo18.twister.core.screens.navigation.Routes
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -29,6 +30,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Route
 import kotlin.collections.contains
 import kotlin.collections.forEach
 
@@ -45,6 +47,7 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
     var respuestasJugador by remember { mutableStateOf(listOf<RespuestaJugador>()) }
     var respuestaJugador by remember { mutableStateOf("") }
     var isCorrect by remember { mutableStateOf(false) }
+    var topPlayers by remember { mutableStateOf(listOf<Pair<String, Int>>()) }
 
     // Inicialización del RealTimeClient
     val realTimeClient = remember { RealTimeClient(ApiClient.getSocket()) }
@@ -96,12 +99,15 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                 }
             })
         }
-
         GameState.FINALIZED -> {
             if (isAdmin) {
-                realTimeClient.gameOverEvent(roomId = currentRoomId)
+                realTimeClient.getTopPlayers(roomId = currentRoomId)
             }
-            FinalScreen(navController = navController)
+            LaunchedEffect(Unit) {
+                delay(500)
+                println("Top players en launched effect: $topPlayers")
+                navController.navigate(Routes.FINAL_SCREEN.replace("{topPlayers}", topPlayers.toString()))
+            }
         }
     }
 
@@ -128,6 +134,26 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
                     "GAME_OVER" -> {
                         gameState = GameState.FINALIZED
                         println("Juego finalizado.")
+                    }
+                    "TOP_SCORES" -> {
+                        try {
+                            println("Event message recibido: ${event.message}")
+                            val parts = event.message.split(":").map { it.trim() }
+                            if (parts.size == 2) {
+                                // Convertir a un mapa
+                                val topScores = mapOf(parts[0] to parts[1].toInt())
+
+                                println("Puntajes máximos:")
+                                topScores.forEach { (playerName, score) ->
+                                    println("Jugador: $playerName, Puntaje: $score")
+                                }
+                                topPlayers = topScores.toList()
+                            } else {
+                                println("Formato de mensaje no válido: ${event.message}")
+                            }
+                        } catch (e: SerializationException) {
+                            println("Error al procesar TOP_SCORES: ${e.localizedMessage}")
+                        }
                     }
                     "QUESTION_TIMEOUT" -> handleQuestionTimeout(event, onTimeout = { questionId ->
                         // Manejar el timeout de la pregunta actual

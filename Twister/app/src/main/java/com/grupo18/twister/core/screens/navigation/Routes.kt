@@ -15,4 +15,5 @@ object Routes {
     const val SOLO_TWIST = "soloTwist/{twist}"
     const val GAME_SCREEN = "gameScreen/{twist}"
     const val LIVE_TWIST_SCREEN = "liveTwist/{pin}"
+    const val FINAL_SCREEN = "finalScreen/{topPlayers}"
 }

@@ -31,6 +31,7 @@ import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.edit.ManageQuestionsScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
 import com.grupo18.twister.core.screens.home.ProfileScreen
+import com.grupo18.twister.core.screens.navigation.Routes.FINAL_SCREEN
 import com.grupo18.twister.core.screens.navigation.Routes.GAME_SCREEN
 import com.grupo18.twister.core.screens.navigation.Routes.LIVE_TWIST_SCREEN
 import com.grupo18.twister.core.screens.search.SearchScreen
@@ -38,7 +39,9 @@ import com.grupo18.twister.core.screens.settings.SettingsScreen
 import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.TwistDetailScreen
 import com.grupo18.twister.core.screens.twists.SoloTwist
+import com.grupo18.twister.core.screens.twists.liveTwist.FinalScreen
 import com.grupo18.twister.core.screens.twists.liveTwist.GameScreen
+import com.grupo18.twister.core.screens.twists.liveTwist.PodiumScreen
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 
 @Composable
@@ -193,7 +196,27 @@ fun NavigationWrapper(
 
         composable(LIVE_TWIST_SCREEN) { backStackEntry ->
             val pin = backStackEntry.arguments?.getString("pin")
-            GameScreen(pin = pin, currentUser = currentUser, twist = null, navController = navController)
+            GameScreen(
+                pin = pin,
+                currentUser = currentUser,
+                twist = null,
+                navController = navController
+            )
+        }
+
+        composable(FINAL_SCREEN) { backStackEntry ->
+            val topPlayersString = backStackEntry.arguments?.getString("topPlayers")
+            val parts = topPlayersString?.split(":")?.map { it.trim() }
+            if (parts?.size == 2) {
+                // Convertir a un mapa
+                val topScores = mapOf(parts[0] to parts[1].toInt())
+
+                println("Puntajes máximos:")
+                topScores.forEach { (playerName, score) ->
+                    println("Jugador: $playerName, Puntaje: $score")
+                }
+                PodiumScreen(topPlayers = topScores.toList())
+            }
         }
     }
 }

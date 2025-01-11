@@ -309,7 +309,7 @@ export async function getScores(roomId, playerName) {
 
     // Filtrar y devolver el puntaje del jugador específico
     if (playerName) {
-      return roomData.scores[playerName] || null; // Devuelve null si no hay puntaje
+      return roomData.scores[playerName] || 0; // Devuelve null si no hay puntaje
     }
 
     return roomData.scores || {}; // Retornar todos los puntajes si no se proporciona playerName
