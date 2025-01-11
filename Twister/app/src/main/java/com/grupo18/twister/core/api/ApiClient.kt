@@ -8,11 +8,11 @@ import io.socket.client.Socket
 import java.net.URISyntaxException
 
 object ApiClient {
-    //private const val BASE_URL = "http://192.168.56.1:3000/"
-    //private const val SOCKET_BASE_URL = "http://192.168.56.1:3001/"
+    private const val BASE_URL = "http://192.168.1.25:3000/"
+    private const val SOCKET_BASE_URL = "http://192.168.1.25:3001/"
     //IP Javier
-    private const val BASE_URL = "http://172.20.10.2:3000/"
-    private const val SOCKET_BASE_URL = "http://172.20.10.2:3001/"
+    //private const val BASE_URL = "http://172.20.10.2:3000/"
+    //private const val SOCKET_BASE_URL = "http://172.20.10.2:3001/"
     private var socket: Socket? = null
 
     // Inicialización de Retrofit

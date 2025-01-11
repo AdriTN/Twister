@@ -31,6 +31,7 @@ import com.grupo18.twister.core.screens.edit.EditScreen
 import com.grupo18.twister.core.screens.edit.ManageQuestionsScreen
 import com.grupo18.twister.core.screens.home.HomeScreen
 import com.grupo18.twister.core.screens.home.ProfileScreen
+import com.grupo18.twister.core.screens.navigation.Routes.FINAL_SCREEN
 import com.grupo18.twister.core.screens.navigation.Routes.GAME_SCREEN
 import com.grupo18.twister.core.screens.navigation.Routes.LIVE_TWIST_SCREEN
 import com.grupo18.twister.core.screens.search.SearchScreen
@@ -39,7 +40,9 @@ import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.PublicTwistDetailScreen
 import com.grupo18.twister.core.screens.twists.TwistDetailScreen
 import com.grupo18.twister.core.screens.twists.SoloTwist
+import com.grupo18.twister.core.screens.twists.liveTwist.FinalScreen
 import com.grupo18.twister.core.screens.twists.liveTwist.GameScreen
+import com.grupo18.twister.core.screens.twists.liveTwist.PodiumScreen
 import com.grupo18.twister.core.viewmodel.TwistViewModel
 
 @Composable
@@ -204,7 +207,58 @@ fun NavigationWrapper(
 
         composable(LIVE_TWIST_SCREEN) { backStackEntry ->
             val pin = backStackEntry.arguments?.getString("pin")
-            GameScreen(pin = pin, currentUser = currentUser, twist = null, navController = navController)
+            GameScreen(
+                pin = pin,
+                currentUser = currentUser,
+                twist = null,
+                navController = navController
+            )
         }
+
+        composable(FINAL_SCREEN) { backStackEntry ->
+            val rawTopPlayersString = backStackEntry.arguments?.getString("topPlayers")
+            println("Este es el topPlayersString: $rawTopPlayersString")
+
+            // Procesar la cadena para convertirla en un formato utilizable
+            val topPlayersString = rawTopPlayersString
+                ?.removePrefix("[(") // Eliminar el prefijo "[("
+                ?.removeSuffix(")]") // Eliminar el sufijo ")]"
+                ?.replace("), (", ";") // Reemplazar "), (" por ";"
+            println("Cadena procesada: $topPlayersString")
+
+            // Separar cada entrada por punto y coma y luego dividir en nombre y puntaje
+            val parts = topPlayersString?.split(";")?.map { it.trim() }
+            println("Este es el parts: $parts")
+
+            // Validar y construir una lista de pares (nombre, puntaje)
+            if (!parts.isNullOrEmpty()) {
+                val topScores = parts.mapNotNull { part ->
+                    val entry = part.split(",").map { it.trim() }
+                    if (entry.size == 2) {
+                        try {
+                            entry[0] to entry[1].toInt() // Convertir a Pair<String, Int>
+                        } catch (e: NumberFormatException) {
+                            println("Error al convertir puntaje: ${e.message}")
+                            null
+                        }
+                    } else {
+                        null
+                    }
+                }.take(3) // Tomar solo los 3 primeros elementos, si existen
+
+                println("Este es el topScores: $topScores")
+
+                // Imprimir los ganadores
+                topScores.forEach { (playerName, score) ->
+                    println("Jugador: $playerName, Puntaje: $score")
+                }
+
+                // Pasar los ganadores a la pantalla PodiumScreen
+                PodiumScreen(topPlayers = topScores)
+            } else {
+                println("No se encontraron jugadores en topPlayersString.")
+            }
+        }
+
     }
 }

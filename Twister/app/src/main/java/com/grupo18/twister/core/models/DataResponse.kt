@@ -2,6 +2,7 @@ package com.grupo18.twister.core.models
 
 import com.grupo18.twister.core.screens.twists.Question
 import com.grupo18.twister.core.screens.twists.SingleQuestion
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 data class UserResponse(
@@ -89,6 +90,25 @@ data class CorrectAnswerEvent(val correctAnswer: AnswerModel, val score: Int)
 
 @Serializable
 data class ScoreEvent(val score: Int)
+
+@Serializable
+data class TopScoresEvent(
+    val topScores: List<playerScore>
+)
+
+@Serializable
+data class playerScore(
+    @SerialName("player") val name: String,
+    val score: Int
+)
+
+
+@Serializable
+data class Player(
+    val id: String,
+    val name: String,
+    val score: Int
+)
 
 @Serializable
 data class NextQuestionEvent(val questionId: String, val questionText: String)

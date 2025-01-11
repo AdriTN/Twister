@@ -8,6 +8,7 @@ import com.grupo18.twister.core.models.JoinPinResponse
 import com.grupo18.twister.core.models.RoomResponse
 import com.grupo18.twister.core.models.ScoreEvent
 import com.grupo18.twister.core.models.StartResponse
+import com.grupo18.twister.core.models.TopScoresEvent
 import com.grupo18.twister.core.models.UploadSocketGameRequest
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
@@ -216,6 +217,28 @@ class RealTimeClient(private val socket: Socket) {
             }
         })
 
+        // Evento: Top 3 players
+        socket.on("TOP_SCORES", Emitter.Listener { args ->
+            println("TOP_SCORES: ${args.joinToString()}")
+            if (args.isNotEmpty()) {
+                val firstArg = args[0].toString()
+                try {
+                    // Intenta deserializar el primer argumento a un objeto específico de TopScoresEvent
+                    val topScoresEvent = Json.decodeFromString<TopScoresEvent>(firstArg)
+                    val winners = topScoresEvent.topScores.joinToString(", ") { "${it.name}: ${it.score}" }
+
+                    onEventReceived(Event(
+                        message = winners,
+                        type = "TOP_SCORES",
+                        id = "TOP_3" // Usa un identificador general para este evento
+                    ))
+                } catch (e: Exception) {
+                    println("Error al deserializar TOP_SCORES: ${e.localizedMessage}")
+                }
+            }
+        })
+
+
         // Evento: Juego finalizado
         socket.on("GAME_OVER", Emitter.Listener { args ->
             println("GAME_OVER: ${args.joinToString()}")
@@ -350,6 +373,14 @@ class RealTimeClient(private val socket: Socket) {
     }"""
         println("getCorrectAnswer: $jsonString")
         socket.emit("getCorrectAnswer", jsonString)
+    }
+
+    fun getTopPlayers(roomId: String){
+        val jsonString = """{
+        "roomId": "$roomId"
+    }"""
+        println("getTopScores: $jsonString")
+        socket.emit("getTopScores", jsonString)
     }
 
     fun gameOverEvent(roomId: String){

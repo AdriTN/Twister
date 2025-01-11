@@ -250,19 +250,19 @@ export const socketHandlers = (io, socket) => {
   socket.on("getCorrectAnswer", async (data) => {
     data = JSON.parse(data);
     const { roomId, questionId, playerName } = data;
-  
+
     console.log("Se ha pedido una answer");
-  
+
     // Obtener datos de la sala
     var room = await getRoomDB(roomId);
-  
+
     if (room == null) {
       console.error("La sala o las preguntas no se encontraron");
       socket.emit("ANSWERS", { error: "Room or questions not found" });
       return;
     }
     room = JSON.parse(room);
-  
+
     console.log("Este es le Room", room, "con questionId", questionId);
     const question = room.twistQuestions.find((q) => q.id === questionId);
     if (!question) {
@@ -272,7 +272,7 @@ export const socketHandlers = (io, socket) => {
       socket.emit("ANSWERS", { error: "Question not found" });
       return;
     }
-  
+
     // Filtra la respuesta correcta
     const correctAnswer = question.answers.find((a) => a.isCorrect === true);
     if (!correctAnswer) {
@@ -282,17 +282,54 @@ export const socketHandlers = (io, socket) => {
       socket.emit("ANSWERS", { error: "Correct answer not found" });
       return;
     }
-  
+
     console.log("Respuestas recibidas:", question.answers);
-  
+
     const score = await getScores(roomId, playerName);
     // Sumar valores relevantes (ajusta esto según tus necesidades)
     console.log("Scores ", score);
-  
+
     //console.log(`La suma de los valores de las respuestas es: ${sum}`);
     socket.emit("CORRECT_ANSWER", { correctAnswer, score });
   });
-  
+
+  // Evento: Obtener los 3 mejores puntajes
+  socket.on("getTopScores", async (data) => {
+    try {
+      data = JSON.parse(data);
+      const { roomId } = data;
+
+      console.log(`Solicitando los 3 mejores puntajes de la sala ${roomId}`);
+
+      // Obtener los puntajes de la sala desde la base de datos
+      const scores = await getScores(roomId);
+      if (!scores || scores.length === 0) {
+        console.log(`No se encontraron puntajes para la sala ${roomId}`);
+        socket.emit("TOP_SCORES", { error: "No scores found" });
+        return;
+      }
+      
+      // Convierte el objeto a un array de objetos
+      const scoresArray = Object.entries(scores).map(([player, score]) => ({ player, score }));
+
+      // Ordena el array de puntajes de mayor a menor
+      const sortedScores = scoresArray.sort((a, b) => b.score - a.score);
+
+      // Obtiene los 3 mejores puntajes (en este caso puede que haya menos de 3)
+      const topScores = sortedScores.slice(0, 3);
+
+
+      console.log(`Top 3 puntajes para la sala ${roomId}:`, topScores);
+
+      // Emitir los resultados al cliente
+      socket.emit("TOP_SCORES", { topScores });
+    } catch (error) {
+      console.error("Error al obtener los 3 mejores puntajes:", error);
+      socket.emit("TOP_SCORES", { error: "Error retrieving top scores" });
+    }
+  });
+
+
 
   socket.on("gameOverEvent", async (data) => {
     data = JSON.parse(data);
