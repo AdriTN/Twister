@@ -2,16 +2,23 @@ package com.grupo18.twister.core.screens.twists.liveTwist
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.*
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun PodiumScreen(topPlayers: List<Pair<String, Int>>) {
@@ -22,21 +29,43 @@ fun PodiumScreen(topPlayers: List<Pair<String, Int>>) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(
+                // Gradiente vertical para dar un toque más llamativo
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primaryContainer,
+                        MaterialTheme.colorScheme.background
+                    ),
+                    startY = 0f,
+                    endY = Float.POSITIVE_INFINITY
+                )
+            )
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
+        // Título con sombra para resaltar
         Text(
             text = "🏆 Podio 🏆",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            style = TextStyle(
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                shadow = Shadow(
+                    color = Color.Gray,
+                    offset = Offset(4f, 4f),
+                    blurRadius = 4f
+                )
+            )
         )
 
         // Renderizar el podio con posiciones 2, 1 y 3
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 200.dp)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Bottom
         ) {
             // Segundo lugar
@@ -45,7 +74,7 @@ fun PodiumScreen(topPlayers: List<Pair<String, Int>>) {
                     playerName = podiumPlayers[1].first,
                     score = podiumPlayers[1].second,
                     position = 2,
-                    height = 150.dp,
+                    height = 140.dp,
                     color = Color(0xFF9E9E9E) // Plata
                 )
             }
@@ -56,7 +85,7 @@ fun PodiumScreen(topPlayers: List<Pair<String, Int>>) {
                     playerName = podiumPlayers[0].first,
                     score = podiumPlayers[0].second,
                     position = 1,
-                    height = 200.dp,
+                    height = 180.dp,
                     color = Color(0xFFFFD700) // Oro
                 )
             }
@@ -83,41 +112,59 @@ fun PodiumPosition(
     height: Dp,
     color: Color
 ) {
-    Column(
+    // Usamos Card para dar un efecto de superficie elevada y esquinas redondeadas
+    Card(
         modifier = Modifier
             .padding(8.dp)
-            .height(height)
-            .width(80.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Bottom
+            .width(90.dp)
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = color)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(height)
-                .background(color)
-        )
+                .padding(horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            // Ícono de trofeo decorativo (puedes sustituirlo por otro ícono o imagen)
+            Icon(
+                imageVector = Icons.Outlined.EmojiEvents,
+                contentDescription = "Ícono de podio",
+                tint = Color.White,
+                modifier = Modifier.size(40.dp)
+            )
 
-        Text(
-            text = "${position}º",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
+            Text(
+                text = "${position}º",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(top = 8.dp)
+            )
 
-        Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-        Text(
-            text = playerName,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+            Text(
+                text = playerName,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Center
+            )
 
-        Text(
-            text = "$score puntos",
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = "$score puntos",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 }
