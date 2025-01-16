@@ -102,11 +102,14 @@ fun LiveTwist(twist: TwistModel?, isAdmin: Boolean, currentRoomId: String, playe
         GameState.FINALIZED -> {
             if (isAdmin) {
                 realTimeClient.getTopPlayers(roomId = currentRoomId)
+                realTimeClient.gameOverEvent(roomId = currentRoomId)
             }
             LaunchedEffect(Unit) {
                 delay(500)
                 println("Top players en launched effect: $topPlayers")
-                navController.navigate(Routes.FINAL_SCREEN.replace("{topPlayers}", topPlayers.toString()))
+                navController.navigate(Routes.FINAL_SCREEN
+                    .replace("{topPlayers}", topPlayers.toString())
+                    .replace("{isAdmin}", isAdmin.toString()))
             }
         }
     }

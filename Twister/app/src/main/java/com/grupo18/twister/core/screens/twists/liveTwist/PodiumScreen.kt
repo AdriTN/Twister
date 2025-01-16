@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,83 +22,160 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PodiumScreen(topPlayers: List<Pair<String, Int>>) {
-    // Aseguramos que hay exactamente tres jugadores
+fun PodiumScreen(topPlayers: List<Pair<String, Int>>, isAdmin: Boolean?, onNavigateToHome: () -> Unit) {
     println("Este es el topPlayers: $topPlayers")
-    val podiumPlayers = topPlayers.take(3)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                // Gradiente vertical para dar un toque más llamativo
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        MaterialTheme.colorScheme.background
-                    ),
-                    startY = 0f,
-                    endY = Float.POSITIVE_INFINITY
-                )
-            )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
-    ) {
-        // Título con sombra para resaltar
-        Text(
-            text = "🏆 Podio 🏆",
-            style = TextStyle(
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                shadow = Shadow(
-                    color = Color.Gray,
-                    offset = Offset(4f, 4f),
-                    blurRadius = 4f
-                )
-            )
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isAdmin == true) {
+            // Interfaz para el administrador (la actual)
+            val podiumPlayers = topPlayers.take(3)
 
-        // Renderizar el podio con posiciones 2, 1 y 3
-        Row(
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.background
+                            ),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
+                        )
+                    )
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    text = "🏆 Podio 🏆",
+                    style = TextStyle(
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        shadow = Shadow(
+                            color = Color.Gray,
+                            offset = Offset(4f, 4f),
+                            blurRadius = 4f
+                        )
+                    )
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp)
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    if (podiumPlayers.size > 1) {
+                        PodiumPosition(
+                            playerName = podiumPlayers[1].first,
+                            score = podiumPlayers[1].second,
+                            position = 2,
+                            height = 140.dp,
+                            color = Color(0xFF9E9E9E)
+                        )
+                    }
+
+                    if (podiumPlayers.isNotEmpty()) {
+                        PodiumPosition(
+                            playerName = podiumPlayers[0].first,
+                            score = podiumPlayers[0].second,
+                            position = 1,
+                            height = 180.dp,
+                            color = Color(0xFFFFD700)
+                        )
+                    }
+
+                    if (podiumPlayers.size > 2) {
+                        PodiumPosition(
+                            playerName = podiumPlayers[2].first,
+                            score = podiumPlayers[2].second,
+                            position = 3,
+                            height = 120.dp,
+                            color = Color(0xFFCD7F32)
+                        )
+                    }
+                }
+            }
+        } else {
+            // Interfaz para los jugadores no administradores
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Card(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .shadow(8.dp, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Your Score",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        if (topPlayers.isNotEmpty()) {
+                            val playerScore = topPlayers.firstOrNull()?.second ?: 0
+                            Text(
+                                text = "$playerScore points",
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "No data available",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Botón en la parte inferior, ligeramente más arriba
+        Button(
+            onClick = onNavigateToHome,
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 200.dp)
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.Bottom
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp), // Ajuste para colocarlo más arriba
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            // Segundo lugar
-            if (podiumPlayers.size > 1) {
-                PodiumPosition(
-                    playerName = podiumPlayers[1].first,
-                    score = podiumPlayers[1].second,
-                    position = 2,
-                    height = 140.dp,
-                    color = Color(0xFF9E9E9E) // Plata
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "Home Icon",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
                 )
-            }
-
-            // Primer lugar
-            if (podiumPlayers.isNotEmpty()) {
-                PodiumPosition(
-                    playerName = podiumPlayers[0].first,
-                    score = podiumPlayers[0].second,
-                    position = 1,
-                    height = 180.dp,
-                    color = Color(0xFFFFD700) // Oro
-                )
-            }
-
-            // Tercer lugar
-            if (podiumPlayers.size > 2) {
-                PodiumPosition(
-                    playerName = podiumPlayers[2].first,
-                    score = podiumPlayers[2].second,
-                    position = 3,
-                    height = 120.dp,
-                    color = Color(0xFFCD7F32) // Bronce
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Go to Home",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
         }

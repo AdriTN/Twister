@@ -103,7 +103,7 @@ fun QuestionView(
     val scrollState = rememberScrollState()
 
 
-    if (isAdmin){
+    if (isAdmin) {
         // Usar Scaffold para manejar el padding y evitar solapamientos
         Scaffold(
             modifier = Modifier
@@ -138,7 +138,11 @@ fun QuestionView(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 val answerStyles = listOf(
-                    Triple(Color(0xFF4A90E2), RoundedCornerShape(16.dp), Icons.Default.ArrowForward),
+                    Triple(
+                        Color(0xFF4A90E2),
+                        RoundedCornerShape(16.dp),
+                        Icons.Default.ArrowForward
+                    ),
                     Triple(Color(0xFFE94E3B), RoundedCornerShape(16.dp), Icons.Default.Circle),
                     Triple(Color(0xFF4CAF50), RoundedCornerShape(16.dp), Icons.Default.Stop),
                     Triple(Color(0xFFFFD700), RoundedCornerShape(16.dp), Icons.Default.Hexagon)
@@ -180,7 +184,18 @@ fun QuestionView(
             }
         }
     } else {
-        if (!isAnswered.value){
+        if (!isAnswered.value) {
+            // Lista de estilos para cada respuesta
+            val answerStyles = listOf(
+                Triple(Color(0xFF4A90E2), RoundedCornerShape(16.dp), Icons.Default.ArrowForward),
+                Triple(Color(0xFFE94E3B), RoundedCornerShape(16.dp), Icons.Default.Circle),
+                Triple(Color(0xFF4CAF50), RoundedCornerShape(16.dp), Icons.Default.Stop),
+                Triple(Color(0xFFFFD700), RoundedCornerShape(16.dp), Icons.Default.Hexagon)
+            )
+
+            // Partimos la lista de respuestas de 2 en 2, para mostrarlas en filas
+            val respuestasPorFila = question.answers.chunked(2)
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -188,63 +203,35 @@ fun QuestionView(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                // Recorremos cada "fila" de 2 respuestas
+                respuestasPorFila.forEach { listaFila ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        // Recorremos cada respuesta de la fila
+                        listaFila.forEachIndexed { indexEnFila, respuesta ->
+                            // Elegimos el estilo según el índice absoluto para que rote
+                            val absoluto = question.answers.indexOf(respuesta)
+                            val (color, shape, icon) = answerStyles[absoluto % answerStyles.size]
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    ColorBlock(
-                        color = Color(0xFF4A90E2),
-                        shape = RoundedCornerShape(16.dp),
-                        icon = Icons.Default.ArrowForward,
-                        contentDescription = "Arrow",
-                        onClick = {
-                            handleAnswer(question.answers[0].text, 0)
+                            ColorBlock(
+                                color = color,
+                                shape = shape,
+                                icon = icon,
+                                contentDescription = "Opción ${absoluto + 1}",
+                                onClick = {
+                                    handleAnswer(respuesta.text, absoluto)
+                                }
+                            )
                         }
-                    )
-                    ColorBlock(
-                        color = Color(0xFFE94E3B),
-                        shape = RoundedCornerShape(16.dp),
-                        icon = Icons.Default.Circle,
-                        contentDescription = "Circle",
-                        onClick = {
-                            handleAnswer(question.answers[1].text, 1)
-                        }
-                    )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    ColorBlock(
-                        color = Color(0xFF4CAF50),
-                        shape = RoundedCornerShape(16.dp),
-                        icon = Icons.Default.Stop,
-                        contentDescription = "Square",
-                        onClick = {
-                            handleAnswer(question.answers[2].text, 2)
-                        }
-                    )
-                    ColorBlock(
-                        color = Color(0xFFFFD700),
-                        shape = RoundedCornerShape(16.dp),
-                        icon = Icons.Default.Hexagon,
-                        contentDescription = "Hexagon",
-                        onClick = {
-                            handleAnswer(question.answers[3].text, 3)
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
-        }
-        else {
-            // Implementacion del mensaje de espera
+        } else {
+            // Implementación del mensaje de espera
             Column(
                 modifier = Modifier
                     .fillMaxSize()

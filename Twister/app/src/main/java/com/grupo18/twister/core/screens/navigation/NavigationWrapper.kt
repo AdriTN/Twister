@@ -12,18 +12,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.google.gson.Gson
-import com.grupo18.twister.core.api.ApiClient
-import com.grupo18.twister.core.api.ApiService
 import com.grupo18.twister.core.factories.TwistViewModelFactory
 import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.core.models.TwistModel
-import com.grupo18.twister.core.models.UserModel
 import com.grupo18.twister.core.screens.authentication.AuthScreen
 import com.grupo18.twister.core.screens.authentication.MyApp
 import com.grupo18.twister.core.screens.welcome.WelcomeScreen
@@ -40,7 +35,6 @@ import com.grupo18.twister.core.screens.twists.AddQuestionScreen
 import com.grupo18.twister.core.screens.twists.PublicTwistDetailScreen
 import com.grupo18.twister.core.screens.twists.TwistDetailScreen
 import com.grupo18.twister.core.screens.twists.SoloTwist
-import com.grupo18.twister.core.screens.twists.liveTwist.FinalScreen
 import com.grupo18.twister.core.screens.twists.liveTwist.GameScreen
 import com.grupo18.twister.core.screens.twists.liveTwist.PodiumScreen
 import com.grupo18.twister.core.viewmodel.TwistViewModel
@@ -217,6 +211,7 @@ fun NavigationWrapper(
 
         composable(FINAL_SCREEN) { backStackEntry ->
             val rawTopPlayersString = backStackEntry.arguments?.getString("topPlayers")
+            val isAdmin = backStackEntry.arguments?.getString("isAdmin")
             println("Este es el topPlayersString: $rawTopPlayersString")
 
             // Procesar la cadena para convertirla en un formato utilizable
@@ -254,7 +249,9 @@ fun NavigationWrapper(
                 }
 
                 // Pasar los ganadores a la pantalla PodiumScreen
-                PodiumScreen(topPlayers = topScores)
+                PodiumScreen(topPlayers = topScores, isAdmin = isAdmin == "true", onNavigateToHome = {
+                    navController.navigate(Routes.HOME)
+                })
             } else {
                 println("No se encontraron jugadores en topPlayersString.")
             }
