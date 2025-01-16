@@ -45,7 +45,7 @@ fun QuestionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = if (question == null) "Add New Question" else "Editar Pregunta") },
+        title = { Text(text = if (question == null) "Add New Question" else "Edit Question") },
         text = {
             Column {
                 OutlinedTextField(

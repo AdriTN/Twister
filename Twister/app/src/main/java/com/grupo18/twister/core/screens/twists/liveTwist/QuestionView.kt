@@ -219,7 +219,7 @@ fun QuestionView(
                                 color = color,
                                 shape = shape,
                                 icon = icon,
-                                contentDescription = "Opción ${absoluto + 1}",
+                                contentDescription = "Option ${absoluto + 1}",
                                 onClick = {
                                     handleAnswer(respuesta.text, absoluto)
                                 }
@@ -240,7 +240,7 @@ fun QuestionView(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Esperando a que el administrador termine la pregunta...",
+                    text = "Waiting for the admin to finalize de question...",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,

@@ -22,13 +22,13 @@ fun FinalScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "¡Juego Finalizado!",
+            text = "¡Game Finalized!",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
         )
         Button(onClick = { navController.navigate(Routes.HOME) }) {
-            Text(text = "Volver al Inicio", fontSize = 18.sp)
+            Text(text = "Return to Home", fontSize = 18.sp)
         }
     }
 }

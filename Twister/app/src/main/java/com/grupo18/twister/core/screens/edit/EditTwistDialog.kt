@@ -77,7 +77,7 @@ fun EditTwistDialog(
             if (!isSame) {
                 imageUri = tempFilePath
             } else {
-                Toast.makeText(context, "Debes seleccionar una imagen diferente a la actual", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "You must select a different image.", Toast.LENGTH_SHORT).show()
             }
         }
     }

@@ -138,7 +138,7 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Text("Enviar Notificación de Prueba")
+                    Text("Send Notification")
                 }
             }
 
