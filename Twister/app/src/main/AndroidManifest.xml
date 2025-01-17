@@ -14,7 +14,7 @@
 
 
     <application
-        android:name="com.grupo18.twister.core.screens.authentication.MyApp"
+        android:name="com.grupo18.twister.main.MyApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
