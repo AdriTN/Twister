@@ -25,7 +25,7 @@ object Routes {
     const val PUBlIC_TWIST_DETAIL = "$PUBLIC_TWIST_BASE/{twistId}"
 
     private const val SOLO_TWIST_BASE = "soloTwist"
-    const val SOLO_TWIST = "$SOLO_TWIST_BASE/{twist}"
+    const val SOLO_TWIST = SOLO_TWIST_BASE
 
     private const val GAME_SCREEN_BASE = "gameScreen"
     const val GAME_SCREEN = "$GAME_SCREEN_BASE/{twist}"

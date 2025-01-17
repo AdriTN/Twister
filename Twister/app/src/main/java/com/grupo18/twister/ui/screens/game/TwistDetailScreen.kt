@@ -1,6 +1,7 @@
 package com.grupo18.twister.ui.screens.game
 
 import android.net.Uri
+import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.gson.Gson
 import com.grupo18.twister.R
+import com.grupo18.twister.main.MyApp
 import com.grupo18.twister.models.game.TwistModel
 import com.grupo18.twister.navigation.Routes
 import com.grupo18.twister.viewmodels.screens.TwistViewModel
@@ -38,6 +40,7 @@ fun TwistDetailScreen(
 ) {
     val twists by twistViewModel.twists.collectAsState()
     val twist = twists.find { it.id == twist?.id }
+    val applicationContext = LocalContext.current.applicationContext
 
     if (twist == null) {
         Scaffold(
@@ -91,8 +94,8 @@ fun TwistDetailScreen(
                 TwistDetailContent(
                     twist = twist,
                     onPlaySolo = {
-                        val twistJson = Gson().toJson(twist)
-                        navController.navigate("soloTwist/${twistJson}")
+                        (applicationContext as MyApp).saveTwist(twist)
+                        navController.navigate("soloTwist")
                     },
                     navController
                 )

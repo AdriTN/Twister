@@ -7,7 +7,7 @@ import retrofit2.Call
 import retrofit2.http.*
 
 interface ImageService {
-
+    @Multipart
     @POST("/images/upload")
     fun uploadImage(
         @Header("Authorization") token: String,

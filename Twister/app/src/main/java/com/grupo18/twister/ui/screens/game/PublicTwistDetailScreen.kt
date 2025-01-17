@@ -1,5 +1,6 @@
 package com.grupo18.twister.ui.screens.game
 
+import android.util.Base64
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.google.gson.Gson
+import com.grupo18.twister.main.MyApp
 import com.grupo18.twister.models.game.TwistModel
 import com.grupo18.twister.viewmodels.screens.TwistViewModel
 
@@ -34,6 +37,7 @@ fun PublicTwistDetailScreen(
 ) {
     var loadedTwist by remember { mutableStateOf<TwistModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    val applicationContext = LocalContext.current.applicationContext
 
     // Llamas a la función que obtiene UN twist público por su ID
     LaunchedEffect(twistId) {
@@ -66,7 +70,6 @@ fun PublicTwistDetailScreen(
             }
         } else {
             loadedTwist?.let { twist ->
-                // Usa tu mismo “TwistDetailContent(...)”
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -75,14 +78,13 @@ fun PublicTwistDetailScreen(
                     TwistDetailContent(
                         twist = twist,
                         onPlaySolo = {
-                            val twistJson = Gson().toJson(twist)
-                            navController.navigate("soloTwist/${twistJson}")
+                            (applicationContext as MyApp).saveTwist(twist)
+                            navController.navigate("soloTwist")
                         },
                         navController = navController
                     )
                 }
             } ?: run {
-                // El Twist no existe o no es público
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

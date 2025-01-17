@@ -1,6 +1,7 @@
 package com.grupo18.twister.navigation
 
 import QRScannerScreen
+import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.grupo18.twister.core.helpers.NotificationHelper
 import com.grupo18.twister.main.MyApp
 import com.grupo18.twister.models.game.TwistModel
@@ -182,15 +184,28 @@ fun NavigationWrapper(
         }
 
         composable(Routes.SOLO_TWIST) { backStackEntry ->
-            val twistJson = backStackEntry.arguments?.getString("twist")
-            val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
-            if (twist != null) {
+            // Usar collectAsState para observar el StateFlow
+            val twist by myApp.currentTwist.collectAsState()
+
+            // Comprobar si hubo un error o si el twist sigue siendo null
+            if (twist == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "Error loading twist.")
+                }
+            } else {
                 SoloTwist(
                     navController = navController,
                     twist = twist
                 )
             }
         }
+
+
+
+
 
         composable(Routes.GAME_SCREEN) { backStackEntry ->
             val twistJson = backStackEntry.arguments?.getString("twist")

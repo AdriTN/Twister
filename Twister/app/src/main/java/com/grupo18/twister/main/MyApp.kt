@@ -8,6 +8,7 @@ import android.util.Log
 import com.grupo18.twister.core.network.socket.SocketManager
 import com.grupo18.twister.models.common.UserModel
 import com.grupo18.twister.features.auth.SessionManager
+import com.grupo18.twister.models.game.TwistModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -16,6 +17,11 @@ class MyApp : Application() {
     // StateFlow para mantener el usuario actual
     private val _currentUser = MutableStateFlow<UserModel?>(null)
     val currentUser: StateFlow<UserModel?> = _currentUser
+
+    // StateFlow para mantener el objeto twist actual
+    private val _currentTwist = MutableStateFlow<TwistModel?>(null)
+    val currentTwist: StateFlow<TwistModel?> = _currentTwist
+
 
     private lateinit var sessionManager: SessionManager
 
@@ -85,4 +91,18 @@ class MyApp : Application() {
             _currentUser.value = it.copy(avatarUrl = newUrl)
         }
     }
+
+    // Función para guardar un Twist completo
+    fun saveTwist(twist: TwistModel) {
+        _currentTwist.value = twist
+    }
+
+    // Función para obtener el Twist actual como StateFlow
+    fun getTwist(): StateFlow<TwistModel?> = currentTwist
+
+    // Función para limpiar el Twist actual
+    fun clearTwist() {
+        _currentTwist.value = null
+    }
+
 }

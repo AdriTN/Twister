@@ -27,10 +27,6 @@ fun SoloTwist(
     navController: NavController,
     twist: TwistModel?
 ) {
-    val context = LocalContext.current
-    val myApp = context.applicationContext as MyApp
-    val token = myApp.currentUser.value?.token ?: ""
-
     val isLoading = remember { mutableStateOf(true) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
     val questionsState = remember { mutableStateOf<List<QuestionModel>>(emptyList()) }

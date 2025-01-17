@@ -8,7 +8,7 @@ import java.net.URISyntaxException
 
 object SocketManager {
     private var socket: Socket? = null
-    private const val SOCKET_BASE_URL = "http://172.20.10.2:3001/" // Reemplaza con tu URL real
+    private const val SOCKET_BASE_URL = "http://192.168.1.16:3001/"
 
     fun connect() {
         if (socket == null) {
