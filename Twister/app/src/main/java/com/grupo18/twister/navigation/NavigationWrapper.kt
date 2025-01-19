@@ -164,14 +164,23 @@ fun NavigationWrapper(
         }
 
         composable(Routes.TWIST_DETAIL) { backStackEntry ->
-            val twistJson = backStackEntry.arguments?.getString("twist")
-            val twist = twistJson?.let { Gson().fromJson(it, TwistModel::class.java) }
+            val twist by myApp.currentTwist.collectAsState()
 
-            TwistDetailScreen(
-                navController = navController,
-                twist = twist,
-                twistViewModel = twistViewModel
-            )
+            // Comprobar si hubo un error o si el twist sigue siendo null
+            if (twist == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "Error loading twist.")
+                }
+            } else {
+                TwistDetailScreen(
+                    navController = navController,
+                    twist = twist,
+                    twistViewModel = twistViewModel
+                )
+            }
         }
 
         composable(Routes.PUBlIC_TWIST_DETAIL) { backStackEntry ->

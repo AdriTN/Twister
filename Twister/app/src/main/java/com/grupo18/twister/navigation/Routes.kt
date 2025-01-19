@@ -19,7 +19,7 @@ object Routes {
     const val MANAGE_QUESTIONS = "$MANAGE_QUESTIONS_BASE/{twist}"
 
     private const val TWIST_DETAIL_BASE = "twistDetail"
-    const val TWIST_DETAIL = "$TWIST_DETAIL_BASE/{twist}"
+    const val TWIST_DETAIL = TWIST_DETAIL_BASE
 
     private const val PUBLIC_TWIST_BASE = "publicTwistDetail"
     const val PUBlIC_TWIST_DETAIL = "$PUBLIC_TWIST_BASE/{twistId}"
@@ -36,14 +36,6 @@ object Routes {
     private const val FINAL_SCREEN_BASE = "finalScreen"
     const val FINAL_SCREEN = "$FINAL_SCREEN_BASE/{topPlayers}/{isAdmin}"
 
-    // Funciones que generan rutas de navegación seguras
-    fun addQuestionRoute(twistId: String): String = "$ADD_QUESTION_BASE/$twistId"
-    fun manageQuestionsRoute(twistJson: String): String = "$MANAGE_QUESTIONS_BASE/$twistJson"
-    fun twistDetailRoute(twistJson: String): String = "$TWIST_DETAIL_BASE/$twistJson"
-    fun publicTwistDetailRoute(twistId: String): String = "$PUBLIC_TWIST_BASE/$twistId"
-    fun soloTwistRoute(twistJson: String): String = "$SOLO_TWIST_BASE/$twistJson"
-    fun gameScreenRoute(twistJson: String): String = "$GAME_SCREEN_BASE/$twistJson"
+    //Navegación segura
     fun liveTwistRoute(pin: String): String = "$LIVE_TWIST_BASE/$pin"
-    fun finalScreenRoute(topPlayers: String, isAdmin: String): String =
-        "$FINAL_SCREEN_BASE/$topPlayers/$isAdmin"
 }

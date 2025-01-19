@@ -94,6 +94,7 @@ class MyApp : Application() {
 
     // Función para guardar un Twist completo
     fun saveTwist(twist: TwistModel) {
+        println("Se va a guardar el twist: $twist")
         _currentTwist.value = twist
     }
 

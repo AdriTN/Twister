@@ -28,6 +28,7 @@ import com.grupo18.twister.ui.components.CustomBottomNavigationBar
 import com.grupo18.twister.models.game.TwistModel
 import com.grupo18.twister.models.common.UserModel
 import com.grupo18.twister.main.MyApp
+import com.grupo18.twister.navigation.Routes
 import com.grupo18.twister.viewmodels.screens.TwistViewModel
 import java.io.File
 
@@ -126,8 +127,8 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                                 twist = twist,
                                 onClick = {
                                     // Navegas a la pantalla de detalle (para userTwists)
-                                    val twistJson = Gson().toJson(twist)
-                                    navController.navigate("twistDetail/${twistJson}")
+                                    app.saveTwist(twist)
+                                    navController.navigate(Routes.TWIST_DETAIL)
                                 }
                             )
                         }
@@ -161,7 +162,8 @@ fun HomeScreen(navController: NavController, twistViewModel: TwistViewModel) {
                         TwistCard(
                             twist = twist,
                             onClick = {
-                                navController.navigate("publicTwistDetail/${twist.id}")
+                                app.saveTwist(twist)
+                                navController.navigate(Routes.PUBlIC_TWIST_DETAIL)
                             }
                         )
                     }
